@@ -40,6 +40,14 @@ async function main() {
     update: {},
     create: { name: "Super Admin", email: "admin@biglight.jp", passwordHash: hash, role: "SUPER_ADMIN" },
   });
+
+  // Tài khoản admin chính (đăng nhập bằng Google/Facebook hoặc mật khẩu password123).
+  // update: đảm bảo luôn là SUPER_ADMIN + ACTIVE kể cả khi đã tồn tại.
+  await prisma.user.upsert({
+    where: { email: "n-tung@biglight.jp" },
+    update: { role: "SUPER_ADMIN", status: "ACTIVE" },
+    create: { name: "Nguyen Tung", email: "n-tung@biglight.jp", passwordHash: hash, role: "SUPER_ADMIN" },
+  });
   await prisma.user.upsert({
     where: { email: "staff@biglight.jp" },
     update: {},

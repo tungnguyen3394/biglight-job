@@ -15,6 +15,8 @@ COPY . .
 # (truyền vào qua build arg — Client ID là thông tin công khai, không phải secret).
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_FACEBOOK_APP_ID
+ENV NEXT_PUBLIC_FACEBOOK_APP_ID=$NEXT_PUBLIC_FACEBOOK_APP_ID
 RUN npx prisma generate && npm run build
 
 # ---- runner ----

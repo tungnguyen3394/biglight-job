@@ -103,7 +103,8 @@ model User {
   email        String        @unique
   passwordHash String? // null for Google-only accounts
   googleId     String?       @unique // Google "sub"
-  image        String? // Google avatar URL
+  facebookId   String?       @unique // Facebook user id
+  image        String? // Google/Facebook avatar URL
   role         Role          @default(BIGLIGHT_STAFF)
   status       AccountStatus @default(ACTIVE)
   companyId    String? // link if role = COMPANY
