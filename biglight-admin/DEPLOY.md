@@ -79,8 +79,9 @@ Dự án dùng `db push` (tạo bảng thẳng từ `schema.prisma`, KHÔNG cầ
 
 Chạy qua Docker bằng service `migrate` (có sẵn prisma CLI + tsx; image `app` production đã lược bỏ):
 ```bash
-docker compose run --rm migrate     # tạo bảng (db push) + seed 5 user mẫu, mật khẩu password123
+docker compose run --rm --build migrate     # tạo bảng (db push) + seed 5 user mẫu, mật khẩu password123
 ```
+> Luôn dùng `--build` để migrate dùng schema mới nhất (service này nằm trong profile `tools` nên `up --build` KHÔNG build nó).
 > Lệnh này chạy lại nhiều lần vẫn an toàn: `db push` chỉ đồng bộ bảng, seed dùng upsert nên không ghi đè dữ liệu.
 > Chỉ tạo bảng (không seed): `docker compose run --rm --entrypoint "npx prisma db push" migrate`
 

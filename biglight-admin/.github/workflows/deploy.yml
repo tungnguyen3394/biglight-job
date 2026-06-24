@@ -42,5 +42,5 @@ jobs:
             git pull origin main
             docker compose up -d --build
             # Tạo/cập nhật bảng trong DB thẳng từ schema (service migrate có sẵn prisma CLI)
-            docker compose run --rm --entrypoint "npx prisma db push" migrate || true
+            docker compose run --rm --build --entrypoint "npx prisma db push" migrate || true
             docker image prune -f
