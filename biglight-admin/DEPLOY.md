@@ -77,12 +77,12 @@ docker exec -i postgres_biglight_job psql -U biglight_job_user -d biglight_job_d
 
 Dự án dùng `db push` (tạo bảng thẳng từ `schema.prisma`, KHÔNG cần thư mục `prisma/migrations/`).
 
-Chạy qua Docker (không cần cài node trên VPS):
+Chạy qua Docker bằng service `migrate` (có sẵn prisma CLI + tsx; image `app` production đã lược bỏ):
 ```bash
-docker compose run --rm --no-deps --entrypoint "npx prisma db push" app
-docker compose run --rm --no-deps --entrypoint "npm run db:seed"  app   # 5 user mẫu, mật khẩu password123
+docker compose run --rm migrate     # tạo bảng (db push) + seed 5 user mẫu, mật khẩu password123
 ```
-> Lệnh `db push` chạy lại nhiều lần vẫn an toàn (chỉ đồng bộ bảng cho khớp schema).
+> Lệnh này chạy lại nhiều lần vẫn an toàn: `db push` chỉ đồng bộ bảng, seed dùng upsert nên không ghi đè dữ liệu.
+> Chỉ tạo bảng (không seed): `docker compose run --rm --entrypoint "npx prisma db push" migrate`
 
 **Cách B — Chạy SQL tay (qua psql trong container):**
 ```bash

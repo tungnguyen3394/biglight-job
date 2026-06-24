@@ -37,5 +37,25 @@ services:
       db:
         condition: service_healthy
 
+  # Service tiện ích: tạo bảng (prisma db push) + seed dữ liệu mẫu.
+  # Dùng target "builder" vì nó có sẵn prisma CLI + tsx (devDependencies);
+  # image "app" production đã lược bỏ các tool này cho nhẹ.
+  # Chạy thủ công khi cần:  docker compose run --rm migrate
+  migrate:
+    build:
+      context: .
+      target: builder
+      args:
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+    profiles: ["tools"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://biglight_job_user:biglight_job_2026@db:5432/biglight_job_db?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma db push && npm run db:seed"
+
 volumes:
   biglight_pgdata:
