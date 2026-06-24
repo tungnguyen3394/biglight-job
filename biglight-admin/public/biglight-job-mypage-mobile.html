@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>マイページ（モバイル）｜BIGLIGHT JOB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#D02E26;--red-d:#A8231C;--red-soft:#FDECEA;
+  --ink:#16181D;--gray:#5B6472;--gray-2:#9AA2AE;--line:#ECECEF;--bg:#F7F8FA;
+  --green:#1F9D55;--green-soft:#E6F6EC;--amber:#E8810C;--blue:#2563EB;--blue-soft:#E8F0FE;
+  --fb:#1877F2;--radius:15px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;background:#E9EBEF;color:var(--ink);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.app{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;position:relative;box-shadow:0 0 40px rgba(0,0,0,.08)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border-radius:12px;padding:13px 20px;font-size:15px;transition:.15s}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 6px 16px rgba(208,46,38,.26)}
+.btn-red:active{transform:scale(.98)}
+.btn-fb{background:var(--fb);color:#fff}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn-block{width:100%}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px;background:var(--bg);color:var(--gray)}
+.chip.green{background:var(--green-soft);color:var(--green)}.chip.red{background:var(--red-soft);color:var(--red)}.chip.blue{background:var(--blue-soft);color:var(--blue)}
+
+/* login */
+.login{position:fixed;inset:0;background:linear-gradient(150deg,#15171d,#3d1411);display:flex;align-items:center;justify-content:center;z-index:100;padding:22px}
+.login.hide{display:none}
+.login .card{background:#fff;border-radius:22px;padding:34px 26px;width:100%;max-width:360px;text-align:center}
+.login .mark{width:60px;height:60px;border:1.5px solid var(--line);border-radius:17px;margin:0 auto 16px}
+.login h1{font-size:22px;font-weight:900;letter-spacing:-.5px}
+.login p{color:var(--gray);font-size:13.5px;margin:8px 0 22px}
+.login .btn-fb{width:100%;padding:15px;font-size:16px;border-radius:13px}
+.login .feats{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.login .feats span{font-size:11.5px;color:var(--gray);font-weight:600}
+.login .note{margin-top:14px;font-size:11.5px;color:var(--gray-2)}
+
+/* shell */
+.shell{display:none}.shell.show{display:block}
+.tbar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:11px 16px}
+.tbar .mk{width:32px;height:32px;border:1.5px solid var(--line);border-radius:9px}
+.tbar .ti{font-weight:900;font-size:15px}.tbar .ti span{color:var(--red)}
+.tbar .pctpill{margin-left:auto;display:flex;align-items:center;gap:7px;background:var(--red-soft);color:var(--red);font-weight:800;font-size:12.5px;padding:5px 11px;border-radius:20px}
+.tbar .pctpill .ring{width:18px;height:18px}
+.tbar .lo{font-size:12px;color:var(--gray-2);font-weight:700;padding:4px}
+.scroller{padding:16px 14px 96px}
+.sec{display:none}.sec.show{display:block;animation:fade .22s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.shead{font-size:13px;color:var(--gray);font-weight:700;margin:2px 4px 14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius)}
+
+/* completion banner */
+.cbanner{display:flex;align-items:center;gap:14px;padding:16px;margin-bottom:18px;background:linear-gradient(120deg,#FFF8F2,#FDECEA);border:1px solid #F6D9D5;border-radius:var(--radius)}
+.cbanner .big{font-size:30px;font-weight:900;color:var(--red);letter-spacing:-1px;line-height:1}
+.cbanner .tx{flex:1;min-width:0}.cbanner .tx b{font-size:14px}.cbanner .tx p{font-size:12px;color:var(--gray);margin-top:2px}
+.cbanner .mn{text-align:center;padding:7px 12px;background:#fff;border-radius:11px;border:1px solid var(--line);flex:0 0 auto}
+.cbanner .mn .n{font-size:20px;font-weight:900;color:var(--green)}.cbanner .mn .l{font-size:10px;color:var(--gray);font-weight:600}
+
+/* form */
+.fb{padding:18px 16px;margin-bottom:16px}
+.fb>h2{font-size:15.5px;font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.fb>h2 .step{width:23px;height:23px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.fb>.bsub{font-size:12.5px;color:var(--gray);margin-bottom:16px;padding-left:31px}
+.field{margin-bottom:20px}
+.field .flabel{font-size:14px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.field .req{font-size:10px;font-weight:700;color:var(--red);background:var(--red-soft);padding:1px 7px;border-radius:5px}
+.field .opt{font-size:10px;font-weight:700;color:var(--gray-2);background:var(--bg);padding:1px 7px;border-radius:5px}
+.field .hint{font-size:12px;color:var(--gray-2);margin-bottom:10px}
+.field .ok{margin-left:auto;color:var(--green);font-size:12px;font-weight:700}
+.chipset{display:flex;flex-wrap:wrap;gap:8px}
+.opt-chip{font-size:13.5px;font-weight:700;padding:10px 14px;border-radius:11px;background:#fff;border:1.5px solid var(--line);color:var(--gray);transition:.13s;text-align:left}
+.opt-chip:active{transform:scale(.97)}
+.opt-chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.opt-chip.on::after{content:'✓';margin-left:6px;font-weight:800}
+.opt-chip .ex{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:1px}
+.prefset{max-height:188px;overflow-y:auto;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);-webkit-overflow-scrolling:touch}
+.inp,.sel{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;font-family:inherit;font-weight:600;color:var(--ink);background:#fff;outline:none}
+.inp:focus,.sel:focus{border-color:var(--red)}
+.inp::placeholder{color:var(--gray-2);font-weight:500}
+.sel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239AA2AE' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;cursor:pointer}
+.rangewrap{display:flex;align-items:center;gap:14px}
+.rangewrap input[type=range]{flex:1;accent-color:var(--red);height:26px}
+.rangewrap .rv{font-size:17px;font-weight:900;color:var(--red);min-width:84px;text-align:right}
+/* doc slots */
+.docslot{margin-bottom:14px}
+.docslot .dl{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.docslot .dh{font-size:11.5px;color:var(--gray-2);margin-bottom:8px}
+.dropzone{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;transition:.15s;background:var(--bg)}
+.dropzone.over{border-color:var(--red);background:var(--red-soft)}
+.dropzone .di{width:38px;height:38px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 7px;color:var(--red)}
+.dropzone b{font-size:12.5px}.dropzone p{font-size:11px;color:var(--gray-2);margin-top:2px}
+.filelist{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.fitem{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.fitem .fi{width:30px;height:30px;border-radius:8px;background:var(--red-soft);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex:0 0 auto}
+.fitem .nm{flex:1;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fitem .rm{color:var(--gray-2);font-size:17px;padding:0 4px}
+.savebar{display:flex;flex-direction:column;gap:10px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.savebar .msg{font-size:12.5px;color:var(--gray);text-align:center}.savebar .msg b{color:var(--red)}
+
+/* applications */
+.appc{padding:16px;margin-bottom:14px}
+.appc .ah{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.appc .ah .code{font-family:Inter,monospace;font-size:11.5px;font-weight:800;color:var(--gray-2);background:var(--bg);padding:3px 8px;border-radius:6px}
+.appc .ah h3{font-size:15px;font-weight:800;width:100%;order:3;margin-top:-6px}
+.appc .ah .st{margin-left:auto}
+.tracker{display:flex;align-items:flex-start;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.tracker .node{display:flex;flex-direction:column;align-items:center;gap:5px;width:62px;text-align:center;flex:0 0 auto}
+.tracker .node .c{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:var(--bg);color:var(--gray-2);border:2px solid var(--line)}
+.tracker .node .lb{font-size:10.5px;color:var(--gray-2);font-weight:600}
+.tracker .node.done .c{background:var(--green);color:#fff;border-color:var(--green)}.tracker .node.done .lb{color:var(--ink)}
+.tracker .node.cur .c{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 0 0 4px var(--red-soft)}.tracker .node.cur .lb{color:var(--red);font-weight:800}
+.tracker .seg{flex:0 0 16px;height:3px;background:var(--line);margin-top:13px;border-radius:3px}
+.tracker .seg.done{background:var(--green)}
+.appc .afoot{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:12.5px;font-weight:600;color:var(--gray)}
+.appc .afoot b{color:var(--red)}
+
+/* inbox */
+.msgrow{display:flex;gap:11px;padding:14px;border-bottom:1px solid var(--line)}
+.msgrow.unread{background:#FFFBFA}
+.msgrow .av{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex:0 0 auto}
+.msgrow .mc{flex:1;min-width:0}
+.msgrow .mc .mt{display:flex;align-items:center;gap:7px}
+.msgrow .mc .mt b{font-size:13.5px}
+.msgrow .mc .mt .time{margin-left:auto;font-size:11px;color:var(--gray-2)}
+.msgrow .mc p{font-size:12.5px;color:var(--gray);margin-top:2px}
+.msgrow .dot{width:8px;height:8px;background:var(--red);border-radius:50%;align-self:center;flex:0 0 auto}
+
+/* bottom nav */
+.mbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--line);display:flex;z-index:40;padding:7px 6px calc(7px + env(safe-area-inset-bottom))}
+.mbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;color:var(--gray-2);font-size:10.5px;font-weight:700;position:relative}
+.mbar button .ic{width:23px;height:23px}
+.mbar button.on{color:var(--red)}
+.mbar button .bd{position:absolute;top:-2px;right:50%;margin-right:-22px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:20px;padding:0 5px;min-width:16px;text-align:center}
+
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;font-weight:600;font-size:13.5px;z-index:90;display:flex;align-items:center;gap:9px;box-shadow:0 10px 30px rgba(0,0,0,.3);transition:.35s;max-width:90%}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast .ti{width:20px;height:20px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- login -->
+<div class="login" id="login">
+  <div class="card">
+    <svg class="mark" viewBox="0 0 120 120"><rect x="4" y="4" width="112" height="112" rx="26" fill="#fff"/><circle cx="47" cy="52" r="5" fill="#D02E26"/><path d="M66 52 A8 6 0 0 1 80 52" fill="none" stroke="#D02E26" stroke-width="6" stroke-linecap="round"/><path d="M42 66 A22 22 0 0 0 78 66" fill="none" stroke="#D02E26" stroke-width="8" stroke-linecap="round"/></svg>
+    <h1>マイページにログイン</h1>
+    <p>Facebookでログインするだけで、すべての求人の閲覧・応募・進捗管理ができます。</p>
+    <button class="btn btn-fb" onclick="doLogin()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/></svg>
+      Facebookでログイン
+    </button>
+    <div class="feats"><span>✓ 完全無料</span><span>✓ 登録30秒</span><span>✓ 個人情報を厳重管理</span></div>
+    <div class="note">ログインで利用規約・プライバシーポリシーに同意したものとみなされます。</div>
+  </div>
+</div>
+
+<!-- shell -->
+<div class="shell" id="shell">
+  <div class="tbar">
+    <svg class="mk" viewBox="0 0 120 120"><rect x="4" y="4" width="112" height="112" rx="26" fill="#fff"/><circle cx="47" cy="52" r="5" fill="#D02E26"/><path d="M66 52 A8 6 0 0 1 80 52" fill="none" stroke="#D02E26" stroke-width="6" stroke-linecap="round"/><path d="M42 66 A22 22 0 0 0 78 66" fill="none" stroke="#D02E26" stroke-width="8" stroke-linecap="round"/></svg>
+    <div class="ti">BIGLIGHT<span> JOB</span></div>
+    <div class="pctpill"><svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#F6D9D5" stroke-width="4"/><circle id="ring" cx="18" cy="18" r="15" fill="none" stroke="#D02E26" stroke-width="4" stroke-linecap="round" stroke-dasharray="94" stroke-dashoffset="94" transform="rotate(-90 18 18)"/></svg><span class="pctval">0%</span></div>
+    <button class="lo" onclick="doLogout()">ログアウト</button>
+  </div>
+
+  <div class="scroller">
+    <!-- PROFILE -->
+    <section class="sec show" id="sec-profile">
+      <div class="cbanner">
+        <div class="big pctval">0%</div>
+        <div class="tx"><b id="bTitle">プロフィールを完成させよう</b><p id="bMsg">入力するほど、応募できる求人が増えます。</p></div>
+        <div class="mn"><div class="n" id="matchNum">8</div><div class="l">マッチ求人</div></div>
+      </div>
+
+      <div class="fb card">
+        <h2><span class="step">1</span>基本情報</h2>
+        <div class="bsub">タップ・選択で入力できます。</div>
+        <div class="field">
+          <div class="flabel">お名前（ローマ字）<span class="req">必須</span><span class="ok" id="ok-name" style="display:none">✓</span></div>
+          <div class="hint">パスポートと同じローマ字（例：NGUYEN VAN A）</div>
+          <input class="inp" id="f-name" placeholder="NGUYEN VAN A" oninput="setVal('name',this.value)">
+        </div>
+        <div class="field">
+          <div class="flabel">生年月日<span class="req">必須</span></div>
+          <div class="hint">カレンダーから選択</div>
+          <input class="inp" type="date" id="f-birth" onchange="setVal('birth',this.value)">
+        </div>
+        <div class="field">
+          <div class="flabel">性別<span class="req">必須</span></div>
+          <div class="hint">タップして選択</div>
+          <div class="chipset" data-one="gender"><button class="opt-chip" onclick="one('gender','男性',this)">男性</button><button class="opt-chip" onclick="one('gender','女性',this)">女性</button></div>
+        </div>
+        <div class="field">
+          <div class="flabel">国籍<span class="req">必須</span></div>
+          <div class="hint">リストから選択</div>
+          <select class="sel" id="f-nat" onchange="setVal('nat',this.value)"><option value="">選択してください</option><option>ベトナム</option><option>インドネシア</option><option>ミャンマー</option><option>ネパール</option><option>フィリピン</option><option>カンボジア</option><option>タイ</option><option>中国</option><option>その他</option></select>
+        </div>
+      </div>
+
+      <div class="fb card">
+        <h2><span class="step">2</span>在留資格（ビザ）</h2>
+        <div class="bsub">マッチングに最も重要です。正確に選択してください。</div>
+        <div class="field">
+          <div class="flabel">現在の在留資格<span class="req">必須</span></div>
+          <div class="hint">いまのビザをタップ</div>
+          <div class="chipset" data-one="visa">
+            <button class="opt-chip" onclick="one('visa','技能実習2号（修了予定）',this)">技能実習2号<span class="ex">修了予定</span></button>
+            <button class="opt-chip" onclick="one('visa','技能実習3号',this)">技能実習3号</button>
+            <button class="opt-chip" onclick="one('visa','特定技能1号',this)">特定技能1号<span class="ex">転職希望</span></button>
+            <button class="opt-chip" onclick="one('visa','特定技能2号',this)">特定技能2号<span class="ex">熟練</span></button>
+            <button class="opt-chip" onclick="one('visa','留学',this)">留学</button>
+            <button class="opt-chip" onclick="one('visa','家族滞在',this)">家族滞在</button>
+            <button class="opt-chip" onclick="one('visa','海外在住',this)">海外在住<span class="ex">これから来日</span></button>
+            <button class="opt-chip" onclick="one('visa','その他',this)">その他</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="flabel">現在の職種（実習・就労中の分野）<span class="opt">任意</span></div>
+          <div class="hint">いま従事している分野をリストから選択（特定技能の分野と同じ区分）</div>
+          <select class="sel" id="f-cur" onchange="setVal('cur',this.value)"><option value="">選択してください</option></select>
+        </div>
+        <div class="field">
+          <div class="flabel">在留期限<span class="opt">任意</span></div>
+          <div class="hint">在留カードの有効期限（カレンダー）</div>
+          <input class="inp" type="date" id="f-expiry" onchange="setVal('expiry',this.value)">
+        </div>
+        <div class="field">
+          <div class="flabel">来日年月日<span class="opt">任意</span></div>
+          <div class="hint">日本に入国した年月日（カレンダーで選択）／ Ngày nhập cảnh Nhật Bản</div>
+          <input class="inp" type="date" id="f-arrival" onchange="setVal('arrival',this.value)">
+        </div>
+        <div class="field">
+          <div class="flabel">日本語レベル<span class="req">必須</span></div>
+          <div class="hint">いちばん近いものをタップ</div>
+          <div class="chipset" data-one="jp"><button class="opt-chip" onclick="one('jp','勉強中',this)">勉強中</button><button class="opt-chip" onclick="one('jp','N5',this)">N5</button><button class="opt-chip" onclick="one('jp','N4',this)">N4</button><button class="opt-chip" onclick="one('jp','N3',this)">N3</button><button class="opt-chip" onclick="one('jp','N2',this)">N2</button><button class="opt-chip" onclick="one('jp','N1',this)">N1</button></div>
+        </div>
+      </div>
+
+      <div class="fb card">
+        <h2><span class="step">3</span>希望する仕事</h2>
+        <div class="bsub">複数選んでOK。選ぶほど合う求人が見つかります。</div>
+        <div class="field">
+          <div class="flabel">希望月給（手取り）<span class="opt">任意</span></div>
+          <div class="hint">※ 手取り＝税金・社会保険を引いた後の金額です（家賃は含みません）。</div>
+          <div class="rangewrap"><input type="range" min="16" max="40" value="22" id="f-sal" oninput="setSal(this.value)"><div class="rv" id="salView">22万円〜</div></div>
+          <button class="btn btn-ghost btn-block" style="margin-top:10px" onclick="window.open('biglight-job-salary.html','_blank')">手取りの計算ツールを開く →</button>
+        </div>
+        <div class="field">
+          <div class="flabel">希望する特定技能分野<span class="req">必須</span></div>
+          <div class="hint">興味のある分野をすべてタップ（複数可）</div>
+          <div class="chipset" data-many="fields" id="fieldset"></div>
+        </div>
+        <div class="field">
+          <div class="flabel">希望勤務地<span class="req">必須</span></div>
+          <div class="hint">働きたい都道府県をタップ（複数可・スクロールできます）</div>
+          <div class="prefset"><div class="chipset" data-many="areas" id="areaset"></div></div>
+        </div>
+        <div class="field">
+          <div class="flabel">寮の希望<span class="opt">任意</span></div>
+          <div class="hint">住まいの希望をタップ</div>
+          <div class="chipset" data-one="dorm"><button class="opt-chip" onclick="one('dorm','寮を希望',this)">寮を希望</button><button class="opt-chip" onclick="one('dorm','自分で探す',this)">自分で探す</button><button class="opt-chip" onclick="one('dorm','どちらでも',this)">どちらでも</button></div>
+        </div>
+        <div class="field">
+          <div class="flabel">いつから働けますか<span class="opt">任意</span></div>
+          <div class="hint">タップで選択</div>
+          <div class="chipset" data-one="start"><button class="opt-chip" onclick="one('start','すぐに',this)">すぐに</button><button class="opt-chip" onclick="one('start','1〜3ヶ月以内',this)">1〜3ヶ月</button><button class="opt-chip" onclick="one('start','3〜6ヶ月以内',this)">3〜6ヶ月</button><button class="opt-chip" onclick="one('start','相談したい',this)">相談したい</button></div>
+        </div>
+        <div class="field">
+          <div class="flabel">夜勤できますか<span class="opt">任意</span></div>
+          <div class="hint">夜勤の可否を選択</div>
+          <div class="chipset" data-one="nightshift"><button class="opt-chip" onclick="one('nightshift','できる',this)">できる</button><button class="opt-chip" onclick="one('nightshift','できない',this)">できない</button><button class="opt-chip" onclick="one('nightshift','仕事による',this)">仕事による</button></div>
+        </div>
+        <div class="field">
+          <div class="flabel">交替勤務できますか<span class="opt">任意</span></div>
+          <div class="hint">シフト制（交替勤務）の可否を選択</div>
+          <div class="chipset" data-one="shiftwork"><button class="opt-chip" onclick="one('shiftwork','できる',this)">できる</button><button class="opt-chip" onclick="one('shiftwork','できない',this)">できない</button><button class="opt-chip" onclick="one('shiftwork','相談したい',this)">相談したい</button></div>
+        </div>
+        <div class="field">
+          <div class="flabel">転職理由・希望する働き方<span class="opt">任意</span></div>
+          <div class="hint">あてはまるものをすべてタップ（複数選択可）</div>
+          <div class="chipset" id="reasonset"></div>
+          <div id="reasonOtherWrap" style="display:none;margin-top:10px"><input class="inp" id="f-reasonOther" placeholder="その他の理由を入力" oninput="setVal('reasonOther',this.value)"></div>
+        </div>
+        <div class="field">
+          <div class="flabel">最も重視すること（3つまで）<span class="opt">任意</span></div>
+          <div class="hint">いちばん大切なことを3つまでタップ</div>
+          <div class="chipset" id="priorityset"></div>
+        </div>
+      </div>
+
+      <div class="fb card">
+        <h2><span class="step">4</span>書類アップロード</h2>
+        <div class="bsub">各書類はそれぞれの枠に追加できます（ドラッグ＆ドロップ可）。</div>
+        <div class="field">
+          <div class="flabel">書類アップロード<span class="opt">任意</span></div>
+          <div class="hint">それぞれの枠にファイルをドラッグ、またはタップして選択（PDF / JPG / PNG）</div>
+          <div id="docslots"></div>
+        </div>
+      </div>
+
+      <div class="savebar">
+        <div class="msg">入力内容は自動保存されます。完成度 <b class="pctval">0%</b></div>
+        <button class="btn btn-red btn-block" onclick="saveProfile()">保存して応募に進む</button>
+      </div>
+    </section>
+
+    <!-- APPS -->
+    <section class="sec" id="sec-apps"><div class="shead">応募した求人の選考状況</div><div id="appList"></div></section>
+    <!-- INBOX -->
+    <section class="sec" id="sec-inbox"><div class="shead">BIGLIGHTからのお知らせ・連絡</div><div class="card" id="inboxList"></div></section>
+  </div>
+
+  <!-- bottom nav -->
+  <nav class="mbar">
+    <button class="on" data-sec="profile"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>入力</button>
+    <button data-sec="apps"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 16l3-4 3 2 4-6"/></svg>応募状況<span class="bd" id="appsBadge">3</span></button>
+    <button data-sec="inbox"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/></svg>メッセージ<span class="bd" id="inboxBadge">2</span></button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"><span class="ti">✓</span><span id="toastMsg"></span></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const FIELDS=['工業製品製造業','建設業','飲食料品製造業','外食業','介護業','宿泊','ビルクリーニング','農業','漁業','自動車整備','造船・舶用工業','航空','自動車運送業','鉄道','林業','木材産業'];
+const PREFS=['どこでも可','東京都','神奈川県','埼玉県','千葉県','茨城県','栃木県','群馬県','愛知県','岐阜県','静岡県','三重県','長野県','山梨県','新潟県','富山県','石川県','福井県','大阪府','兵庫県','京都府','滋賀県','奈良県','和歌山県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県','広島県','岡山県','山口県','鳥取県','島根県','徳島県','香川県','愛媛県','高知県','宮城県','福島県','山形県','秋田県','岩手県','青森県','北海道'];
+const DOCSLOTS=[
+ {id:'rirekisho',label:'1. 履歴書',hint:'日本語の履歴書（1点）',multi:false},
+ {id:'zairyu',label:'2. 在留カード（両面）',hint:'表・裏の両面。複数可',multi:true},
+ {id:'hyouka',label:'3. 専門級 または 評価調書',hint:'技能実習の評価調書など（1点）',multi:false},
+ {id:'jlpt',label:'4. 日本語能力試験（JLPT）',hint:'合格証明書。複数可',multi:true},
+ {id:'tokutei',label:'5. 特定技能の資格',hint:'技能試験の合格証など。複数可',multi:true},
+];
+const COLORS=['#D02E26','#2563EB','#1F9D55','#E8810C','#7C3AED','#0891B2'];
+const STAGES=['登録','書類選考','面接','内定','入社'];
+
+const state={name:'',birth:'',gender:'',nat:'',visa:'',cur:'',expiry:'',arrival:'',jp:'',fields:[],areas:[],sal:0,dorm:'',start:'',reasons:[],reasonOther:'',priorities:[],nightshift:'',shiftwork:'',docs:{rirekisho:[],zairyu:[],hyouka:[],jlpt:[],tokutei:[]}};
+const WEIGHT={name:8,birth:7,gender:4,nat:5,visa:10,jp:9,fields:12,areas:8,cur:5,expiry:5,arrival:5,sal:3,dorm:3,start:5,reasons:4,priorities:4,nightshift:3,shiftwork:3,docs:9};
+const REASONS=['恋人の近くで働きたい','家族・親戚の近くで働きたい','より高い給与がほしい','残業を多くしたい','長く安定して働きたい','好きな職種に変えたい','新しいスキルを学びたい','特定技能2号を目指したい','昇進のチャンスがほしい','より良い職場環境で働きたい','外国人サポートが手厚い会社がいい','大きな都市に引っ越したい','静かな地域に住みたい','にぎやかな場所に住みたい','駅に近く通勤が便利な所がいい','ベトナム人コミュニティの近くがいい','友人の近くに住みたい','より良い寮がいい','生活費を抑えたい','もっと軽作業がいい','体を動かす活発な仕事がいい','手に職をつける技術的な仕事がいい','考えて問題解決する仕事がいい','多くの人と関わる仕事がいい','一人で集中できる仕事がいい','日勤（日中）で働きたい','夜勤で働きたい','シフト制で働きたい','休日を増やしたい','仕事のプレッシャーを減らしたい','生活環境を変えたい','日本での将来に備えたい','将来家族を呼び寄せたい','日本に長く定住したい','その他（自由入力）'];
+const PRIORITIES=['高い給与','残業が多い','安定した仕事','家族の近く','良い職場環境','良い寮','昇進','新しいスキル','プレッシャーが少ない','良い住環境','大都市','ビザ更新しやすい','特定技能2号への道'];
+function filled(k){const v=state[k];if(k==='docs')return Object.values(v).some(a=>a.length);return Array.isArray(v)?v.length>0:(k==='sal'?v>0:String(v).trim()!=='');}
+
+let APPS=[
+ {code:'CON-002',t:'型枠大工',co:'中部建設 株式会社',pref:'愛知県',city:'名古屋市',stage:2,applied:'2026/06/14',msg:'面接日程を調整中です。'},
+ {code:'MFG-001',t:'半自動溶接スタッフ',co:'トヨタ系 金属部品メーカー',pref:'愛知県',city:'豊田市',stage:1,applied:'2026/06/18',msg:'企業が書類を確認しています。'},
+ {code:'CON-008',t:'とび職（足場）',co:'スカイ工業',pref:'岐阜県',city:'岐阜市',stage:3,applied:'2026/06/08',msg:'内定が出ました！入社準備に進みましょう。'},
+];
+let INBOX=[
+ {from:'BIGLIGHT サポート',tag:'お知らせ',tagc:'red',time:'10分前',text:'プロフィールを完成させると、マッチング求人が3倍になります。',unread:true,color:'#D02E26'},
+ {from:'グェン・ホア（製造担当）',tag:'面接',tagc:'blue',time:'1時間前',text:'CON-002 型枠大工の面接日程について、ご希望の日をお知らせください。',unread:true,color:'#2563EB'},
+ {from:'BIGLIGHT サポート',tag:'応募完了',tagc:'green',time:'昨日',text:'MFG-001 半自動溶接スタッフへの応募を受け付けました。',unread:false,color:'#1F9D55'},
+];
+
+function doLogin(){$('#login').classList.add('hide');$('#shell').classList.add('show');try{localStorage.setItem('bl_login','1')}catch(e){};handleApply();}
+function doLogout(){try{localStorage.removeItem('bl_login')}catch(e){};$('#login').classList.remove('hide');$('#shell').classList.remove('show');}
+function boot(){try{if(localStorage.getItem('bl_login')==='1'){$('#login').classList.add('hide');$('#shell').classList.add('show');handleApply();}}catch(e){}}
+
+$$('.mbar button[data-sec]').forEach(b=>b.onclick=()=>go(b.dataset.sec));
+function go(sec){$$('.mbar button').forEach(x=>x.classList.toggle('on',x.dataset.sec===sec));$$('.sec').forEach(x=>x.classList.remove('show'));$('#sec-'+sec).classList.add('show');if(sec==='inbox')markRead();$('.scroller').scrollTo?window.scrollTo({top:0,behavior:'smooth'}):0;}
+
+/* build chips */
+$('#fieldset').innerHTML=FIELDS.map(f=>`<button class="opt-chip" onclick="many('fields','${f}',this)">${f}</button>`).join('');
+$('#areaset').innerHTML=PREFS.map(p=>`<button class="opt-chip" onclick="many('areas','${p}',this)">${p}</button>`).join('');
+$('#reasonset').innerHTML=REASONS.map(r=>`<button class="opt-chip" onclick="many('reasons','${r}',this)">${r}</button>`).join('');
+$('#priorityset').innerHTML=PRIORITIES.map(p=>`<button class="opt-chip" onclick="manyMax('priorities','${p}',this,3)">${p}</button>`).join('');
+$('#f-cur').innerHTML='<option value="">選択してください</option>'+FIELDS.map(f=>`<option>${f}</option>`).join('');
+/* doc slots */
+$('#docslots').innerHTML=DOCSLOTS.map(d=>`<div class="docslot"><div class="dl">${d.label}${d.multi?' <span class="opt">複数可</span>':''}</div><div class="dh">${d.hint}</div><div class="dropzone" data-slot="${d.id}" onclick="document.getElementById('fi-${d.id}').click()"><div class="di"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div><b>タップ または ドラッグで追加</b><p>PDF / JPG / PNG</p></div><input type="file" id="fi-${d.id}" ${d.multi?'multiple':''} style="display:none" onchange="addFiles('${d.id}',this.files)"><div class="filelist" id="fl-${d.id}"></div></div>`).join('');
+setupDrops();
+
+function setVal(k,v){state[k]=v;recompute();}
+function setSal(v){state.sal=+v;$('#salView').textContent=v+'万円〜';recompute();}
+function one(k,v,el){state[k]=v;el.parentNode.querySelectorAll('.opt-chip').forEach(x=>x.classList.remove('on'));el.classList.add('on');recompute();}
+function many(k,v,el){const i=state[k].indexOf(v);if(i<0){state[k].push(v);el.classList.add('on');}else{state[k].splice(i,1);el.classList.remove('on');}if(k==='reasons'){$('#reasonOtherWrap').style.display=state.reasons.includes('その他（自由入力）')?'block':'none';}recompute();}
+function manyMax(key,val,el,max){const i=state[key].indexOf(val);if(i<0){if(state[key].length>=max){toast(max+'つまで選択できます');return;}state[key].push(val);el.classList.add('on');}else{state[key].splice(i,1);el.classList.remove('on');}recompute();}
+
+function setupDrops(){$$('.dropzone').forEach(dz=>{const slot=dz.dataset.slot;
+  ['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('over');}));
+  ['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('over');}));
+  dz.addEventListener('drop',ev=>{ev.stopPropagation();addFiles(slot,ev.dataTransfer.files);});
+});}
+function addFiles(slot,files){const d=DOCSLOTS.find(x=>x.id===slot);if(!d.multi)state.docs[slot]=[];[...files].forEach(f=>state.docs[slot].push(f.name));renderSlot(slot);recompute();}
+function renderSlot(slot){$('#fl-'+slot).innerHTML=state.docs[slot].map((n,i)=>`<div class="fitem"><div class="fi">${(n.split('.').pop()||'F').toUpperCase().slice(0,3)}</div><div class="nm">${n}</div><span class="rm" onclick="rmFile('${slot}',${i})">×</span></div>`).join('');}
+function rmFile(slot,i){state.docs[slot].splice(i,1);renderSlot(slot);recompute();}
+
+function recompute(){
+  let got=0,total=0;for(const k in WEIGHT){total+=WEIGHT[k];if(filled(k))got+=WEIGHT[k];}
+  const pct=Math.round(got/total*100);
+  const off=94-94*pct/100;$('#ring').style.strokeDashoffset=off;
+  $$('.pctval').forEach(e=>e.textContent=pct+'%');
+  $('#matchNum').textContent=Math.round(6+pct/100*30);
+  $('#ok-name').style.display=filled('name')?'inline':'none';
+  let bt='プロフィールを完成させよう',bm='入力するほど、応募できる求人が増えます。';
+  if(pct>=100){bt='プロフィール完成！';bm='すべての求人に応募できます。';}
+  else if(pct>=70){bt='あと少しで完成！';bm='残りを入力するとさらにマッチします。';}
+  else if(pct>=40){bt='いい調子です';bm='ビザ・希望分野を入力しましょう。';}
+  $('#bTitle').textContent=bt;$('#bMsg').textContent=bm;
+}
+
+function renderApps(){
+  $('#appsBadge').textContent=APPS.length;
+  $('#appList').innerHTML=APPS.map(a=>{
+    const nodes=STAGES.map((s,i)=>{const cls=i<a.stage?'done':i===a.stage?'cur':'';const seg=i<STAGES.length-1?`<div class="seg ${i<a.stage?'done':''}"></div>`:'';return `<div class="node ${cls}"><div class="c">${i<a.stage?'✓':i+1}</div><div class="lb">${s}</div></div>${seg}`;}).join('');
+    return `<div class="appc card"><div class="ah"><span class="code">${a.code}</span><span class="st chip ${a.stage>=3?'green':'red'}">${STAGES[a.stage]}</span><h3>${a.t}</h3></div><div class="tracker">${nodes}</div><div class="afoot"><b>次のステップ：</b>${a.msg}</div></div>`;
+  }).join('');
+}
+function renderInbox(){
+  const un=INBOX.filter(m=>m.unread).length;$('#inboxBadge').textContent=un;$('#inboxBadge').style.display=un?'inline':'none';
+  $('#inboxList').innerHTML=INBOX.map(m=>`<div class="msgrow ${m.unread?'unread':''}"><div class="av" style="background:${m.color}">${m.from[0]}</div><div class="mc"><div class="mt"><b>${m.from}</b><span class="time">${m.time}</span></div><p>${m.text}</p></div>${m.unread?'<span class="dot"></span>':''}</div>`).join('');
+}
+function markRead(){INBOX.forEach(m=>m.unread=false);renderInbox();}
+
+function handleApply(){
+  const p=new URLSearchParams(location.search),code=p.get('apply');
+  if(code&&!APPS.find(a=>a.code===code)){const t=p.get('t')||'応募した求人';
+    APPS.unshift({code,t,co:'BIGLIGHT 紹介求人',pref:'',city:'',stage:0,applied:'2026/06/23',msg:'プロフィールを完成させると選考がスムーズに進みます。'});
+    INBOX.unshift({from:'BIGLIGHT サポート',tag:'応募完了',tagc:'green',time:'たった今',text:code+' '+t+' への応募を受け付けました。基本情報のご入力をお願いします。',unread:true,color:'#1F9D55'});
+    renderApps();renderInbox();toast(t+' に応募しました');setTimeout(()=>toast('基本情報を入力しましょう'),2600);}
+}
+function saveProfile(){toast('プロフィールを保存しました');go('apps');}
+let tT;function toast(m){$('#toastMsg').textContent=m;$('#toast').classList.add('show');clearTimeout(tT);tT=setTimeout(()=>$('#toast').classList.remove('show'),2300);}
+
+renderApps();renderInbox();recompute();boot();
+</script>
+<a href="https://www.facebook.com/biglight" target="_blank" rel="noopener" class="fbfab" style="bottom:90px" aria-label="Facebookで相談"><svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/></svg></a>
+<style>.fbfab{position:fixed;right:18px;bottom:20px;z-index:90;display:inline-flex;align-items:center;justify-content:center;background:#1877F2;color:#fff;padding:14px;border-radius:50%;text-decoration:none;box-shadow:0 12px 30px rgba(24,119,242,.45);transition:.16s}.fbfab:active{transform:scale(.95)}.fbfab svg{width:24px;height:24px}</style>
+</body>
+</html>
