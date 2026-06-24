@@ -11,6 +11,10 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# NEXT_PUBLIC_* được Next.js nhúng vào bundle client LÚC BUILD, nên phải có ở đây
+# (truyền vào qua build arg — Client ID là thông tin công khai, không phải secret).
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 RUN npx prisma generate && npm run build
 
 # ---- runner ----
