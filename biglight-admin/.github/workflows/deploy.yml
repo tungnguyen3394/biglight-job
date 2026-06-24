@@ -1,0 +1,46 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # 1) Build check — đảm bảo code build được trước khi deploy
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+        env:
+          JWT_SECRET: ci-dummy-secret
+          DATABASE_URL: postgresql://u:p@localhost:5432/db?schema=public
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ci-dummy
+
+  # 2) Deploy — SSH vào VPS, kéo code mới, build lại container
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            # Thư mục đã clone repo trên VPS (chứa biglight-admin). Đổi nếu bạn clone chỗ khác.
+            cd ~/biglight-job/biglight-admin
+            git pull origin main
+            docker compose up -d --build
+            # Tạo/cập nhật bảng trong DB thẳng từ schema (không cần migration files)
+            docker compose run --rm --no-deps --entrypoint "npx prisma db push" app || true
+            docker image prune -f

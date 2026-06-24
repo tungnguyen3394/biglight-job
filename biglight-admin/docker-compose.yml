@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    container_name: postgres_biglight_job
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: biglight_job_user
+      POSTGRES_PASSWORD: biglight_job_2026
+      POSTGRES_DB: biglight_job_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - biglight_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U biglight_job_user -d biglight_job_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # App (production). For local dev you can run only "db" and use `npm run dev`.
+  app:
+    build: .
+    container_name: biglight_job_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # inside the compose network the DB host is the service name "db"
+      DATABASE_URL: postgresql://biglight_job_user:biglight_job_2026@db:5432/biglight_job_db?schema=public
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  biglight_pgdata:

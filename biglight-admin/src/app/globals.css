@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #13335c;
+  --bg: #f5f7fa;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: #16181d;
+  font-family: "Noto Sans JP", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* small reusable component classes */
+@layer components {
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition;
+  }
+  .btn-navy {
+    @apply bg-navy text-white hover:bg-navy-900;
+  }
+  .btn-ghost {
+    @apply border border-slate-200 bg-white text-slate-700 hover:border-slate-400;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-navy;
+  }
+  .label {
+    @apply mb-1 block text-sm font-semibold text-slate-700;
+  }
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+}

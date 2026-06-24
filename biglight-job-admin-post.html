@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>求人票の作成・編集（管理）｜BIGLIGHT JOB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#D02E26;--red-d:#A8231C;--red-soft:#FDECEA;
+  --ink:#16181D;--gray:#5B6472;--gray-2:#9AA2AE;--line:#ECECEF;--bg:#F7F8FA;
+  --green:#1F9D55;--green-soft:#E6F6EC;--blue:#2563EB;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.08);
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP','Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink)}
+a{color:inherit;text-decoration:none}
+
+/* Header */
+header{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;gap:14px;height:62px;max-width:1480px;margin:0 auto;padding:0 22px}
+.logo{display:flex;align-items:center;gap:10px;margin-right:auto}
+.logo .mark{width:38px;height:38px;border:1.5px solid var(--line);border-radius:11px}
+.logo .name{font-weight:900;font-size:18px;letter-spacing:-.5px}
+.logo .name span{color:var(--red)}
+.logo .adm{font-size:11px;font-weight:800;color:#fff;background:var(--ink);padding:2px 8px;border-radius:6px;margin-left:4px;letter-spacing:.5px}
+.htitle{font-size:16px;font-weight:800}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;border-radius:11px;padding:11px 18px;font-size:14px;transition:.16s;white-space:nowrap}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 6px 16px rgba(208,46,38,.28)}
+.btn-red:hover{background:var(--red-d)}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--gray-2)}
+.btn-sm{padding:8px 13px;font-size:13px}
+
+/* Prototype note */
+.protonote{max-width:1480px;margin:0 auto;padding:10px 22px 0}
+.protonote .inner{background:#FFF8E1;border:1px solid #F3E2A8;border-radius:10px;padding:9px 14px;font-size:12.5px;color:#7A5C00;display:flex;align-items:center;gap:8px}
+
+/* Layout */
+.layout{max-width:1480px;margin:0 auto;padding:18px 22px 60px;display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
+.formcol{min-width:0}
+.previewcol{position:sticky;top:80px;min-width:0}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.previewcol{position:static}}
+
+/* Form sections */
+.section{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.section>h2{font-size:15.5px;font-weight:900;display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.section>h2 .num{width:24px;height:24px;flex:0 0 auto;border-radius:8px;background:var(--red-soft);color:var(--red);font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.section>.sdesc{font-size:12px;color:var(--gray-2);margin:0 0 14px 33px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12.5px;font-weight:800;color:var(--ink)}
+.field label .req{color:var(--red);margin-left:3px}
+.field .hint{font-size:11px;color:var(--gray-2);font-weight:500;line-height:1.4}
+.inp,.sel,.ta{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;width:100%;outline:none;transition:.14s;font-weight:600}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.sel{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239AA2AE' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:32px}
+.ta{resize:vertical;min-height:84px;line-height:1.65;font-weight:500}
+.with-unit{display:flex;align-items:center;gap:8px}
+.with-unit .inp{flex:1}
+.with-unit .unit{font-size:13px;font-weight:800;color:var(--gray);flex:0 0 auto}
+
+/* chips (radio-style & multi) */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip-btn{font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;background:var(--bg);color:var(--gray);border:1.5px solid transparent;transition:.14s}
+.chip-btn:hover{background:#EEF0F3}
+.chip-btn.on{background:var(--red);color:#fff}
+.chip-btn.multi.on{background:var(--green-soft);color:var(--green);border-color:#BCE7CC}
+.chip-btn.tag.on{background:#E8F0FE;color:var(--blue);border-color:#C7DBFD}
+.chip-add{display:flex;gap:7px;margin-top:9px}
+.chip-add .inp{flex:1;padding:8px 11px}
+.chip-add button{flex:0 0 auto;padding:8px 14px;border-radius:10px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700}
+
+/* toggle */
+.toggle{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.toggle button{padding:9px 16px;font-size:13px;font-weight:700;color:var(--gray);background:#fff}
+.toggle button.on{background:var(--red);color:#fff}
+
+/* repeatable lines */
+.lines{display:flex;flex-direction:column;gap:8px}
+.line-row{display:flex;gap:8px;align-items:center}
+.line-row .inp{flex:1}
+.line-row .del{flex:0 0 auto;width:36px;height:36px;border-radius:9px;background:var(--red-soft);color:var(--red);font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.line-row .del:hover{background:#FAD7D4}
+.addline{align-self:flex-start;font-size:12.5px;font-weight:800;color:var(--red);padding:7px 12px;border:1.5px dashed var(--red-soft);border-radius:9px;background:#fff;margin-top:2px}
+.addline:hover{background:var(--red-soft)}
+
+/* ===== PREVIEW ===== */
+.pv-frame{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.pv-topbar{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
+.pv-topbar .dot{width:10px;height:10px;border-radius:50%;background:#E4E7EB}
+.pv-topbar .lbl{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--gray-2);letter-spacing:1px}
+.pv-scroll{max-height:calc(100vh - 150px);overflow-y:auto}
+.pv-hero{position:relative;height:170px;background:linear-gradient(120deg,#15171d,#46140f);overflow:hidden;display:flex;align-items:flex-end}
+.pv-hero .glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,90,70,.45),transparent 70%);right:-90px;top:-110px}
+.pv-hero .info{position:relative;z-index:2;padding:16px 20px;display:flex;gap:8px;flex-wrap:wrap}
+.pv-jcode{font-family:'Inter',monospace;font-size:12px;font-weight:800;letter-spacing:.5px;background:rgba(255,255,255,.94);color:var(--ink);padding:4px 10px;border-radius:7px}
+.pv-cont{padding:20px 22px 26px}
+.pv-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pv-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px;background:var(--bg);color:var(--gray)}
+.pv-pill.green{background:var(--green-soft);color:var(--green)}
+.pv-pill.blue{background:#E8F0FE;color:var(--blue)}
+.pv-pill.red{background:var(--red-soft);color:var(--red)}
+.pv-pill.amber{background:#FFF3E2;color:#E8810C}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:-.3px;line-height:1.35;margin:2px 0 4px}
+.pv-co{font-size:13.5px;color:var(--gray);font-weight:600;margin-bottom:18px}
+.pv-co .muted{color:var(--gray-2)}
+.pv-kv{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px;padding:16px 18px;background:var(--bg);border-radius:13px;margin-bottom:22px}
+.pv-kv .k{font-size:11px;font-weight:700;color:var(--gray-2);letter-spacing:.3px;margin-bottom:2px}
+.pv-kv .v{font-size:14px;font-weight:700;color:var(--ink)}
+.pv-kv .v.sal{color:var(--red);font-size:19px;font-weight:900;line-height:1.2}
+.pv-kv .v.sub{font-size:11.5px;font-weight:600;color:var(--gray);margin-top:3px}
+.pv-kv .full{grid-column:1/-1}
+.pv-net{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:12px 16px;border:1.5px dashed var(--green);border-radius:12px;background:var(--green-soft);margin-bottom:22px}
+.pv-net .k{font-size:12px;font-weight:800;color:var(--green)}
+.pv-net .v{font-size:20px;font-weight:900;color:var(--green)}
+.pv-net .hint{font-size:11px;color:#3a7d5a;width:100%}
+.pv-block{margin-bottom:22px}
+.pv-block h4{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.pv-block h4::before{content:'';width:4px;height:15px;background:var(--red);border-radius:3px}
+.pv-block p{font-size:13.5px;color:#374151;line-height:1.8;white-space:pre-wrap}
+.pv-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.pv-list li{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#374151}
+.pv-list li svg{width:17px;height:17px;flex:0 0 auto;margin-top:3px;color:var(--green)}
+.pv-bullets{list-style:none;display:flex;flex-direction:column;gap:7px}
+.pv-bullets li{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#374151}
+.pv-bullets li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);flex:0 0 auto;margin-top:8px}
+.pv-benefits{display:flex;flex-wrap:wrap;gap:7px}
+.pv-empty{color:var(--gray-2);font-size:12.5px;font-style:normal}
+/* living info grid */
+.pv-living{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:13px}
+.pv-living .li{display:flex;flex-direction:column}
+.pv-living .li .k{font-size:11px;font-weight:700;color:var(--gray-2)}
+.pv-living .li .v{font-weight:700;color:var(--ink)}
+.pv-living .full{grid-column:1/-1}
+.pv-near{list-style:none;display:flex;flex-direction:column;gap:6px}
+.pv-near li{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151}
+.pv-near li svg{width:15px;height:15px;color:var(--red);flex:0 0 auto}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;z-index:90;background:rgba(16,24,40,.5);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-ov.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:680px;max-width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.modal .mh{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal .mh b{font-size:16px;font-weight:900}
+.modal .mh .x{margin-left:auto;font-size:24px;line-height:1;color:var(--gray);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.modal .mh .x:hover{background:var(--bg)}
+.modal .mb{padding:16px 20px;overflow:auto}
+.modal .mb .note{font-size:12.5px;color:var(--gray);margin-bottom:10px}
+.modal textarea{width:100%;min-height:320px;border:1.5px solid var(--line);border-radius:10px;padding:12px;font-family:'Inter','Noto Sans JP',monospace;font-size:12.5px;line-height:1.6;background:#0F1115;color:#D7E0EA;resize:vertical}
+.modal .mf{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line)}
+.modal .mf .btn{flex:1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="nav">
+    <div class="logo">
+      <svg class="mark" viewBox="0 0 120 120"><rect x="4" y="4" width="112" height="112" rx="26" fill="#fff"/><circle cx="47" cy="52" r="5" fill="#D02E26"/><path d="M66 52 A8 6 0 0 1 80 52" fill="none" stroke="#D02E26" stroke-width="6" stroke-linecap="round"/><path d="M42 66 A22 22 0 0 0 78 66" fill="none" stroke="#D02E26" stroke-width="8" stroke-linecap="round"/></svg>
+      <div class="name">BIGLIGHT<span> JOB</span></div>
+      <span class="adm">ADMIN</span>
+    </div>
+    <div class="htitle">求人票の作成・編集（管理）</div>
+    <button class="btn btn-ghost btn-sm" onclick="resetForm()">クリア</button>
+    <button class="btn btn-red" onclick="openJson()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+      プレビューを保存（JSON出力）
+    </button>
+  </div>
+</header>
+
+<div class="protonote"><div class="inner">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+  これはプロトタイプです（サーバー保存なし）。入力内容は右側のプレビューにリアルタイム反映され、「JSON出力」で worker データモデル形式のJSONを書き出せます。
+</div></div>
+
+<div class="layout">
+  <!-- ============ FORM ============ -->
+  <div class="formcol">
+
+    <!-- 1. 基本情報 -->
+    <div class="section">
+      <h2><span class="num">1</span>基本情報</h2>
+      <p class="sdesc">求人の業種・職種・会社・勤務地</p>
+      <div class="grid">
+        <div class="field full">
+          <label>業種（特定技能分野）<span class="req">*</span></label>
+          <select class="sel" id="f_field"></select>
+          <span class="hint">特定技能の正式名称から選択。求人コードの接頭辞に使われます。</span>
+        </div>
+        <div class="field">
+          <label>職種<span class="req">*</span></label>
+          <input class="inp" id="f_type" placeholder="例）半自動溶接 / 型枠大工 / 惣菜製造">
+          <span class="hint">具体的な仕事の呼び名</span>
+        </div>
+        <div class="field">
+          <label>会社名<span class="req">*</span></label>
+          <input class="inp" id="f_co" placeholder="例）トヨタ系 金属部品メーカー">
+          <span class="hint">掲載企業名（伏せ字も可）</span>
+        </div>
+        <div class="field full">
+          <label>求人タイトル</label>
+          <input class="inp" id="f_title" placeholder="例）半自動溶接スタッフ（未経験OK・寮あり）">
+          <span class="hint">空欄なら「職種」を見出しに使用します。</span>
+        </div>
+        <div class="field">
+          <label>勤務地（都道府県）<span class="req">*</span></label>
+          <select class="sel" id="f_pref"></select>
+          <span class="hint">求人の所在エリア</span>
+        </div>
+        <div class="field">
+          <label>勤務地（市区町村）</label>
+          <input class="inp" id="f_city" placeholder="例）豊田市">
+          <span class="hint">市区町村名</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 給与 -->
+    <div class="section">
+      <h2><span class="num">2</span>給与</h2>
+      <p class="sdesc">基本給・月収例・手取り（労働者が最も気にする部分）</p>
+      <div class="field full" style="margin-bottom:13px">
+        <label>基本給 — 区分</label>
+        <div class="chips" id="f_payTypeChips"></div>
+        <span class="hint">時給・日給・月給のいずれか</span>
+      </div>
+      <div class="grid cols3">
+        <div class="field">
+          <label>金額</label>
+          <div class="with-unit"><input class="inp" id="f_payAmount" type="number" inputmode="numeric" placeholder="例）1300"><span class="unit" id="payUnit">円</span></div>
+          <span class="hint">区分に対応した金額</span>
+        </div>
+        <div class="field">
+          <label>月収例</label>
+          <div class="with-unit"><input class="inp" id="f_monthly" type="number" inputmode="numeric" placeholder="例）250000"><span class="unit">円</span></div>
+          <span class="hint">残業・手当込みの目安</span>
+        </div>
+        <div class="field">
+          <label>手取り月収</label>
+          <div class="with-unit"><input class="inp" id="f_takehome" type="number" inputmode="numeric" placeholder="例）205000"><span class="unit">円</span></div>
+          <span class="hint">税・社会保険を引いた後／家賃は含まない</span>
+        </div>
+        <div class="field full">
+          <label>基本給の補足</label>
+          <input class="inp" id="f_payNote" placeholder="例）試用期間3ヶ月は時給1,200円 / 深夜手当別途">
+          <span class="hint">条件や手当の注意書き</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 募集要項 -->
+    <div class="section">
+      <h2><span class="num">3</span>募集要項</h2>
+      <p class="sdesc">雇用条件・勤務形態・待遇</p>
+      <div class="grid">
+        <div class="field">
+          <label>雇用期間</label>
+          <input class="inp" id="f_term" placeholder="例）特定技能1号（通算上限5年）">
+          <span class="hint">在留資格・契約期間</span>
+        </div>
+        <div class="field">
+          <label>勤務時間</label>
+          <input class="inp" id="f_hours" placeholder="例）8:00〜17:00（休憩60分）">
+          <span class="hint">シフト・実働時間</span>
+        </div>
+        <div class="field">
+          <label>残業時間</label>
+          <input class="inp" id="f_overtime" placeholder="例）月平均20時間程度">
+          <span class="hint">月平均の目安</span>
+        </div>
+        <div class="field">
+          <label>休日・休暇</label>
+          <input class="inp" id="f_holiday" placeholder="例）土日休み・年間休日120日">
+          <span class="hint">週休・年間休日・長期休暇</span>
+        </div>
+        <div class="field">
+          <label>通勤手段</label>
+          <input class="inp" id="f_commute" placeholder="例）寮から徒歩10分 / 送迎あり">
+          <span class="hint">通勤方法</span>
+        </div>
+        <div class="field">
+          <label>賞与・昇給</label>
+          <input class="inp" id="f_bonus" placeholder="例）賞与年2回・昇給あり">
+          <span class="hint">ボーナス・昇給の有無</span>
+        </div>
+        <div class="field full">
+          <label>待遇・福利厚生</label>
+          <div class="chips" id="f_benefitChips"></div>
+          <div class="chip-add">
+            <input class="inp" id="benefitCustom" placeholder="その他の待遇を追加（例：退職金制度）" onkeydown="if(event.key==='Enter'){event.preventDefault();addBenefit()}">
+            <button onclick="addBenefit()">＋ 追加</button>
+          </div>
+          <span class="hint">複数選択可。カスタム追加もできます。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 仕事内容 -->
+    <div class="section">
+      <h2><span class="num">4</span>仕事内容</h2>
+      <p class="sdesc">具体的な業務・魅力・求める人物像</p>
+      <div class="field full" style="margin-bottom:13px">
+        <label>仕事内容詳細</label>
+        <textarea class="ta" id="f_desc" placeholder="工場内で半自動溶接の作業を担当します。図面を見ながら部品を溶接し、検査・梱包までを行います。丁寧な指導があるため未経験の方も安心です。"></textarea>
+        <span class="hint">1日の流れや作業内容を具体的に</span>
+      </div>
+      <div class="field full" style="margin-bottom:13px">
+        <label>アピールポイント</label>
+        <div class="lines" id="f_appeal"></div>
+        <button class="addline" onclick="addLine('f_appeal')">＋ 行を追加</button>
+        <span class="hint">1行＝1ポイント（例：未経験から月収25万円可）</span>
+      </div>
+      <div class="field full">
+        <label>こんな人が活躍しています</label>
+        <div class="lines" id="f_active"></div>
+        <button class="addline" onclick="addLine('f_active')">＋ 行を追加</button>
+        <span class="hint">1行＝1項目（例：体を動かす仕事が好きな人）</span>
+      </div>
+    </div>
+
+    <!-- 5. 応募条件 -->
+    <div class="section">
+      <h2><span class="num">5</span>応募条件</h2>
+      <p class="sdesc">日本語レベル・資格・入社時期</p>
+      <div class="grid">
+        <div class="field">
+          <label>日本語レベル</label>
+          <select class="sel" id="f_jp">
+            <option>不問</option><option>N5</option><option>N4</option><option>N3</option><option>N2</option><option>N1</option>
+          </select>
+          <span class="hint">必要な日本語能力</span>
+        </div>
+        <div class="field">
+          <label>入社できる時期</label>
+          <select class="sel" id="f_start">
+            <option>即日</option><option>1ヶ月以内</option><option>1〜3ヶ月</option><option>3ヶ月以上</option><option>応相談</option>
+          </select>
+          <span class="hint">受け入れ可能なタイミング</span>
+        </div>
+        <div class="field full">
+          <label>資格・条件</label>
+          <div class="lines" id="f_quals"></div>
+          <button class="addline" onclick="addLine('f_quals')">＋ 行を追加</button>
+          <span class="hint">1行＝1条件（例：在留資格 特定技能1号 / 18〜40歳）</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. 住居・生活 -->
+    <div class="section">
+      <h2><span class="num">6</span>住居・生活</h2>
+      <p class="sdesc">寮・家賃・光熱費など生活コスト</p>
+      <div class="grid">
+        <div class="field">
+          <label>住居タイプ</label>
+          <select class="sel" id="f_houseType">
+            <option>アパート寮</option><option>一戸建て寮</option><option>マンション</option><option>社宅</option><option>自分で手配</option>
+          </select>
+          <span class="hint">提供される住居の形態</span>
+        </div>
+        <div class="field">
+          <label>個室／相部屋</label>
+          <div class="toggle" id="f_roomToggle">
+            <button data-v="個室" class="on">個室</button>
+            <button data-v="相部屋">相部屋</button>
+          </div>
+          <span class="hint">部屋の利用形態</span>
+        </div>
+        <div class="field">
+          <label>同居人数</label>
+          <div class="with-unit"><input class="inp" id="f_roommates" type="number" inputmode="numeric" placeholder="例）2" min="0"><span class="unit">人</span></div>
+          <span class="hint">同じ部屋・寮の人数</span>
+        </div>
+        <div class="field">
+          <label>家賃</label>
+          <div class="with-unit"><input class="inp" id="f_rent" type="number" inputmode="numeric" placeholder="例）20000"><span class="unit">円/月</span></div>
+          <span class="hint">毎月の自己負担額</span>
+        </div>
+        <div class="field full">
+          <label>部屋の説明</label>
+          <input class="inp" id="f_roomDesc" placeholder="例）6畳・エアコン・冷蔵庫・洗濯機付き">
+          <span class="hint">設備や広さ</span>
+        </div>
+        <div class="field">
+          <label>電気・水道・ガス</label>
+          <input class="inp" id="f_utility" placeholder="例）実費 約8,000円">
+          <span class="hint">光熱費の負担</span>
+        </div>
+        <div class="field">
+          <label>インターネット代</label>
+          <input class="inp" id="f_internet" placeholder="例）無料 / 月3,000円">
+          <span class="hint">Wi-Fiの有無・費用</span>
+        </div>
+        <div class="field full">
+          <label>その他実費</label>
+          <input class="inp" id="f_otherCost" placeholder="例）寝具レンタル 月1,000円 / 駐車場 月2,000円">
+          <span class="hint">家賃以外にかかる費用</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. 近隣情報 -->
+    <div class="section">
+      <h2><span class="num">7</span>近隣情報</h2>
+      <p class="sdesc">徒歩15分圏内の施設（生活の便利さ）</p>
+      <div class="field full">
+        <label>近くの施設</label>
+        <div class="lines" id="f_nearby"></div>
+        <button class="addline" onclick="addLine('f_nearby')">＋ 行を追加</button>
+        <span class="hint">1行＝1施設（例：コンビニ 徒歩3分 / スーパー 徒歩8分）</span>
+      </div>
+    </div>
+
+    <!-- 8. タグ -->
+    <div class="section">
+      <h2><span class="num">8</span>タグ</h2>
+      <p class="sdesc">検索・絞り込み用のタグ（複数選択可）</p>
+      <div class="field full">
+        <div class="chips" id="f_tagChips"></div>
+        <div class="chip-add">
+          <input class="inp" id="tagCustom" placeholder="カスタムタグを追加（例：駅徒歩5分）" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag()}">
+          <button onclick="addTag()">＋ 追加</button>
+        </div>
+        <span class="hint">標準タグから選択、または独自タグを追加できます。</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ LIVE PREVIEW ============ -->
+  <div class="previewcol">
+    <div class="pv-frame">
+      <div class="pv-topbar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="lbl">LIVE PREVIEW ・ 求人票プレビュー</span>
+      </div>
+      <div class="pv-scroll" id="pvScroll"><!-- rendered by JS --></div>
+    </div>
+  </div>
+</div>
+
+<!-- JSON Modal -->
+<div class="modal-ov" id="jsonModal">
+  <div class="modal">
+    <div class="mh">
+      <b>求人票 JSON 出力</b>
+      <span class="x" onclick="closeJson()">×</span>
+    </div>
+    <div class="mb">
+      <p class="note">worker データモデル互換の形式です。<code>biglight-jobs-data.js</code> の <code>JOBS</code> 配列に貼り付けられます（プロトタイプ：サーバー保存なし）。コンソールにも出力済み。</p>
+      <textarea id="jsonOut" readonly></textarea>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="copyJson()">クリップボードにコピー</button>
+      <button class="btn btn-red" onclick="closeJson()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const $id=id=>document.getElementById(id);
+
+/* ---- constants ---- */
+const FIELDS=['工業製品製造業','建設業','飲食料品製造業','外食業','介護業','宿泊','ビルクリーニング','農業','漁業','自動車整備','造船・舶用工業','航空','自動車運送業','鉄道','林業','木材産業'];
+const PREFS=['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+const PAY_TYPES=['時給','日給','月給'];
+const STD_BENEFITS=['社会保険完備','交通費支給','制服貸与','賞与あり','寮完備','送迎あり','食事補助','資格取得支援','日本語学習サポート'];
+const STD_TAGS=['寮あり','個室寮','未経験OK','高収入','駅近','賞与あり','土日休み','日本語不問','特定技能2号可','送迎あり','女性活躍','長期歓迎','残業少なめ','家賃補助'];
+const CODEPREF={'工業製品製造業':'MFG','建設業':'CON','飲食料品製造業':'FBM','外食業':'FSV','介護業':'CARE','宿泊':'HTL','ビルクリーニング':'CLN','農業':'AGR','漁業':'FSH','自動車整備':'AUTO','造船・舶用工業':'SHIP','航空':'AIR','自動車運送業':'TRK','鉄道':'RAIL','林業':'FRST','木材産業':'WOOD'};
+
+/* ---- state ---- */
+const state={
+  field:FIELDS[0], type:'', co:'', title:'', pref:'愛知県', city:'',
+  payType:'時給', payAmount:'', monthly:'', takehome:'', payNote:'',
+  term:'特定技能1号（通算上限5年）', hours:'', overtime:'', holiday:'', commute:'', bonus:'',
+  benefits:[], desc:'', appeal:[], active:[],
+  jp:'不問', quals:[], start:'応相談',
+  houseType:'アパート寮', room:'個室', roommates:'', roomDesc:'', rent:'', utility:'', internet:'', otherCost:'',
+  nearby:[], tags:[]
+};
+
+/* ---- build static selects/chips ---- */
+function buildStatics(){
+  $id('f_field').innerHTML=FIELDS.map(f=>`<option>${f}</option>`).join('');
+  $id('f_pref').innerHTML=PREFS.map(p=>`<option${p==='愛知県'?' selected':''}>${p}</option>`).join('');
+  $id('f_payTypeChips').innerHTML=PAY_TYPES.map(p=>`<button class="chip-btn${p===state.payType?' on':''}" data-v="${p}" onclick="pickPayType('${p}')">${p}</button>`).join('');
+  renderBenefitChips();
+  renderTagChips();
+}
+function renderBenefitChips(){
+  $id('f_benefitChips').innerHTML=STD_BENEFITS.map(b=>`<button class="chip-btn multi${state.benefits.includes(b)?' on':''}" onclick="toggleBenefit('${b}')">${b}</button>`).join('')
+   + state.benefits.filter(b=>!STD_BENEFITS.includes(b)).map(b=>`<button class="chip-btn multi on" onclick="toggleBenefit('${esc(b)}')">${b} ×</button>`).join('');
+}
+function renderTagChips(){
+  $id('f_tagChips').innerHTML=STD_TAGS.map(t=>`<button class="chip-btn tag${state.tags.includes(t)?' on':''}" onclick="toggleTag('${t}')">${t}</button>`).join('')
+   + state.tags.filter(t=>!STD_TAGS.includes(t)).map(t=>`<button class="chip-btn tag on" onclick="toggleTag('${esc(t)}')">${t} ×</button>`).join('');
+}
+function esc(s){return String(s).replace(/'/g,"\\'");}
+
+/* ---- chip handlers ---- */
+const PAY_UNIT={'時給':'円','日給':'円','月給':'円'};
+function pickPayType(p){
+  state.payType=p;
+  document.querySelectorAll('#f_payTypeChips .chip-btn').forEach(b=>b.classList.toggle('on',b.dataset.v===p));
+  $id('payUnit').textContent=PAY_UNIT[p];
+  render();
+}
+function toggleBenefit(b){
+  const i=state.benefits.indexOf(b);
+  if(i>=0)state.benefits.splice(i,1); else state.benefits.push(b);
+  renderBenefitChips(); render();
+}
+function addBenefit(){
+  const v=$id('benefitCustom').value.trim();
+  if(v&&!state.benefits.includes(v))state.benefits.push(v);
+  $id('benefitCustom').value='';
+  renderBenefitChips(); render();
+}
+function toggleTag(t){
+  const i=state.tags.indexOf(t);
+  if(i>=0)state.tags.splice(i,1); else state.tags.push(t);
+  renderTagChips(); render();
+}
+function addTag(){
+  const v=$id('tagCustom').value.trim();
+  if(v&&!state.tags.includes(v))state.tags.push(v);
+  $id('tagCustom').value='';
+  renderTagChips(); render();
+}
+
+/* ---- room toggle ---- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('#f_roomToggle button');
+  if(!b)return;
+  state.room=b.dataset.v;
+  document.querySelectorAll('#f_roomToggle button').forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+
+/* ---- repeatable lines ---- */
+const LINE_KEY={f_appeal:'appeal',f_active:'active',f_quals:'quals',f_nearby:'nearby'};
+const LINE_PH={f_appeal:'例）未経験から月収25万円可',f_active:'例）コツコツ作業が得意な人',f_quals:'例）在留資格 特定技能1号',f_nearby:'例）コンビニ 徒歩3分'};
+function renderLines(contId){
+  const key=LINE_KEY[contId], arr=state[key];
+  const cont=$id(contId);
+  cont.innerHTML=arr.map((v,i)=>`<div class="line-row">
+    <input class="inp" value="${(v||'').replace(/"/g,'&quot;')}" placeholder="${LINE_PH[contId]}" oninput="updateLine('${contId}',${i},this.value)">
+    <button class="del" onclick="delLine('${contId}',${i})" title="削除">×</button>
+  </div>`).join('');
+}
+function addLine(contId){state[LINE_KEY[contId]].push(''); renderLines(contId); render();}
+function delLine(contId,i){state[LINE_KEY[contId]].splice(i,1); renderLines(contId); render();}
+function updateLine(contId,i,val){state[LINE_KEY[contId]][i]=val; render();}
+
+/* ---- bind plain inputs/selects ---- */
+const BIND={
+  f_field:'field',f_type:'type',f_co:'co',f_title:'title',f_pref:'pref',f_city:'city',
+  f_payAmount:'payAmount',f_monthly:'monthly',f_takehome:'takehome',f_payNote:'payNote',
+  f_term:'term',f_hours:'hours',f_overtime:'overtime',f_holiday:'holiday',f_commute:'commute',f_bonus:'bonus',
+  f_desc:'desc',f_jp:'jp',f_start:'start',
+  f_houseType:'houseType',f_roommates:'roommates',f_roomDesc:'roomDesc',f_rent:'rent',f_utility:'utility',f_internet:'internet',f_otherCost:'otherCost'
+};
+function bindInputs(){
+  Object.keys(BIND).forEach(id=>{
+    const el=$id(id); if(!el)return;
+    el.value=state[BIND[id]]||'';
+    const ev=(el.tagName==='SELECT')?'change':'input';
+    el.addEventListener(ev,()=>{state[BIND[id]]=el.value; render();});
+  });
+}
+
+/* ---- helpers ---- */
+function jobCode(){return (CODEPREF[state.field]||'JOB')+'-001';}
+function yen(n){return n? Number(n).toLocaleString('ja-JP') : '';}
+function man(n){return n? (Number(n)/10000) : '';}
+function fieldClass(){if(state.field.includes('製造'))return 'blue'; if(state.field.includes('建設'))return 'amber'; return 'green';}
+function payLabel(){
+  if(!state.payAmount)return '';
+  return state.payType+' '+yen(state.payAmount)+'円';
+}
+function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ---- LIVE PREVIEW ---- */
+const CK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+function emptyHint(t){return `<span class="pv-empty">${t}</span>`;}
+
+function render(){
+  const s=state;
+  const title=s.title.trim()||s.type.trim()||'（求人タイトル未入力）';
+  const code=jobCode();
+  // tag pills (tags + auto from benefits/room)
+  let pills=[];
+  s.tags.forEach(t=>pills.push(`<span class="pv-pill red">${escH(t)}</span>`));
+  if(s.benefits.includes('寮完備')||s.tags.includes('寮あり'))pills.push(`<span class="pv-pill green">寮あり</span>`);
+  pills.push(`<span class="pv-pill blue">日本語 ${escH(s.jp)}</span>`);
+  if(s.type.trim())pills.unshift(`<span class="pv-pill">${escH(s.type)}</span>`);
+
+  // pay block
+  const baseRow = s.payAmount
+    ? `<div class="full"><div class="k">基本給（${escH(s.payType)}）</div><div class="v sal">${yen(s.payAmount)}円</div>${s.payNote?`<div class="v sub">${escH(s.payNote)}</div>`:''}</div>`
+    : `<div class="full"><div class="k">基本給</div><div class="v">${emptyHint('未入力')}</div></div>`;
+  const monthlyRow = `<div><div class="k">月収例</div><div class="v">${s.monthly?yen(s.monthly)+'円':emptyHint('—')}</div></div>`;
+
+  // living
+  const livingItems=[
+    ['住居タイプ',escH(s.houseType)],
+    ['部屋',escH(s.room)+(s.roommates?`・同居 ${escH(s.roommates)}人`:'')],
+    ['家賃',s.rent?yen(s.rent)+'円/月':'—'],
+    ['電気・水道・ガス',s.utility?escH(s.utility):'—'],
+    ['インターネット',s.internet?escH(s.internet):'—'],
+    ['その他実費',s.otherCost?escH(s.otherCost):'—']
+  ];
+  const livingHtml=`<div class="pv-living">
+    ${livingItems.map(([k,v])=>`<div class="li"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('')}
+    ${s.roomDesc?`<div class="li full"><span class="k">部屋の説明</span><span class="v">${escH(s.roomDesc)}</span></div>`:''}
+  </div>`;
+
+  // lists
+  const appeal=s.appeal.filter(x=>x.trim());
+  const active=s.active.filter(x=>x.trim());
+  const quals=s.quals.filter(x=>x.trim());
+  const nearby=s.nearby.filter(x=>x.trim());
+
+  $id('pvScroll').innerHTML=`
+  <div class="pv-hero" style="background:linear-gradient(120deg,#15171d,${fieldClass()==='amber'?'#46300f':fieldClass()==='blue'?'#0f2046':'#0f3320'})">
+    <div class="glow"></div>
+    <div class="info">
+      <span class="pv-jcode">${code}</span>
+      <span class="pv-pill ${fieldClass()}">${escH(s.field)}</span>
+    </div>
+  </div>
+  <div class="pv-cont">
+    <div class="pv-tags">${pills.join('')||emptyHint('タグ未設定')}</div>
+    <h2 class="pv-title">${escH(title)}</h2>
+    <div class="pv-co">${s.co.trim()?escH(s.co):'<span class="muted">会社名未入力</span>'} ・ ${escH(s.pref)} ${escH(s.city)}</div>
+
+    <div class="pv-kv">
+      ${baseRow}
+      ${monthlyRow}
+      <div><div class="k">勤務地</div><div class="v">${escH(s.pref)} ${escH(s.city)||''}</div></div>
+      <div><div class="k">日本語</div><div class="v">${escH(s.jp)}</div></div>
+      <div><div class="k">入社時期</div><div class="v">${escH(s.start)}</div></div>
+    </div>
+
+    <div class="pv-net">
+      <span class="k">手取り月収（目安）</span>
+      <span class="v">${s.takehome?yen(s.takehome)+'円':'—'}</span>
+      <span class="hint">税・社会保険を引いた後の金額です。家賃は含まれていません。</span>
+    </div>
+
+    <div class="pv-block">
+      <h4>募集要項</h4>
+      <div class="pv-kv" style="margin-bottom:0">
+        <div class="full"><div class="k">雇用期間</div><div class="v">${s.term?escH(s.term):'—'}</div></div>
+        <div><div class="k">勤務時間</div><div class="v">${s.hours?escH(s.hours):'—'}</div></div>
+        <div><div class="k">残業</div><div class="v">${s.overtime?escH(s.overtime):'—'}</div></div>
+        <div><div class="k">休日・休暇</div><div class="v">${s.holiday?escH(s.holiday):'—'}</div></div>
+        <div><div class="k">通勤手段</div><div class="v">${s.commute?escH(s.commute):'—'}</div></div>
+        <div class="full"><div class="k">賞与・昇給</div><div class="v">${s.bonus?escH(s.bonus):'—'}</div></div>
+      </div>
+    </div>
+
+    <div class="pv-block">
+      <h4>待遇・福利厚生</h4>
+      ${s.benefits.length?`<div class="pv-benefits">${s.benefits.map(b=>`<span class="pv-pill green">${escH(b)}</span>`).join('')}</div>`:emptyHint('未設定')}
+    </div>
+
+    <div class="pv-block">
+      <h4>仕事内容</h4>
+      ${s.desc.trim()?`<p>${escH(s.desc)}</p>`:emptyHint('仕事内容を入力してください')}
+    </div>
+
+    <div class="pv-block">
+      <h4>アピールポイント</h4>
+      ${appeal.length?`<ul class="pv-bullets">${appeal.map(a=>`<li>${escH(a)}</li>`).join('')}</ul>`:emptyHint('未入力')}
+    </div>
+
+    <div class="pv-block">
+      <h4>こんな人が活躍しています</h4>
+      ${active.length?`<ul class="pv-bullets">${active.map(a=>`<li>${escH(a)}</li>`).join('')}</ul>`:emptyHint('未入力')}
+    </div>
+
+    <div class="pv-block">
+      <h4>応募条件</h4>
+      <ul class="pv-list">
+        <li>${CK}<span>日本語 ${escH(s.jp)} 程度</span></li>
+        <li>${CK}<span>入社できる時期：${escH(s.start)}</span></li>
+        ${quals.map(q=>`<li>${CK}<span>${escH(q)}</span></li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="pv-block">
+      <h4>住居・生活</h4>
+      ${livingHtml}
+    </div>
+
+    <div class="pv-block">
+      <h4>近隣情報（徒歩15分圏内）</h4>
+      ${nearby.length?`<ul class="pv-near">${nearby.map(n=>`<li>${PIN}<span>${escH(n)}</span></li>`).join('')}</ul>`:emptyHint('未入力')}
+    </div>
+  </div>`;
+}
+
+/* ---- JSON output (worker data model compatible) ---- */
+function buildJson(){
+  const s=state;
+  const num=v=>v===''||v==null?null:Number(v);
+  // sal: convert monthly example to 万 range for worker-card compatibility
+  const monthlyMan=s.monthly?Math.round(Number(s.monthly)/10000):null;
+  return {
+    id:1,
+    code:jobCode(),
+    t:s.title.trim()||s.type.trim(),
+    co:s.co.trim(),
+    field:s.field,
+    type:s.type.trim(),
+    pref:s.pref,
+    city:s.city.trim(),
+    sal: monthlyMan? [monthlyMan, monthlyMan] : null,
+    jp:s.jp,
+    dorm: s.benefits.includes('寮完備')||s.tags.includes('寮あり')||s.houseType!=='自分で手配',
+    feat:false,
+    tags:[...s.tags],
+    pay:{ type:s.payType, amount:num(s.payAmount), note:s.payNote.trim(), monthlyExample:num(s.monthly), takeHome:num(s.takehome) },
+    requirements:{
+      term:s.term.trim(), hours:s.hours.trim(), overtime:s.overtime.trim(),
+      holiday:s.holiday.trim(), commute:s.commute.trim(), bonus:s.bonus.trim(),
+      benefits:[...s.benefits]
+    },
+    work:{
+      desc:s.desc.trim(),
+      appeal:s.appeal.filter(x=>x.trim()),
+      activePeople:s.active.filter(x=>x.trim())
+    },
+    apply:{ jp:s.jp, qualifications:s.quals.filter(x=>x.trim()), startTiming:s.start },
+    living:{
+      houseType:s.houseType, room:s.room, roommates:num(s.roommates),
+      roomDesc:s.roomDesc.trim(), rent:num(s.rent), utility:s.utility.trim(),
+      internet:s.internet.trim(), otherCost:s.otherCost.trim()
+    },
+    nearby:s.nearby.filter(x=>x.trim())
+  };
+}
+function openJson(){
+  const obj=buildJson();
+  const json=JSON.stringify(obj,null,2);
+  console.log('=== BIGLIGHT JOB 求人票 JSON ===');
+  console.log(obj);
+  $id('jsonOut').value=json;
+  $id('jsonModal').classList.add('open');
+}
+function closeJson(){$id('jsonModal').classList.remove('open');}
+function copyJson(){
+  const ta=$id('jsonOut'); ta.select(); ta.setSelectionRange(0,99999);
+  try{navigator.clipboard.writeText(ta.value);}catch(e){document.execCommand('copy');}
+  const btn=event.target; const o=btn.textContent; btn.textContent='コピーしました ✓';
+  setTimeout(()=>btn.textContent=o,1400);
+}
+$id('jsonModal').addEventListener('click',e=>{if(e.target.id==='jsonModal')closeJson();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeJson();});
+
+/* ---- reset / sample ---- */
+function resetForm(){
+  if(!confirm('入力内容をクリアしますか？'))return;
+  location.reload();
+}
+
+/* ---- seed sample lines so the preview demonstrates structure ---- */
+function seed(){
+  state.type='半自動溶接';
+  state.co='トヨタ系 金属部品メーカー';
+  state.title='半自動溶接スタッフ（未経験OK・寮あり）';
+  state.city='豊田市';
+  state.payAmount='1300'; state.monthly='250000'; state.takehome='205000';
+  state.payNote='試用期間3ヶ月は時給1,250円';
+  state.hours='8:00〜17:00（休憩60分）'; state.overtime='月平均20時間程度';
+  state.holiday='土日休み・年間休日120日'; state.commute='寮から徒歩10分'; state.bonus='賞与年2回・昇給あり';
+  state.benefits=['社会保険完備','交通費支給','寮完備','日本語学習サポート'];
+  state.desc='工場内で半自動溶接の作業を担当します。図面を見ながら金属部品を溶接し、検査・梱包までを行います。丁寧な指導があるため未経験の方も安心して始められます。';
+  state.appeal=['未経験から月収25万円可','日本語学習を会社がサポート','きれいな寮を完備'];
+  state.active=['体を動かす仕事が好きな人','コツコツ作業が得意な人'];
+  state.quals=['在留資格 特定技能1号','18〜40歳の方','溶接経験者は優遇'];
+  state.start='1ヶ月以内';
+  state.roommates='1'; state.roomDesc='6畳・エアコン・冷蔵庫・洗濯機付き';
+  state.rent='20000'; state.utility='実費 約8,000円'; state.internet='無料（Wi-Fi完備）';
+  state.otherCost='寝具レンタル 月1,000円';
+  state.nearby=['コンビニ 徒歩3分','スーパー 徒歩8分','駅 徒歩12分'];
+  state.tags=['寮あり','個室寮','未経験OK','高収入','送迎あり'];
+}
+
+/* ---- init ---- */
+function init(){
+  seed();
+  buildStatics();
+  bindInputs();
+  // sync selects/toggles to state
+  $id('f_jp').value=state.jp; $id('f_start').value=state.start; $id('f_houseType').value=state.houseType;
+  renderLines('f_appeal'); renderLines('f_active'); renderLines('f_quals'); renderLines('f_nearby');
+  render();
+}
+init();
+</script>
+<a href="https://www.facebook.com/biglight" target="_blank" rel="noopener" class="fbfab" aria-label="Facebookで相談"><svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/></svg><span>Facebookで相談</span></a>
+<style>.fbfab{position:fixed;right:20px;bottom:20px;z-index:90;display:inline-flex;align-items:center;gap:9px;background:#1877F2;color:#fff;padding:13px 18px;border-radius:30px;font-weight:800;font-size:14px;text-decoration:none;box-shadow:0 12px 30px rgba(24,119,242,.45);font-family:'Noto Sans JP',sans-serif;transition:.16s}.fbfab:hover{background:#0C63D4;transform:translateY(-2px)}.fbfab svg{width:22px;height:22px;flex:0 0 auto}@media(max-width:560px){.fbfab span{display:none}.fbfab{padding:15px;border-radius:50%}}</style>
+</body>
+</html>

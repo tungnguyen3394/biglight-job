@@ -1,0 +1,431 @@
+// BIGLIGHT Job — Admin data model
+// 特定技能 / 育成就労 / 外国人材 recruiting
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------- ENUMS -----------------------------
+
+enum Role {
+  SUPER_ADMIN
+  BIGLIGHT_STAFF
+  CTV
+  COMPANY
+  CANDIDATE
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ResidenceType {
+  TOKUTEI_1 // 特定技能1号
+  TOKUTEI_2 // 特定技能2号
+  IKUSEI // 育成就労
+  GIJINKOKU // 技人国
+}
+
+enum JobOpStatus {
+  OPEN // 募集中
+  PAUSED // 停止中
+  CLOSED // 終了
+  FILLED // 充足
+}
+
+enum JobPublicStatus {
+  PUBLIC // 公開
+  PRIVATE // 非公開
+  DRAFT // 下書き
+  SUSPENDED // 停止中
+  PENDING_APPROVAL // 承認待ち (company edited, awaiting BIGLIGHT)
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}
+
+enum ApplicationStatus {
+  NEW // 新規応募
+  CONSULTING // 相談中
+  DOC_CHECK // 書類確認中
+  CV_SENT // CV送付済み
+  INTERVIEW_ARRANGING // 面接調整中
+  INTERVIEW_SCHEDULED // 面接予定
+  INTERVIEWED // 面接済み
+  OFFER // 内定
+  CONTRACT // 契約書作成中
+  VISA_APPLYING // ビザ申請中
+  VISA_APPROVED // ビザ許可
+  JOIN_SCHEDULED // 入社予定
+  JOINED // 入社済み
+  REJECTED // 不採用
+  DECLINED // 辞退
+  CANCELLED // キャンセル
+}
+
+enum RewardType {
+  FIXED // 固定金額
+  MONTHLY_PCT // 月給%
+  ANNUAL_PCT // 年収%
+}
+
+enum PaymentTiming {
+  AFTER_VISA // ビザ許可後
+  AFTER_JOIN // 入社後
+  AFTER_1M // 1ヶ月後
+  AFTER_3M // 3ヶ月後
+}
+
+enum PaymentStatus {
+  NOT_YET // 未発生
+  ACCRUED // 発生済み
+  SCHEDULED // 支払予定
+  PAID // 支払済み
+  ON_HOLD // 保留
+  CANCELLED // キャンセル
+  REFUND // 返金対象
+}
+
+// ----------------------------- MODELS -----------------------------
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String? // null for Google-only accounts
+  googleId     String?       @unique // Google "sub"
+  image        String? // Google avatar URL
+  role         Role          @default(BIGLIGHT_STAFF)
+  status       AccountStatus @default(ACTIVE)
+  companyId    String? // link if role = COMPANY
+  ctvId        String? // link if role = CTV
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  company Company? @relation(fields: [companyId], references: [id])
+  ctv     Ctv?     @relation(fields: [ctvId], references: [id])
+
+  // staff assignments
+  staffCompanies   Company[]     @relation("CompanyStaff")
+  staffJobs        Job[]         @relation("JobStaff")
+  staffCandidates  Candidate[]   @relation("CandidateStaff")
+  staffApplications Application[] @relation("ApplicationStaff")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Company {
+  id             String        @id @default(cuid())
+  name           String
+  industry       String?
+  address        String?
+  contactName    String?
+  phone          String?
+  email          String?
+  biglightStaffId String?
+  status         AccountStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  biglightStaff User?  @relation("CompanyStaff", fields: [biglightStaffId], references: [id])
+  users         User[]
+  jobs          Job[]
+  applications  Application[]
+  candidateCommissions CandidateCommission[]
+
+  @@map("companies")
+}
+
+model Ctv {
+  id          String        @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  country     String? // 国籍 / 担当国
+  status      AccountStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  users           User[]
+  jobs            Job[]
+  referredCandidates Candidate[]  @relation("CandidateReferral")
+  applications    Application[]
+  jobCommissions  JobCommission[]
+  candidateCommissions CandidateCommission[]
+
+  @@map("ctvs")
+}
+
+model Job {
+  id         String @id @default(cuid())
+  code       String @unique // 求人ID (e.g. MFG-001)
+  companyId  String
+  title      String
+  industry   String // 業種 / 特定技能分野
+  jobTypeName String? // 職種
+  location   String // 勤務地 (都道府県)
+  city       String?
+
+  // recruit counts (incl. gender breakdown)
+  recruitCount  Int @default(1) // 募集人数
+  recruitMale   Int @default(0)
+  recruitFemale Int @default(0)
+  hiredCount    Int @default(0) // 採用人数
+
+  employmentType String? // 雇用形態
+  residenceType  ResidenceType @default(TOKUTEI_1) // 在留資格区分
+
+  // job content
+  description           String? @db.Text // 仕事内容
+  dailyFlow            String? @db.Text // 一日の流れ
+  requiredExperience   String? @db.Text // 必要な経験
+  requiredQualification String? @db.Text // 必要な資格
+  japaneseLevel        String? // 日本語レベル
+  ageMin               Int?
+  ageMax               Int?
+  genderCondition      Gender  @default(ANY)
+  nationalityCondition String?
+
+  // salary & benefits
+  baseSalary       Int? // 基本給
+  expectedMonthly  Int? // 想定月収
+  expectedTakeHome Int? // 想定手取り
+  salaryMin        Int?
+  salaryMax        Int?
+  overtimeHours    String? // 残業時間
+  bonus            String? // 賞与
+  raise            String? // 昇給
+  socialInsurance  String? // 社会保険
+  transportAllowance String? // 交通費
+  holidays         String? // 休日
+  paidLeave        String? // 有給
+
+  // work conditions
+  workHours        String? // 勤務時間
+  nightShift       Boolean @default(false) // 夜勤
+  shiftWork        Boolean @default(false) // シフト制
+  alternatingShift Boolean @default(false) // 交替勤務
+  hasOvertime      Boolean @default(false) // 残業あり
+  startDate        DateTime? // 入社予定日
+
+  // dormitory & living
+  dormitoryAvailable Boolean @default(false) // 寮
+  dormitoryFee       Int? // 寮費
+  utilitiesCost      String? // 水道光熱費
+  wifi               String? // Wi-Fi
+  commuteMethod      String? // 通勤方法
+  stationDistance    String? // 駅からの距離
+  bicycleLease       Boolean @default(false) // 自転車貸与
+  pickupService      Boolean @default(false) // 送迎
+
+  // memos
+  publicMemo   String? @db.Text // 公開用メモ (candidate-visible)
+  appealPoints String? @db.Text // 公開: 仕事の魅力
+  applyNotes   String? @db.Text // 公開: 応募時の注意
+  internalMemo String? @db.Text // 社内メモ (BIGLIGHT only)
+  companyHistory String? @db.Text // 会社との交渉履歴 (internal)
+  riskNotes    String? @db.Text // 求人のリスク (internal)
+
+  // tags
+  tags String[] @default([])
+
+  // status & assignment
+  status       JobOpStatus     @default(OPEN)
+  publicStatus JobPublicStatus @default(DRAFT)
+  biglightStaffId String?
+  ctvId        String? // assigned CTV (CTV can view if assigned)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company       Company         @relation(fields: [companyId], references: [id])
+  biglightStaff User?           @relation("JobStaff", fields: [biglightStaffId], references: [id])
+  ctv           Ctv?            @relation(fields: [ctvId], references: [id])
+  applications  Application[]
+  jobCommissions JobCommission[]
+  candidateCommissions CandidateCommission[]
+
+  @@index([companyId])
+  @@index([publicStatus])
+  @@index([ctvId])
+  @@map("jobs")
+}
+
+model Candidate {
+  id            String   @id @default(cuid())
+  name          String
+  birthdate     DateTime?
+  nationality   String?
+  gender        Gender   @default(ANY)
+  phone         String?
+  email         String?
+  facebookUrl   String?
+  currentAddress String?
+
+  // visa
+  visaType        String? // 現在の在留資格
+  visaExpiryDate  DateTime?
+  currentTokuteiField String? // 現在のTokutei分野
+  passedSkillTest Boolean @default(false)
+  passedJlpt      Boolean @default(false)
+  canChangeJobFrom DateTime?
+
+  japaneseLevel String?
+
+  // wishes
+  desiredIndustry String?
+  desiredLocation String?
+  desiredSalary   Int?
+  canNightShift   Boolean @default(false)
+  canShiftWork    Boolean @default(false)
+  canOvertime     Boolean @default(false)
+  canRelocate     Boolean @default(false)
+  wantDormitory   Boolean @default(false)
+  changeReason    String? @db.Text // 転職理由
+
+  // documents (file metadata as JSON for MVP)
+  documents Json @default("{}")
+
+  // notes
+  consultNote  String? @db.Text // 相談メモ
+  internalMemo String? @db.Text // 社内メモ (BIGLIGHT only)
+  contactHistory String? @db.Text // 連絡履歴
+
+  referralCtvId  String? // 紹介者 CTV
+  biglightStaffId String?
+  status         String  @default("新規") // operational status label
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  referralCtv   Ctv?          @relation("CandidateReferral", fields: [referralCtvId], references: [id])
+  biglightStaff User?         @relation("CandidateStaff", fields: [biglightStaffId], references: [id])
+  applications  Application[]
+  candidateCommissions CandidateCommission[]
+
+  @@index([referralCtvId])
+  @@map("candidates")
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  candidateId String
+  jobId       String
+  companyId   String
+  ctvId       String?
+  biglightStaffId String?
+  status      ApplicationStatus @default(NEW)
+
+  nextAction        String?
+  nextActionDate    DateTime?
+  interviewDate     DateTime?
+  offerDate         DateTime?
+  visaApplicationDate DateTime?
+  visaApprovalDate  DateTime?
+  joinDate          DateTime?
+  internalMemo      String? @db.Text // BIGLIGHT only
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidate     Candidate       @relation(fields: [candidateId], references: [id])
+  job           Job             @relation(fields: [jobId], references: [id])
+  company       Company         @relation(fields: [companyId], references: [id])
+  ctv           Ctv?            @relation(fields: [ctvId], references: [id])
+  biglightStaff User?           @relation("ApplicationStaff", fields: [biglightStaffId], references: [id])
+  statusHistories StatusHistory[]
+  candidateCommissions CandidateCommission[]
+
+  @@index([jobId])
+  @@index([candidateId])
+  @@index([companyId])
+  @@index([ctvId])
+  @@index([status])
+  @@map("applications")
+}
+
+// Commission tied to a 求人 (per-job referral reward agreement)
+model JobCommission {
+  id              String        @id @default(cuid())
+  jobId           String
+  ctvId           String?
+  amount          Int           @default(0) // 報酬金額
+  rewardType      RewardType    @default(FIXED)
+  paymentTiming   PaymentTiming @default(AFTER_JOIN)
+  paymentCondition String?
+  guaranteePeriod String? // 保証期間
+  refundRule      String? // 返金規定
+  paymentStatus   PaymentStatus @default(NOT_YET)
+  scheduledPaymentDate DateTime?
+  paidDate        DateTime?
+  internalMemo    String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job Job  @relation(fields: [jobId], references: [id])
+  ctv Ctv? @relation(fields: [ctvId], references: [id])
+
+  @@index([jobId])
+  @@index([ctvId])
+  @@map("job_commissions")
+}
+
+// Commission realized for a specific application/candidate (報酬管理)
+model CandidateCommission {
+  id            String        @id @default(cuid())
+  applicationId String
+  jobId         String
+  candidateId   String
+  companyId     String
+  ctvId         String?
+  amount        Int           @default(0)
+  rewardType    RewardType    @default(FIXED)
+  paymentStatus PaymentStatus @default(NOT_YET)
+  joinedDate    DateTime? // 入社日
+  scheduledPaymentDate DateTime?
+  paidDate      DateTime?
+  guaranteePeriod String?
+  refundRule    String?
+  memo          String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id])
+  job         Job         @relation(fields: [jobId], references: [id])
+  candidate   Candidate   @relation(fields: [candidateId], references: [id])
+  company     Company     @relation(fields: [companyId], references: [id])
+  ctv         Ctv?        @relation(fields: [ctvId], references: [id])
+
+  @@index([ctvId])
+  @@index([companyId])
+  @@index([paymentStatus])
+  @@map("candidate_commissions")
+}
+
+model StatusHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  oldStatus     String?
+  newStatus     String
+  changedBy     String? // user id
+  changedAt     DateTime @default(now())
+  memo          String?
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+  @@map("status_histories")
+}
