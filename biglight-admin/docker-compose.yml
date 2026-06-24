@@ -63,7 +63,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npx prisma db push && npm run db:seed"
+    command: sh -c "npx prisma db push --accept-data-loss && npm run db:seed"
 
 networks:
   web:
