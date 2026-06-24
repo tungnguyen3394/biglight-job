@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyFacebookAccessToken } from "@/lib/facebook";
-import { setSessionCookie } from "@/lib/auth";
+import { setSessionCookie, isAllowedAdminEmail } from "@/lib/auth";
 
 // POST /api/auth/facebook  { accessToken }  — accessToken từ Facebook JS SDK
 export async function POST(req: Request) {
@@ -13,6 +13,13 @@ export async function POST(req: Request) {
   const payload = await verifyFacebookAccessToken(accessToken);
   if (!payload) {
     return NextResponse.json({ error: "Facebook認証に失敗しました" }, { status: 401 });
+  }
+
+  if (!isAllowedAdminEmail(payload.email)) {
+    return NextResponse.json(
+      { error: "BIGLIGHT（@biglight.jp）のメールアドレスのみログインできます" },
+      { status: 403 }
+    );
   }
 
   // Chỉ user đã được admin tạo sẵn mới đăng nhập được.

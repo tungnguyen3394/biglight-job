@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyGoogleIdToken } from "@/lib/google";
-import { setSessionCookie } from "@/lib/auth";
+import { setSessionCookie, isAllowedAdminEmail } from "@/lib/auth";
 
 // POST /api/auth/google  { credential }  — credential = Google ID token (GIS)
 export async function POST(req: Request) {
@@ -13,6 +13,13 @@ export async function POST(req: Request) {
   const payload = await verifyGoogleIdToken(credential);
   if (!payload) {
     return NextResponse.json({ error: "Google認証に失敗しました" }, { status: 401 });
+  }
+
+  if (!isAllowedAdminEmail(payload.email)) {
+    return NextResponse.json(
+      { error: "BIGLIGHT（@biglight.jp）のメールアドレスのみログインできます" },
+      { status: 403 }
+    );
   }
 
   // Only pre-registered users may log in (admin creates accounts).

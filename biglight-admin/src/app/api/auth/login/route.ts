@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, setSessionCookie } from "@/lib/auth";
+import { verifyPassword, setSessionCookie, isAllowedAdminEmail } from "@/lib/auth";
 
 const Body = z.object({
   email: z.string().email(),
@@ -14,6 +14,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
   const { email, password } = parsed.data;
+
+  if (!isAllowedAdminEmail(email)) {
+    return NextResponse.json(
+      { error: "BIGLIGHT（@biglight.jp）のメールアドレスのみログインできます" },
+      { status: 403 }
+    );
+  }
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || user.status !== "ACTIVE" || !user.passwordHash) {

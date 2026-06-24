@@ -9,6 +9,20 @@ import type { SessionUser } from "./permissions";
 
 export const SESSION_COOKIE = "bl_session";
 
+// Chỉ cho phép nhân viên BIGLIGHT (email tên miền @biglight.jp) đăng nhập khu quản trị.
+// Có thể đổi/ mở rộng nhiều tên miền qua biến môi trường ALLOWED_EMAIL_DOMAINS (ngăn cách bởi dấu phẩy).
+const ALLOWED_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || "biglight.jp")
+  .split(",")
+  .map((d) => d.trim().toLowerCase())
+  .filter(Boolean);
+
+export function isAllowedAdminEmail(email: string): boolean {
+  const at = email.lastIndexOf("@");
+  if (at < 0) return false;
+  const domain = email.slice(at + 1).toLowerCase();
+  return ALLOWED_DOMAINS.includes(domain);
+}
+
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || process.env.AUTH_SECRET || "dev-insecure-secret-change-me"
 );
