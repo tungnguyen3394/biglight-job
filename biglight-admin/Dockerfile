@@ -22,6 +22,9 @@ FROM node:20-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+# Bind trên MỌI địa chỉ mạng, không chỉ hostname container.
+# Bắt buộc để reverse proxy (caddy) ở mạng khác gọi vào được — nếu thiếu sẽ bị 502 connection refused.
+ENV HOSTNAME=0.0.0.0
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN groupadd -r nodejs && useradd -r -g nodejs nextjs
 
