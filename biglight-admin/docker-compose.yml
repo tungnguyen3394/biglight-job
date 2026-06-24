@@ -33,6 +33,13 @@ services:
       DATABASE_URL: postgresql://biglight_job_user:biglight_job_2026@db:5432/biglight_job_db?schema=public
     ports:
       - "3000:3000"
+    # Nhãn để caddy-docker-proxy tự route domain + cấp HTTPS (giống pgadmin, biglight-web)
+    labels:
+      caddy: job.biglight.jp
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+    networks:
+      - default   # để app nói chuyện với db
+      - web       # để container caddy (mạng web) proxy vào được
     depends_on:
       db:
         condition: service_healthy
@@ -56,6 +63,10 @@ services:
       db:
         condition: service_healthy
     command: sh -c "npx prisma db push && npm run db:seed"
+
+networks:
+  web:
+    external: true   # mạng dùng chung với caddy (đã tạo sẵn bởi infra/)
 
 volumes:
   biglight_pgdata:
