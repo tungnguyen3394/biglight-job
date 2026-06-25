@@ -200,6 +200,7 @@ model Job {
   nationalityCondition String?
 
   // salary & benefits
+  payType          String? // 給与区分: 時給 / 日給 / 月給
   baseSalary       Int? // 基本給
   expectedMonthly  Int? // 想定月収
   expectedTakeHome Int? // 想定手取り

@@ -39,7 +39,6 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 export default async function JobDetail({ params }: { params: { id: string } }) {
   const job = await prisma.job.findFirst({
     where: { id: params.id, publicStatus: "PUBLIC" },
-    include: { company: true },
   });
   if (!job) notFound();
 
@@ -62,7 +61,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
               {job.jobTypeName && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.jobTypeName}</span>}
             </div>
             <h1 className="text-xl font-black sm:text-2xl">{job.title}</h1>
-            <p className="text-sm text-white/90">{job.company.name} ・ 📍 {job.location}{job.city ? ` ${job.city}` : ""}</p>
+            <p className="text-sm text-white/90">📍 {job.location}{job.city ? ` ${job.city}` : ""}</p>
           </div>
         </div>
 
@@ -75,7 +74,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
           <Card title="給与">
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-xl bg-bl-bg p-3">
-                <div className="text-xs text-bl-gray">基本給</div>
+                <div className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</div>
                 <div className="mt-1 font-black">{fmtYen(job.baseSalary)}</div>
               </div>
               <div className="rounded-xl bg-bl-bg p-3">

@@ -14,8 +14,8 @@ import { STANDARD_TAGS, FB_PAGE_URL } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type PublicJob = {
-  id: string; title: string; company: string; industry: string; jobType: string | null;
-  location: string; city: string | null; salaryLabel: string | null; japaneseLevel: string | null;
+  id: string; title: string; industry: string; jobType: string | null;
+  location: string; city: string | null; salaryMain: string | null; monthlyExample: string | null; japaneseLevel: string | null;
   residence: string; dormitory: boolean; recruitCount: number; tags: string[]; img: string;
 };
 
@@ -89,7 +89,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
       if (area && j.location !== area) return false;
       if (tags.length && !tags.every((t) => j.tags.includes(t))) return false;
       if (kw) {
-        const hay = `${j.title} ${j.company} ${j.location} ${j.city ?? ""} ${j.jobType ?? ""} ${j.tags.join(" ")}`.toLowerCase();
+        const hay = `${j.title} ${j.location} ${j.city ?? ""} ${j.jobType ?? ""} ${j.tags.join(" ")}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
@@ -190,9 +190,9 @@ function JobCard({ job }: { job: PublicJob }) {
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="text-[15px] font-bold leading-snug group-hover:text-bl-red">{job.title}</h3>
-        <p className="mt-0.5 text-xs text-bl-gray">{job.company}</p>
         <div className="mt-2.5 grid grid-cols-2 gap-y-1 border-t border-dashed border-bl-line pt-2.5 text-xs text-bl-gray">
-          {job.salaryLabel && <div className="col-span-2 font-bold text-bl-red">💴 {job.salaryLabel}</div>}
+          {job.salaryMain && <div className="col-span-2 font-bold text-bl-red">💴 {job.salaryMain}</div>}
+          {job.monthlyExample && <div className="col-span-2 text-bl-gray">{job.monthlyExample}</div>}
           <div>📍 {job.location}{job.city ? ` ${job.city}` : ""}</div>
           <div>{RESIDENCE_LABEL[job.residence] ?? job.residence}</div>
           {job.japaneseLevel && <div>日本語 {job.japaneseLevel}</div>}
