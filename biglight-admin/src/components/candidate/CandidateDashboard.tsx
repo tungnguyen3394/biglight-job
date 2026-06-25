@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type DocMap } from "./CandidateProfileForm";
 
-const STAGES = ["登録", "書類選考", "面接", "内定", "入社"];
+const STAGES = ["応募", "面談", "面接", "内定", "ビザ申請中", "入社"];
 
 export type AppView = { id: string; code: string; title: string; company: string; stage: number; statusLabel: string; ended: boolean };
 

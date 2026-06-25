@@ -12,12 +12,14 @@ const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
 export const dynamic = "force-dynamic";
 
+// 6 bước: 応募→面談→面接→内定→ビザ申請中→入社
 const STAGE_OF: Record<string, number> = {
-  NEW: 0, CONSULTING: 0,
-  DOC_CHECK: 1, CV_SENT: 1,
+  NEW: 0,
+  CONSULTING: 1, DOC_CHECK: 1, CV_SENT: 1,
   INTERVIEW_ARRANGING: 2, INTERVIEW_SCHEDULED: 2, INTERVIEWED: 2,
   OFFER: 3, CONTRACT: 3,
-  VISA_APPLYING: 4, VISA_APPROVED: 4, JOIN_SCHEDULED: 4, JOINED: 4,
+  VISA_APPLYING: 4, VISA_APPROVED: 4,
+  JOIN_SCHEDULED: 5, JOINED: 5,
   REJECTED: 0, DECLINED: 0, CANCELLED: 0,
 };
 const ENDED = new Set(["REJECTED", "DECLINED", "CANCELLED"]);
@@ -73,7 +75,10 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     gender: candidate?.gender ?? "ANY",
     nat: candidate?.nationality ?? "",
     visa: candidate?.visaType ?? "",
-    cur: candidate?.currentTokuteiField ?? "",
+    sswField: (p.sswField as string) ?? candidate?.currentTokuteiField ?? "",
+    sswCategory: (p.sswCategory as string) ?? "",
+    sswTask: (p.sswTask as string) ?? "",
+    otherSkills: (p.otherSkills as string) ?? "",
     expiry: ymd(candidate?.visaExpiryDate),
     arrival: (p.arrival as string) ?? "",
     jp: candidate?.japaneseLevel ?? "",

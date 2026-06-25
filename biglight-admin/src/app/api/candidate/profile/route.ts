@@ -25,6 +25,10 @@ export async function POST(req: Request) {
   // Các trường nguyện vọng chi tiết (giữ đủ form gốc) → cột prefs (Json).
   const prefs = {
     arrival: b.arrival || "",
+    sswField: b.sswField || "",
+    sswCategory: b.sswCategory || "",
+    sswTask: b.sswTask || "",
+    otherSkills: b.otherSkills || "",
     dorm: b.dorm || "",
     start: b.start || "",
     nightshift: b.nightshift || "",
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
       gender: b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY",
       nationality: b.nat || null,
       visaType: b.visa || null,
-      currentTokuteiField: b.cur || null,
+      currentTokuteiField: b.sswField || null,
       visaExpiryDate: toDate(b.expiry),
       japaneseLevel: b.jp || null,
       desiredSalary: typeof b.desiredSalary === "number" ? b.desiredSalary : null,

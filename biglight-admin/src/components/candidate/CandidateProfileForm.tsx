@@ -7,10 +7,12 @@ import {
   DORM_OPTIONS, START_OPTIONS, NIGHTSHIFT_OPTIONS, SHIFTWORK_OPTIONS,
   REASONS, PRIORITIES, WEIGHT,
 } from "@/lib/candidateFields";
+import { SSW_JOBS } from "@/lib/sswJobs";
 
 export type ProfileInit = {
   name: string; birth: string; gender: string; nat: string;
-  visa: string; cur: string; expiry: string; arrival: string; jp: string;
+  visa: string; expiry: string; arrival: string; jp: string;
+  sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
   fields: string[]; areas: string[]; sal: number;
   dorm: string; start: string; nightshift: string; shiftwork: string;
   reasons: string[]; reasonOther: string; priorities: string[];
@@ -67,6 +69,9 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const set = <K extends keyof ProfileInit>(k: K, v: ProfileInit[K]) => { setF((p) => ({ ...p, [k]: v })); setSaved(false); };
+  const setSsw = (field: string, cat: string, task: string) => { setF((p) => ({ ...p, sswField: field, sswCategory: cat, sswTask: task })); setSaved(false); };
+  const sswCats = SSW_JOBS.find((d) => d.field === f.sswField)?.categories ?? [];
+  const sswTasks = sswCats.find((c) => c.category === f.sswCategory)?.mainTasks ?? [];
 
   const [docs, setDocs] = useState<DocMap>(initDocs);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -89,6 +94,7 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
     const filled = (k: string): boolean => {
       if (k === "docs") return Object.values(docs).some((a) => a.length > 0);
       if (k === "gender") return f.gender === "MALE" || f.gender === "FEMALE";
+      if (k === "cur") return !!f.sswField;
       const v = (f as Record<string, unknown>)[k];
       if (Array.isArray(v)) return v.length > 0;
       if (k === "sal") return (v as number) > 0;
@@ -129,7 +135,25 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
 
       <Card n={2} title="在留資格（ビザ）">
         <Field label="現在の在留資格"><One options={VISA_TYPES} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
-        <Field label="現在の職種（特定技能分野）" opt><select value={f.cur} onChange={(e) => set("cur", e.target.value)} className={inputCls}><option value="">選択してください</option>{SKILL_FIELDS.map((s) => <option key={s}>{s}</option>)}</select></Field>
+        <Field label="現在の職種（特定技能分野）" opt>
+          <div className="space-y-2">
+            <select value={f.sswField} onChange={(e) => setSsw(e.target.value, "", "")} className={inputCls}>
+              <option value="">① 特定技能分野を選択</option>
+              {SSW_JOBS.map((d) => <option key={d.field}>{d.field}</option>)}
+            </select>
+            <select value={f.sswCategory} onChange={(e) => setSsw(f.sswField, e.target.value, "")} disabled={sswCats.length === 0} className={`${inputCls} disabled:bg-bl-bg disabled:text-bl-gray2`}>
+              <option value="">② 業務区分を選択</option>
+              {sswCats.map((c) => <option key={c.category}>{c.category}</option>)}
+            </select>
+            <select value={f.sswTask} onChange={(e) => setSsw(f.sswField, f.sswCategory, e.target.value)} disabled={sswTasks.length === 0} className={`${inputCls} disabled:bg-bl-bg disabled:text-bl-gray2`}>
+              <option value="">③ 従事する主な業務を選択</option>
+              {sswTasks.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+        </Field>
+        <Field label="その他の経験・スキル" opt>
+          <textarea value={f.otherSkills} onChange={(e) => set("otherSkills", e.target.value)} rows={2} placeholder="例：フォークリフト免許、溶接3年 など" className={inputCls} />
+        </Field>
         <Field label="在留期限" opt><input type="date" value={f.expiry} onChange={(e) => set("expiry", e.target.value)} className={inputCls} /></Field>
         <Field label="来日年月日" opt><input type="date" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} className={inputCls} /></Field>
         <Field label="日本語レベル"><One options={JP_LEVELS} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
