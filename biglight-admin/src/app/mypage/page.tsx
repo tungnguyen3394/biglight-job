@@ -19,7 +19,7 @@ const STAGE_OF: Record<string, number> = {
 };
 const ENDED = new Set(["REJECTED", "DECLINED", "CANCELLED"]);
 
-export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string } }) {
+export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string } }) {
   const session = await getSessionUser();
 
   // Lao động đã đăng nhập + có ?apply=<jobId> → tạo đơn ứng tuyển rồi làm sạch URL.
@@ -41,7 +41,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
   if (!session || session.role !== "CANDIDATE") {
     return (
       <Shell active="mypage">
-        <CandidateLogin applyTitle={searchParams.t} />
+        <CandidateLogin applyTitle={searchParams.t} fbError={searchParams.fberror ? "Facebookログインに失敗しました。もう一度お試しください。" : undefined} />
         <FbChat />
       </Shell>
     );

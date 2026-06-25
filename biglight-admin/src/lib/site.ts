@@ -7,6 +7,9 @@ export const FB_MESSENGER_URL = "https://m.me/biglight";
 // Email nhận đơn ứng tuyển.
 export const CONTACT_EMAIL = "info@biglight.jp";
 
+// Base URL công khai (dùng cho OAuth redirect của Facebook). Đổi nếu domain khác.
+export const PUBLIC_BASE_URL = "https://job.biglight.jp";
+
 // Ảnh bìa hero (đổi link nếu muốn ảnh riêng).
 export const HERO_IMAGE =
   "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1600&q=80";
