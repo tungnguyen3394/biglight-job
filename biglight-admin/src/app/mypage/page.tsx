@@ -6,6 +6,9 @@ import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
 import CandidateDashboard, { type AppView } from "@/components/candidate/CandidateDashboard";
+import { type ProfileInit } from "@/components/candidate/CandidateProfileForm";
+
+const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
 export const dynamic = "force-dynamic";
 
@@ -62,9 +65,27 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     ended: ENDED.has(a.status),
   }));
 
+  const profile: ProfileInit = {
+    name: candidate?.name ?? session.name,
+    birthdate: ymd(candidate?.birthdate),
+    gender: candidate?.gender ?? "ANY",
+    nationality: candidate?.nationality ?? "",
+    visaType: candidate?.visaType ?? "",
+    currentTokuteiField: candidate?.currentTokuteiField ?? "",
+    visaExpiryDate: ymd(candidate?.visaExpiryDate),
+    japaneseLevel: candidate?.japaneseLevel ?? "",
+    desiredSalaryMan: candidate?.desiredSalary ? Math.round(candidate.desiredSalary / 10000) : 25,
+    desiredIndustry: candidate?.desiredIndustry ? candidate.desiredIndustry.split(",").filter(Boolean) : [],
+    desiredLocation: candidate?.desiredLocation ? candidate.desiredLocation.split(",").filter(Boolean) : [],
+    wantDormitory: candidate?.wantDormitory ?? false,
+    canNightShift: candidate?.canNightShift ?? false,
+    canShiftWork: candidate?.canShiftWork ?? false,
+    changeReason: candidate?.changeReason ?? "",
+  };
+
   return (
     <Shell active="mypage">
-      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} />
+      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} />
       <FbChat />
     </Shell>
   );

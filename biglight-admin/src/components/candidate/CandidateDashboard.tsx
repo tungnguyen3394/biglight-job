@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import CandidateProfileForm, { type ProfileInit } from "./CandidateProfileForm";
 
 const STAGES = ["登録", "書類選考", "面接", "内定", "入社"];
 
@@ -26,7 +27,7 @@ function Tracker({ stage }: { stage: number }) {
   );
 }
 
-export default function CandidateDashboard({ name, apps, applied }: { name: string; apps: AppView[]; applied?: boolean }) {
+export default function CandidateDashboard({ name, apps, applied, profile }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit }) {
   const router = useRouter();
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -47,12 +48,20 @@ export default function CandidateDashboard({ name, apps, applied }: { name: stri
         <div className="mb-5 rounded-2xl border border-bl-green bg-bl-greensoft p-4 text-sm font-semibold text-bl-green">✓ 応募を受け付けました。担当者がご連絡します。</div>
       )}
 
-      {/* Profile prompt — khuyến khích nhập đủ thông tin */}
-      <div className="mb-5 rounded-2xl border border-bl-red/30 bg-bl-redsoft p-5">
-        <h2 className="font-black text-bl-red">プロフィールを完成させよう</h2>
-        <p className="mt-1 text-sm text-ink">在留資格・日本語レベル・希望条件を入力すると、あなたに合う求人が見つかりやすくなります。</p>
-        <span className="mt-3 inline-block rounded-lg bg-bl-red px-4 py-2 text-sm font-bold text-white opacity-70">プロフィール入力（近日公開）</span>
-      </div>
+      {/* 手取り計算ツール — nút đỏ đậm nổi bật */}
+      <Link href="/salary" className="mb-5 flex items-center justify-between rounded-2xl bg-gradient-to-br from-bl-red to-bl-redd p-5 text-white shadow-lg transition hover:brightness-105">
+        <div>
+          <h2 className="text-base font-black">💰 手取り計算ツール</h2>
+          <p className="mt-0.5 text-sm text-white/85">額面から「実際にもらえる金額」を計算してみよう</p>
+        </div>
+        <span className="flex-none rounded-lg bg-white px-4 py-2 text-sm font-bold text-bl-red">計算する →</span>
+      </Link>
+
+      {/* Profile form */}
+      <h2 className="mb-3 text-base font-black">プロフィール入力</h2>
+      <CandidateProfileForm init={profile} />
+
+      <div className="my-7 h-px bg-bl-line" />
 
       {/* Applications */}
       <h2 className="mb-3 text-base font-black">応募状況・進捗</h2>
