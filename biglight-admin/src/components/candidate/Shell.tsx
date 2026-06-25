@@ -1,0 +1,119 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FB_PAGE_URL } from "@/lib/site";
+import FbChat from "./FbChat";
+
+type Active = "jobs" | "mypage" | "apps" | "chat";
+
+const NAV: { key: Active; label: string; href: string; icon: React.ReactNode }[] = [
+  { key: "jobs", label: "求人", href: "/", icon: <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /> },
+  { key: "mypage", label: "マイページ", href: "/mypage", icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></> },
+  { key: "apps", label: "応募状況", href: "/mypage?tab=apps", icon: <path d="M4 19V5M4 19h16M8 16l3-4 3 2 4-6" /> },
+  { key: "chat", label: "相談", href: FB_PAGE_URL, icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /> },
+];
+
+function Icon({ children }: { children: React.ReactNode }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </svg>
+  );
+}
+
+export default function Shell({
+  active,
+  children,
+  searchValue,
+  onSearchChange,
+}: {
+  active: Active;
+  children: React.ReactNode;
+  searchValue?: string;
+  onSearchChange?: (v: string) => void;
+}) {
+  const router = useRouter();
+  const controlled = typeof onSearchChange === "function";
+  const [local, setLocal] = useState("");
+  const value = controlled ? searchValue ?? "" : local;
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!controlled) router.push(`/?q=${encodeURIComponent(local.trim())}`);
+  }
+
+  return (
+    <div className="min-h-screen bg-bl-bg text-ink lg:grid lg:grid-cols-[248px_1fr]">
+      {/* Sidebar — desktop */}
+      <aside className="sticky top-0 hidden h-screen flex-col border-r border-bl-line bg-white p-4 lg:flex">
+        <Link href="/" className="mb-4 flex items-center gap-2 px-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-bl-red text-lg font-black text-white">B</span>
+          <span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span>
+        </Link>
+        <nav className="flex flex-col gap-1">
+          {NAV.map((n) => {
+            const cls = `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active === n.key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`;
+            return n.key === "chat" ? (
+              <a key={n.key} href={n.href} target="_blank" rel="noopener noreferrer" className={cls}><Icon>{n.icon}</Icon>{n.label}</a>
+            ) : (
+              <Link key={n.key} href={n.href} className={cls}><Icon>{n.icon}</Icon>{n.label}</Link>
+            );
+          })}
+        </nav>
+        <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-bl-fb py-3 text-sm font-bold text-white hover:bg-[#0C63D4]">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
+          Facebookで登録
+        </a>
+      </aside>
+
+      <div className="flex min-h-screen flex-col">
+        {/* Header — search + notifications */}
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-bl-line bg-white/95 px-4 py-2.5 backdrop-blur">
+          <Link href="/" className="flex items-center gap-1.5 lg:hidden">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-bl-red text-base font-black text-white">B</span>
+          </Link>
+          <form onSubmit={onSubmit} className="flex flex-1 items-center gap-2 rounded-xl bg-bl-bg px-3 py-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA2AE" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            <input
+              value={value}
+              onChange={(e) => (controlled ? onSearchChange!(e.target.value) : setLocal(e.target.value))}
+              placeholder="仕事を検索（溶接、寮あり、愛知 …）"
+              className="w-full bg-transparent text-sm outline-none"
+            />
+          </form>
+          <button className="relative flex h-9 w-9 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg" aria-label="お知らせ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-bl-red" />
+          </button>
+          <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white sm:flex lg:hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
+            登録
+          </a>
+        </header>
+
+        <main className="flex-1 pb-24 lg:pb-6">{children}</main>
+      </div>
+
+      {/* Bottom nav — mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-4 border-t border-bl-line bg-white lg:hidden">
+        {NAV.map((n) => {
+          const inner = (
+            <span className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${active === n.key ? "text-bl-red" : "text-bl-gray2"}`}>
+              <Icon>{n.icon}</Icon>
+              {n.label}
+            </span>
+          );
+          return n.key === "chat" ? (
+            <a key={n.key} href={n.href} target="_blank" rel="noopener noreferrer">{inner}</a>
+          ) : (
+            <Link key={n.key} href={n.href}>{inner}</Link>
+          );
+        })}
+      </nav>
+
+      <FbChat />
+    </div>
+  );
+}
