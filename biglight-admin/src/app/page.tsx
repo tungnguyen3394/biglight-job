@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { industryImage, salaryRange } from "@/lib/site";
-import HomeBoard, { type PublicJob } from "@/components/candidate/HomeBoard";
+import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateHome";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +28,5 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     img: industryImage(j.industry),
   }));
 
-  return <HomeBoard jobs={data} initialQ={searchParams.q ?? ""} />;
+  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} />;
 }

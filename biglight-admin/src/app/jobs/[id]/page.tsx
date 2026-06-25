@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
 import { industryImage, CONTACT_EMAIL } from "@/lib/site";
 import Shell from "@/components/candidate/Shell";
+import FbChat from "@/components/candidate/FbChat";
 
 export const dynamic = "force-dynamic";
 
@@ -151,6 +152,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
           </div>
         </div>
       </div>
+      <FbChat />
     </Shell>
   );
 }

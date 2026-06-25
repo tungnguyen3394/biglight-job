@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FB_PAGE_URL } from "@/lib/site";
-import FbChat from "./FbChat";
 
 type Active = "jobs" | "mypage" | "apps" | "chat";
 
@@ -112,8 +111,6 @@ export default function Shell({
           );
         })}
       </nav>
-
-      <FbChat />
     </div>
   );
 }

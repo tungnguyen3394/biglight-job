@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Shell from "@/components/candidate/Shell";
+import FbChat from "@/components/candidate/FbChat";
 import { FB_PAGE_URL } from "@/lib/site";
 
 function fbRegister() {
@@ -42,6 +43,7 @@ function MyPageInner() {
 
         <p className="mt-4 text-center text-xs text-bl-gray2">※ プロフィール入力・応募状況の詳細画面は近日公開予定です。</p>
       </div>
+      <FbChat />
     </Shell>
   );
 }
