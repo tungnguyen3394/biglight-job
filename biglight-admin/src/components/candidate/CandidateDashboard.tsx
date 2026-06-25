@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import CandidateProfileForm, { type ProfileInit } from "./CandidateProfileForm";
+import CandidateProfileForm, { type ProfileInit, type DocMap } from "./CandidateProfileForm";
 
 const STAGES = ["登録", "書類選考", "面接", "内定", "入社"];
 
@@ -27,7 +27,7 @@ function Tracker({ stage }: { stage: number }) {
   );
 }
 
-export default function CandidateDashboard({ name, apps, applied, profile }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit }) {
+export default function CandidateDashboard({ name, apps, applied, profile, docs }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap }) {
   const router = useRouter();
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -48,18 +48,18 @@ export default function CandidateDashboard({ name, apps, applied, profile }: { n
         <div className="mb-5 rounded-2xl border border-bl-green bg-bl-greensoft p-4 text-sm font-semibold text-bl-green">✓ 応募を受け付けました。担当者がご連絡します。</div>
       )}
 
-      {/* 手取り計算ツール — nút đỏ đậm nổi bật */}
-      <Link href="/salary" className="mb-5 flex items-center justify-between rounded-2xl bg-gradient-to-br from-bl-red to-bl-redd p-5 text-white shadow-lg transition hover:brightness-105">
+      {/* 手取り計算ツール — nút đỏ đậm, mở file gốc (100% bản cũ) ở tab mới */}
+      <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mb-5 flex items-center justify-between rounded-2xl bg-gradient-to-br from-bl-red to-bl-redd p-5 text-white shadow-lg transition hover:brightness-105">
         <div>
           <h2 className="text-base font-black">💰 手取り計算ツール</h2>
           <p className="mt-0.5 text-sm text-white/85">額面から「実際にもらえる金額」を計算してみよう</p>
         </div>
         <span className="flex-none rounded-lg bg-white px-4 py-2 text-sm font-bold text-bl-red">計算する →</span>
-      </Link>
+      </a>
 
       {/* Profile form */}
       <h2 className="mb-3 text-base font-black">プロフィール入力</h2>
-      <CandidateProfileForm init={profile} />
+      <CandidateProfileForm init={profile} initDocs={docs} />
 
       <div className="my-7 h-px bg-bl-line" />
 

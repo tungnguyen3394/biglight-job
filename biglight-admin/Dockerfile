@@ -38,6 +38,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Thư mục lưu file giấy tờ (volume sẽ kế thừa quyền nextjs khi tạo lần đầu)
+RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

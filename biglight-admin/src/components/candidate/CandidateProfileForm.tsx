@@ -23,6 +23,17 @@ export type ProfileInit = {
   changeReason: string;
 };
 
+export type DocFile = { name: string; file: string; size: number };
+export type DocMap = Record<string, DocFile[]>;
+
+const DOCSLOTS = [
+  { id: "rirekisho", label: "1. 履歴書", hint: "日本語の履歴書（1点）" },
+  { id: "zairyu", label: "2. 在留カード（両面）", hint: "表・裏の両面。複数可" },
+  { id: "hyouka", label: "3. 専門級 または 評価調書", hint: "技能実習の評価調書など（1点）" },
+  { id: "jlpt", label: "4. 日本語能力試験（JLPT）", hint: "合格証明書。複数可" },
+  { id: "tokutei", label: "5. 特定技能の資格", hint: "技能試験の合格証など。複数可" },
+];
+
 function Card({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
@@ -70,12 +81,31 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   );
 }
 
-export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
+export default function CandidateProfileForm({ init, initDocs }: { init: ProfileInit; initDocs: DocMap }) {
   const router = useRouter();
   const [f, setF] = useState<ProfileInit>(init);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const set = <K extends keyof ProfileInit>(k: K, v: ProfileInit[K]) => { setF((p) => ({ ...p, [k]: v })); setSaved(false); };
+
+  const [docs, setDocs] = useState<DocMap>(initDocs);
+  const [uploading, setUploading] = useState<string | null>(null);
+
+  async function upload(slot: string, file?: File | null) {
+    if (!file) return;
+    setUploading(slot);
+    const fd = new FormData();
+    fd.append("slot", slot);
+    fd.append("file", file);
+    const res = await fetch("/api/candidate/documents", { method: "POST", body: fd });
+    setUploading(null);
+    if (res.ok) { const d = await res.json(); setDocs((p) => ({ ...p, [slot]: d.files })); }
+    else alert((await res.json().catch(() => ({}))).error || "アップロードに失敗しました");
+  }
+  async function removeDoc(slot: string, file: string) {
+    const res = await fetch("/api/candidate/documents", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot, file }) });
+    if (res.ok) { const d = await res.json(); setDocs((p) => ({ ...p, [slot]: d.files })); }
+  }
 
   const pct = useMemo(() => {
     const checks = [!!f.name, !!f.birthdate, f.gender !== "ANY" && !!f.gender, !!f.nationality, !!f.visaType, !!f.japaneseLevel, f.desiredIndustry.length > 0, f.desiredLocation.length > 0];
@@ -135,6 +165,33 @@ export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
           </div>
         </Field>
         <Field label="転職理由・希望する働き方（自由入力）"><textarea value={f.changeReason} onChange={(e) => set("changeReason", e.target.value)} rows={3} className="w-full rounded-xl border border-bl-line px-3 py-2.5 text-sm outline-none focus:border-bl-red" /></Field>
+      </Card>
+
+      <Card n={4} title="書類アップロード">
+        <p className="mb-4 text-xs text-bl-gray">画像・PDF（1ファイル最大10MB）。アップロードした書類は担当者のみ閲覧します。</p>
+        <div className="space-y-4">
+          {DOCSLOTS.map((d) => (
+            <div key={d.id}>
+              <div className="text-sm font-bold">{d.label}</div>
+              <div className="mb-1.5 text-xs text-bl-gray2">{d.hint}</div>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-bl-line bg-bl-bg py-3 text-sm font-semibold text-bl-gray hover:border-bl-red hover:text-bl-red">
+                <input type="file" accept="image/*,application/pdf" className="hidden" disabled={uploading === d.id} onChange={(e) => { upload(d.id, e.target.files?.[0]); e.target.value = ""; }} />
+                {uploading === d.id ? "アップロード中…" : "＋ ファイルを選択"}
+              </label>
+              {(docs[d.id] ?? []).length > 0 && (
+                <ul className="mt-2 space-y-1.5">
+                  {docs[d.id].map((file) => (
+                    <li key={file.file} className="flex items-center gap-2 rounded-lg border border-bl-line bg-white px-3 py-2 text-sm">
+                      <span className="flex-1 truncate">📎 {file.name}</span>
+                      <a href={`/api/candidate/documents?slot=${d.id}&file=${encodeURIComponent(file.file)}`} className="text-xs font-semibold text-bl-blue hover:underline">DL</a>
+                      <button type="button" onClick={() => removeDoc(d.id, file.file)} className="text-xs font-bold text-bl-gray2 hover:text-bl-red">×</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
       </Card>
 
       {/* Save */}

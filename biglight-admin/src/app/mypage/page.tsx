@@ -6,7 +6,7 @@ import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
 import CandidateDashboard, { type AppView } from "@/components/candidate/CandidateDashboard";
-import { type ProfileInit } from "@/components/candidate/CandidateProfileForm";
+import { type ProfileInit, type DocMap } from "@/components/candidate/CandidateProfileForm";
 
 const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
@@ -83,9 +83,11 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     changeReason: candidate?.changeReason ?? "",
   };
 
+  const docs = ((candidate?.documents as DocMap) ?? {}) as DocMap;
+
   return (
     <Shell active="mypage">
-      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} />
+      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} docs={docs} />
       <FbChat />
     </Shell>
   );
