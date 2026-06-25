@@ -50,14 +50,20 @@ export default function CandidateLogin({ applyTitle }: { applyTitle?: string }) 
     window.FB.init({ appId: fbAppId, cookie: true, xfbml: false, version: "v21.0" });
   }
   function loginFb() {
-    if (!window.FB) return;
+    if (!window.FB) {
+      setError("Facebookの読み込みに失敗しました。ページを再読み込みしてください。");
+      return;
+    }
     setError("");
     window.FB.login(
       async (response: any) => {
-        const token = response?.authResponse?.accessToken;
-        if (!token) { setError("Facebookログインがキャンセルされました"); return; }
-        setBusy(true);
-        finish(await fetch("/api/auth/candidate/facebook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessToken: token }) }));
+        if (response?.status === "connected" && response.authResponse?.accessToken) {
+          setBusy(true);
+          finish(await fetch("/api/auth/candidate/facebook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessToken: response.authResponse.accessToken }) }));
+        } else {
+          // status: 'not_authorized' | 'unknown' (huỷ, hoặc app/domain chưa cấu hình đúng)
+          setError("Facebookログインができませんでした。アプリのドメイン設定（job.biglight.jp）をご確認ください。");
+        }
       },
       { scope: "public_profile,email" }
     );
