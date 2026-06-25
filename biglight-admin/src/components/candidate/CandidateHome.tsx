@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Shell from "./Shell";
 import FbChat from "./FbChat";
 import HeroArt from "./HeroArt";
 import Logo from "./Logo";
+import MultiSelect from "./MultiSelect";
+import SiteFooter from "./SiteFooter";
 import { PREFECTURES } from "@/lib/prefectures";
-import { STANDARD_TAGS, TEAM, STORIES, COMPANY } from "@/lib/site";
+import { STANDARD_TAGS, FB_PAGE_URL } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type PublicJob = {
@@ -20,9 +21,60 @@ export type PublicJob = {
 const FbIcon = ({ size = 17 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
 );
+
+const STEPS: [string, string, string][] = [
+  ["1", "無料登録", "Facebookで30秒"],
+  ["2", "無料相談", "希望をヒアリング"],
+  ["3", "求人紹介", "条件に合う仕事を提案"],
+  ["4", "面接", "オンライン可・準備サポート"],
+  ["5", "入社", "ビザ・渡航までサポート"],
+];
+
+function FiveSteps() {
+  return (
+    <div className="rounded-2xl bg-white/85 p-4 shadow-lg backdrop-blur">
+      <p className="mb-3 text-center text-sm font-black text-bl-red">応募はかんたん5ステップ</p>
+      <div className="flex items-start justify-between gap-1">
+        {STEPS.map(([n, t, d], i) => (
+          <div key={n} className="flex flex-1 items-start">
+            <div className="flex flex-1 flex-col items-center text-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-bl-red text-sm font-black text-white">{n}</div>
+              <div className="mt-1 text-xs font-bold">{t}</div>
+              <div className="mt-0.5 hidden text-[11px] leading-tight text-bl-gray sm:block">{d}</div>
+            </div>
+            {i < STEPS.length - 1 && <div className="mt-4 h-0.5 flex-1 bg-bl-redsoft" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const selectCls = "w-full rounded-xl border border-bl-line bg-white px-3 py-3 text-sm font-semibold text-ink";
+
+function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
+  area: string; setArea: (v: string) => void; field: string; setField: (v: string) => void;
+  fields: string[]; tags: string[]; setTags: (v: string[]) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-bl-line bg-white p-4 shadow-xl">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
+        <select value={area} onChange={(e) => setArea(e.target.value)} className={selectCls}>
+          <option value="">すべての地域</option>
+          {PREFECTURES.map((p) => <option key={p}>{p}</option>)}
+        </select>
+        <select value={field} onChange={(e) => setField(e.target.value)} className={selectCls}>
+          <option value="">特定技能分野（すべて）</option>
+          {fields.map((f) => <option key={f}>{f}</option>)}
+        </select>
+        <MultiSelect label="タグ" options={STANDARD_TAGS} value={tags} onChange={setTags} />
+        <a href="#jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索する</a>
+      </div>
+    </div>
+  );
+}
+
 export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob[]; initialQ?: string }) {
-  const router = useRouter();
-  const fbRegister = () => router.push("/mypage");
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
@@ -42,210 +94,77 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
       return true;
     });
   }, [jobs, q, field, area, tags]);
-  const toggleTag = (t: string) => setTags((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
 
-  const Grid =
-    list.length === 0 ? (
-      <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
-    ) : (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{list.map((j) => <JobCard key={j.id} job={j} />)}</div>
-    );
+  const Grid = list.length === 0 ? (
+    <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
+  ) : (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{list.map((j) => <JobCard key={j.id} job={j} />)}</div>
+  );
+
+  const searchProps = { area, setArea, field, setField, fields, tags, setTags };
 
   return (
     <>
-      {/* ===================== DESKTOP (landing) ===================== */}
+      {/* ===================== DESKTOP ===================== */}
       <div className="hidden bg-white text-ink lg:block">
-        {/* Header */}
         <header className="sticky top-0 z-30 border-b border-bl-line bg-white/95 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
-            <Link href="/" className="flex items-center gap-2">
-              <Logo size={36} />
-              <span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span>
-            </Link>
-            <nav className="flex items-center gap-5 text-sm font-semibold text-bl-gray">
-              <a href="#jobs" className="hover:text-ink">求人を探す</a>
-              <a href="#team" className="hover:text-ink">サポートチーム</a>
-              <a href="#testi" className="hover:text-ink">体験談</a>
-              <a href="#flow" className="hover:text-ink">応募の流れ</a>
-              <Link href="/mypage" className="hover:text-ink">マイページ</Link>
+            <Link href="/" className="flex items-center gap-2"><Logo size={36} /><span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span></Link>
+            <nav className="flex items-center gap-5 text-sm font-bold text-bl-gray">
+              <Link href="/" className="text-ink">求人を探す</Link>
+              <Link href="/about" className="hover:text-ink">私たちについて</Link>
+              <Link href="/info" className="hover:text-ink">役に立つ情報</Link>
             </nav>
             <div className="ml-auto flex items-center gap-2">
-              <button onClick={fbRegister} className="flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white hover:bg-[#0C63D4]"><FbIcon /> Facebookで登録</button>
-              <Link href="/login" className="rounded-lg border border-bl-line px-3 py-2 text-sm font-semibold text-bl-gray hover:text-ink">管理</Link>
+              <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white hover:bg-[#0C63D4]"><FbIcon /> 登録</a>
+              <Link href="/mypage" className="rounded-lg bg-bl-red px-4 py-2 text-sm font-black text-white shadow-md hover:bg-bl-redd">マイページ</Link>
             </div>
           </div>
         </header>
 
-        {/* Hero — friendly flat illustration */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFEAE3] to-[#FFE0D6]">
-          <div className="mx-auto grid max-w-6xl items-center gap-6 px-6 py-14 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <div className="mb-4 flex flex-wrap gap-2 text-xs font-bold">
-                <span className="rounded-full bg-bl-redsoft px-3 py-1 text-bl-red">工業製品製造業</span>
-                <span className="rounded-full bg-bl-redsoft px-3 py-1 text-bl-red">建設業</span>
-                <span className="rounded-full bg-white px-3 py-1 text-bl-gray">ほか 特定技能 全分野</span>
+        {/* Hero */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFE7DF] to-[#FFD9CC]">
+          <div className="mx-auto max-w-6xl px-6 pb-10 pt-12">
+            <div className="grid items-center gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <div>
+                <span className="inline-block rounded-full bg-white px-3 py-1 text-xs font-black text-bl-red shadow-sm">🎌 特定技能 全16分野に対応</span>
+                <h1 className="mt-4 text-4xl font-black leading-tight text-ink sm:text-5xl">特定技能の求人を、<br /><span className="text-bl-red">サクッと</span>見つけよう。</h1>
+                <p className="mt-3 text-lg font-bold text-bl-gray">あなたにピッタリの仕事が、きっと見つかる。✨</p>
               </div>
-              <h1 className="text-4xl font-black leading-tight text-ink sm:text-5xl">
-                日本で働く夢を、<br /><span className="text-bl-red">いっしょに</span>叶えよう。
-              </h1>
-              <p className="mt-4 max-w-xl text-bl-gray">特定技能の <b className="text-ink">製造・建設</b> を中心に、寮あり・ビザ支援つきの優良求人を多数掲載。手数料は完全無料です。</p>
-              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-bl-gray">
-                <span className="text-bl-green">✓</span>完全無料
-                <span className="text-bl-green">✓</span>ビザ・書類サポート
-                <span className="text-bl-green">✓</span>寮あり多数
-              </div>
-
-              {/* Search box */}
-              <div className="mt-7 rounded-2xl border border-bl-line bg-white p-4 text-ink shadow-xl">
-                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="キーワード（溶接、惣菜 …）" className="rounded-xl bg-bl-bg px-4 py-3 text-sm outline-none" />
-                  <select value={area} onChange={(e) => setArea(e.target.value)} className="rounded-xl border border-bl-line px-3 py-3 text-sm font-semibold">
-                    <option value="">すべての地域</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}
-                  </select>
-                  <a href="#jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索</a>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <select value={field} onChange={(e) => setField(e.target.value)} className="rounded-xl border border-bl-line px-3 py-2 text-sm font-semibold">
-                    <option value="">特定技能分野（すべて）</option>{fields.map((f) => <option key={f}>{f}</option>)}
-                  </select>
-                  <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
-                    {STANDARD_TAGS.map((t) => (
-                      <button key={t} onClick={() => toggleTag(t)} className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold transition ${tags.includes(t) ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray hover:border-bl-red hover:text-bl-red"}`}>{t}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <div><HeroArt className="mx-auto w-full max-w-md" /></div>
             </div>
 
-            {/* Illustration */}
-            <div className="hidden lg:block">
-              <HeroArt className="mx-auto w-full max-w-md" />
-            </div>
+            {/* 5 steps ABOVE search */}
+            <div className="mx-auto mt-8 max-w-4xl"><FiveSteps /></div>
+            {/* Search */}
+            <div className="mx-auto mt-4 max-w-4xl"><SearchBox {...searchProps} /></div>
           </div>
         </section>
 
         {/* Jobs */}
-        <section id="jobs" className="bg-bl-bg py-14">
+        <section id="jobs" className="bg-bl-bg py-12">
           <div className="mx-auto max-w-6xl px-6">
             <div className="mb-6 flex items-baseline justify-between">
-              <h2 className="text-2xl font-black"><span className="text-bl-red">{list.length}</span>件の求人</h2>
-              {(field || area || tags.length > 0) && <button onClick={() => { setField(""); setArea(""); setTags([]); setQ(""); }} className="text-sm font-semibold text-bl-gray2 underline">条件をクリア</button>}
+              <h2 className="text-2xl font-black"><span className="text-bl-red">{list.length}</span>件の特定技能求人</h2>
+              {(field || area || tags.length > 0) && <button onClick={() => { setField(""); setArea(""); setTags([]); }} className="text-sm font-semibold text-bl-gray2 underline">条件をクリア</button>}
             </div>
             {Grid}
           </div>
         </section>
 
-        {/* Why */}
-        <section id="why" className="py-14">
-          <div className="mx-auto max-w-6xl px-6">
-            <SecHead ey="WHY BIGLIGHT" h2="BIGLIGHT が選ばれる理由" p="あなたの「日本で働きたい」を、最後まで責任を持ってサポートします。" />
-            <div className="mt-8 grid gap-5 sm:grid-cols-3">
-              {[["手数料 完全無料", "登録から入社まで、あなたが支払う費用は一切ありません。安心して相談できます。"], ["ビザ・書類をフルサポート", "登録支援機関として、在留資格の申請や書類作成をワンストップで代行します。"], ["入社後も寄り添う", "最長1年の安心サポート。日本での生活や仕事の悩みも気軽に相談できます。"]].map(([t, d]) => (
-                <div key={t} className="rounded-2xl border border-bl-line bg-white p-6 shadow-sm"><h3 className="text-lg font-bold text-bl-red">{t}</h3><p className="mt-2 text-sm leading-relaxed text-bl-gray">{d}</p></div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Team */}
-        <section id="team" className="bg-bl-bg py-14">
-          <div className="mx-auto max-w-6xl px-6">
-            <SecHead ey="SUPPORT TEAM" h2="あなたの専属サポーター" p="登録から入社後まで、母国語で寄り添うBIGLIGHTの相談員チームです。" />
-            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {TEAM.map((m) => (
-                <div key={m.name} className="overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm">
-                  <div className="relative h-44"><img src={m.img} alt="" className="h-full w-full object-cover" /><span className="absolute right-2 top-2 rounded-full bg-bl-green px-2 py-0.5 text-[11px] font-bold text-white">対応可能</span></div>
-                  <div className="p-4">
-                    <h3 className="font-bold">{m.name}</h3>
-                    <div className="text-xs text-bl-gray2">{m.rom}</div>
-                    <div className="mt-1 text-sm font-semibold text-bl-red">{m.role}</div>
-                    <div className="mt-2 flex flex-wrap gap-1">{m.langs.map((l) => <span key={l} className="rounded bg-bl-bg px-2 py-0.5 text-[11px] text-bl-gray">{l}</span>)}</div>
-                    <button onClick={fbRegister} className="mt-3 w-full rounded-lg border border-bl-line py-2 text-sm font-semibold text-bl-gray hover:border-bl-red hover:text-bl-red">相談する</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials */}
-        <section id="testi" className="py-14">
-          <div className="mx-auto max-w-6xl px-6">
-            <SecHead ey="SUCCESS STORIES" h2="先輩たちの声" />
-            <div className="mt-8 grid gap-5 sm:grid-cols-3">
-              {STORIES.map((s) => (
-                <div key={s.name} className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
-                  <div className="flex items-center gap-3"><img src={s.img} alt="" className="h-11 w-11 rounded-full object-cover" /><div><b className="text-sm">{s.name}</b><div className="text-xs text-bl-gray2">{s.meta}</div></div></div>
-                  <div className="mt-2 text-bl-amber">★★★★★</div>
-                  <p className="mt-2 text-sm leading-relaxed text-bl-gray">「{s.quote}」</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Flow */}
-        <section id="flow" className="bg-bl-bg py-14">
-          <div className="mx-auto max-w-6xl px-6">
-            <SecHead ey="HOW IT WORKS" h2="応募はかんたん5ステップ" />
-            <div className="mt-8 grid gap-4 sm:grid-cols-5">
-              {[["1", "無料登録", "Facebookで30秒"], ["2", "無料相談", "希望をヒアリング"], ["3", "求人紹介", "条件に合う求人を提案"], ["4", "面接", "オンライン可・準備サポート"], ["5", "入社", "ビザ・渡航までサポート"]].map(([n, t, d]) => (
-                <div key={n} className="rounded-2xl border border-bl-line bg-white p-5 text-center shadow-sm"><div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-bl-red font-black text-white">{n}</div><h4 className="mt-3 text-sm font-bold">{t}</h4><p className="mt-1 text-xs text-bl-gray">{d}</p></div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="bg-gradient-to-br from-bl-red to-bl-redd py-16 text-center text-white">
-          <div className="mx-auto max-w-2xl px-6">
-            <h2 className="text-3xl font-black">まずは無料で登録しよう</h2>
-            <p className="mt-3 text-white/85">Facebookアカウントですぐに始められます。担当者がチャットでサポートします。</p>
-            <button onClick={fbRegister} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-bl-fb px-7 py-3.5 text-base font-bold text-white shadow-lg hover:bg-[#0C63D4]"><FbIcon size={20} /> Facebookで無料登録</button>
-            <div className="mt-3 text-xs text-white/75">※ 登録・相談・入社まで完全無料 / 個人情報は厳重に管理します</div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-[#16181D] py-12 text-sm text-white/70">
-          <div className="mx-auto grid max-w-6xl gap-8 px-6 sm:grid-cols-3">
-            <div>
-              <div className="flex items-center gap-2"><Logo size={32} /><span className="font-black text-white">BIGLIGHT<span className="text-bl-red"> JOB</span></span></div>
-              <p className="mt-3 leading-relaxed">{COMPANY.name}<br />{COMPANY.postal} {COMPANY.address}<br />TEL: {COMPANY.tel}</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">{COMPANY.licenses.map((l) => <span key={l} className="rounded bg-white/10 px-2 py-0.5 text-[11px]">{l}</span>)}</div>
-            </div>
-            <div><h5 className="mb-2 font-bold text-white">分野から探す</h5><div className="flex flex-col gap-1"><a href="#jobs" className="hover:text-white">工業製品製造業</a><a href="#jobs" className="hover:text-white">建設業</a><a href="#jobs" className="hover:text-white">飲食料品製造業</a><a href="#jobs" className="hover:text-white">外食業・介護・宿泊 ほか</a></div></div>
-            <div><h5 className="mb-2 font-bold text-white">BIGLIGHTについて</h5><div className="flex flex-col gap-1"><a href="#why" className="hover:text-white">選ばれる理由</a><a href="#flow" className="hover:text-white">応募の流れ</a><a href="#testi" className="hover:text-white">体験談</a></div></div>
-          </div>
-          <div className="mx-auto mt-8 max-w-6xl border-t border-white/10 px-6 pt-5 text-xs text-white/50">© 2026 {COMPANY.name} — 日本の成長を、もっとグローバルに</div>
-        </footer>
+        <SiteFooter />
       </div>
 
-      {/* ===================== MOBILE (app-shell) ===================== */}
+      {/* ===================== MOBILE ===================== */}
       <div className="lg:hidden">
         <Shell active="jobs" searchValue={q} onSearchChange={setQ}>
-          {/* Friendly banner */}
-          <div className="flex items-center gap-2 bg-gradient-to-br from-[#FFF6F2] to-[#FFE0D6] px-4 py-3">
-            <HeroArt className="h-20 w-24 flex-none" />
-            <div>
-              <h2 className="text-sm font-black leading-snug text-ink">日本のお仕事を、<br />いっしょに見つけよう 🎌</h2>
-              <button onClick={fbRegister} className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-1.5 text-xs font-bold text-white">
-                <FbIcon size={13} /> Facebookで無料登録
-              </button>
-            </div>
-          </div>
-          <div className="sticky top-[53px] z-20 border-b border-bl-line bg-white/95 px-4 py-3 backdrop-blur">
-            <div className="flex flex-wrap items-center gap-2">
-              <select value={field} onChange={(e) => setField(e.target.value)} className="rounded-xl border border-bl-line bg-white px-3 py-2 text-sm font-semibold"><option value="">特定技能分野</option>{fields.map((f) => <option key={f}>{f}</option>)}</select>
-              <select value={area} onChange={(e) => setArea(e.target.value)} className="rounded-xl border border-bl-line bg-white px-3 py-2 text-sm font-semibold"><option value="">地域</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}</select>
-              {(field || area || tags.length > 0) && <button onClick={() => { setField(""); setArea(""); setTags([]); }} className="text-xs font-semibold text-bl-gray2 underline">クリア</button>}
-            </div>
-            <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
-              {STANDARD_TAGS.map((t) => <button key={t} onClick={() => toggleTag(t)} className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold ${tags.includes(t) ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray"}`}>{t}</button>)}
-            </div>
+          <div className="bg-gradient-to-br from-[#FFF6F2] to-[#FFD9CC] px-4 pb-3 pt-4">
+            <h1 className="text-xl font-black leading-snug text-ink">特定技能の求人を、<span className="text-bl-red">サクッと</span>見つけよう 🎌</h1>
+            <div className="mt-3"><FiveSteps /></div>
+            <div className="mt-3"><SearchBox {...searchProps} /></div>
           </div>
           <div className="px-4 py-5">
-            <h1 className="mb-4 text-xl font-black"><span className="text-bl-red">{list.length}</span>件の求人</h1>
+            <h2 className="mb-4 text-lg font-black"><span className="text-bl-red">{list.length}</span>件の求人</h2>
             {Grid}
           </div>
         </Shell>
@@ -253,16 +172,6 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
 
       <FbChat />
     </>
-  );
-}
-
-function SecHead({ ey, h2, p }: { ey: string; h2: string; p?: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-xs font-black tracking-widest text-bl-red">{ey}</div>
-      <h2 className="mt-1 text-2xl font-black">{h2}</h2>
-      {p && <p className="mx-auto mt-2 max-w-xl text-sm text-bl-gray">{p}</p>}
-    </div>
   );
 }
 
