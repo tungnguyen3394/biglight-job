@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Facebook認証に失敗しました" }, { status: 401 });
   }
 
-  if (!isAllowedAdminEmail(payload.email)) {
+  if (!payload.email || !isAllowedAdminEmail(payload.email)) {
     return NextResponse.json(
       { error: "BIGLIGHT（@biglight.jp）のメールアドレスのみログインできます" },
       { status: 403 }

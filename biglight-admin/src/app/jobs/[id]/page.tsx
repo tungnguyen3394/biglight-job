@@ -44,7 +44,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   if (!job) notFound();
 
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
-  const applyHref = `/mypage?apply=${encodeURIComponent(job.code)}&t=${encodeURIComponent(job.title)}`;
+  const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
 
   return (
     <Shell active="jobs">

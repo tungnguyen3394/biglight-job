@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FB_PAGE_URL } from "@/lib/site";
+import Logo from "./Logo";
 
 type Active = "jobs" | "mypage" | "apps" | "chat";
 
@@ -48,7 +49,7 @@ export default function Shell({
       {/* Sidebar — desktop */}
       <aside className="sticky top-0 hidden h-screen flex-col border-r border-bl-line bg-white p-4 lg:flex">
         <Link href="/" className="mb-4 flex items-center gap-2 px-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-bl-red text-lg font-black text-white">B</span>
+          <Logo size={36} />
           <span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span>
         </Link>
         <nav className="flex flex-col gap-1">
@@ -61,17 +62,17 @@ export default function Shell({
             );
           })}
         </nav>
-        <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-bl-fb py-3 text-sm font-bold text-white hover:bg-[#0C63D4]">
+        <Link href="/mypage" className="mt-auto flex items-center justify-center gap-2 rounded-xl bg-bl-fb py-3 text-sm font-bold text-white hover:bg-[#0C63D4]">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
-          Facebookで登録
-        </a>
+          登録・ログイン
+        </Link>
       </aside>
 
       <div className="flex min-h-screen flex-col">
         {/* Header — search + notifications */}
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-bl-line bg-white/95 px-4 py-2.5 backdrop-blur">
           <Link href="/" className="flex items-center gap-1.5 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-bl-red text-base font-black text-white">B</span>
+            <Logo size={32} />
           </Link>
           <form onSubmit={onSubmit} className="flex flex-1 items-center gap-2 rounded-xl bg-bl-bg px-3 py-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA2AE" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
@@ -86,10 +87,10 @@ export default function Shell({
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-bl-red" />
           </button>
-          <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white sm:flex lg:hidden">
+          <Link href="/mypage" className="hidden items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white sm:flex lg:hidden">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
             登録
-          </a>
+          </Link>
         </header>
 
         <main className="flex-1 pb-24 lg:pb-6">{children}</main>

@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Shell from "./Shell";
 import FbChat from "./FbChat";
 import HeroArt from "./HeroArt";
+import Logo from "./Logo";
 import { PREFECTURES } from "@/lib/prefectures";
-import { STANDARD_TAGS, TEAM, STORIES, COMPANY, FB_PAGE_URL } from "@/lib/site";
+import { STANDARD_TAGS, TEAM, STORIES, COMPANY } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type PublicJob = {
@@ -18,9 +20,9 @@ export type PublicJob = {
 const FbIcon = ({ size = 17 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
 );
-const fbRegister = () => window.open(FB_PAGE_URL, "_blank", "noopener");
-
 export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob[]; initialQ?: string }) {
+  const router = useRouter();
+  const fbRegister = () => router.push("/mypage");
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
@@ -57,7 +59,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
         <header className="sticky top-0 z-30 border-b border-bl-line bg-white/95 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
             <Link href="/" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-bl-red text-lg font-black text-white">B</span>
+              <Logo size={36} />
               <span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span>
             </Link>
             <nav className="flex items-center gap-5 text-sm font-semibold text-bl-gray">
@@ -208,7 +210,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
         <footer className="bg-[#16181D] py-12 text-sm text-white/70">
           <div className="mx-auto grid max-w-6xl gap-8 px-6 sm:grid-cols-3">
             <div>
-              <div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-bl-red font-black text-white">B</span><span className="font-black text-white">BIGLIGHT<span className="text-bl-red"> JOB</span></span></div>
+              <div className="flex items-center gap-2"><Logo size={32} /><span className="font-black text-white">BIGLIGHT<span className="text-bl-red"> JOB</span></span></div>
               <p className="mt-3 leading-relaxed">{COMPANY.name}<br />{COMPANY.postal} {COMPANY.address}<br />TEL: {COMPANY.tel}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">{COMPANY.licenses.map((l) => <span key={l} className="rounded bg-white/10 px-2 py-0.5 text-[11px]">{l}</span>)}</div>
             </div>

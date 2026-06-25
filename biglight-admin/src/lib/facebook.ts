@@ -4,7 +4,7 @@ const APP_ID = process.env.FACEBOOK_APP_ID;
 const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 
 export interface FacebookPayload {
-  email: string;
+  email?: string; // Facebook có thể không chia sẻ email
   name: string;
   picture?: string;
   id: string;
@@ -30,12 +30,12 @@ export async function verifyFacebookAccessToken(accessToken: string): Promise<Fa
       `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${encodeURIComponent(accessToken)}`
     );
     const me = await meRes.json();
-    if (!me?.email) return null;
+    if (!me?.id) return null;
 
     return {
       id: String(me.id),
-      email: me.email,
-      name: me.name || me.email,
+      email: me.email ?? undefined,
+      name: me.name || me.email || "Facebookユーザー",
       picture: me.picture?.data?.url,
     };
   } catch {

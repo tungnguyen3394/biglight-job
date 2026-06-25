@@ -16,7 +16,8 @@ const ALLOWED_DOMAINS = (process.env.ALLOWED_EMAIL_DOMAINS || "biglight.jp")
   .map((d) => d.trim().toLowerCase())
   .filter(Boolean);
 
-export function isAllowedAdminEmail(email: string): boolean {
+export function isAllowedAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
   const at = email.lastIndexOf("@");
   if (at < 0) return false;
   const domain = email.slice(at + 1).toLowerCase();

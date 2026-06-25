@@ -121,6 +121,7 @@ model User {
   staffJobs        Job[]         @relation("JobStaff")
   staffCandidates  Candidate[]   @relation("CandidateStaff")
   staffApplications Application[] @relation("ApplicationStaff")
+  candidateProfile Candidate?    @relation("CandidateAccount")
 
   @@index([role])
   @@map("users")
@@ -307,11 +308,14 @@ model Candidate {
   biglightStaffId String?
   status         String  @default("新規") // operational status label
 
+  userId String? @unique // tài khoản đăng nhập của lao động (login Facebook/Google)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   referralCtv   Ctv?          @relation("CandidateReferral", fields: [referralCtvId], references: [id])
   biglightStaff User?         @relation("CandidateStaff", fields: [biglightStaffId], references: [id])
+  user          User?         @relation("CandidateAccount", fields: [userId], references: [id])
   applications  Application[]
   candidateCommissions CandidateCommission[]
 
