@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Shell from "./Shell";
 import FbChat from "./FbChat";
+import HeroArt from "./HeroArt";
 import { PREFECTURES } from "@/lib/prefectures";
-import { STANDARD_TAGS, TEAM, STORIES, COMPANY, HERO_IMAGE, FB_PAGE_URL } from "@/lib/site";
+import { STANDARD_TAGS, TEAM, STORIES, COMPANY, FB_PAGE_URL } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type PublicJob = {
@@ -41,14 +42,6 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
   }, [jobs, q, field, area, tags]);
   const toggleTag = (t: string) => setTags((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
 
-  const TagChips = (
-    <div className="flex flex-wrap gap-1.5">
-      {STANDARD_TAGS.map((t) => (
-        <button key={t} onClick={() => toggleTag(t)} className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${tags.includes(t) ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray hover:border-bl-red hover:text-bl-red"}`}>{t}</button>
-      ))}
-    </div>
-  );
-
   const Grid =
     list.length === 0 ? (
       <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
@@ -81,35 +74,50 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
           </div>
         </header>
 
-        {/* Hero */}
-        <section className="relative isolate overflow-hidden">
-          <img src={HERO_IMAGE} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[#1a0a08]/92 via-[#2a0d0a]/88 to-[#13335C]/82" />
-          <div className="mx-auto max-w-6xl px-6 py-20 text-white">
-            <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold">
-              <span className="rounded-full bg-white/15 px-3 py-1">工業製品製造業</span>
-              <span className="rounded-full bg-white/15 px-3 py-1">建設業</span>
-              <span className="rounded-full bg-white/15 px-3 py-1">ほか 特定技能 全分野に対応</span>
-            </div>
-            <h1 className="text-4xl font-black leading-tight sm:text-5xl">日本で働く夢を、<br /><span className="text-[#FF6B61]">最短ルート</span>で叶える。</h1>
-            <p className="mt-4 max-w-2xl text-white/80">特定技能の <b>製造・建設</b> を中心に、寮あり・ビザ支援つきの優良求人を多数掲載。手数料は完全無料です。</p>
-            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/90">
-              <span>✓ 完全無料</span><span>✓ ビザ・書類サポート</span><span>✓ 寮あり多数</span><span>✓ 登録支援機関</span>
+        {/* Hero — friendly flat illustration */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFEAE3] to-[#FFE0D6]">
+          <div className="mx-auto grid max-w-6xl items-center gap-6 px-6 py-14 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <div className="mb-4 flex flex-wrap gap-2 text-xs font-bold">
+                <span className="rounded-full bg-bl-redsoft px-3 py-1 text-bl-red">工業製品製造業</span>
+                <span className="rounded-full bg-bl-redsoft px-3 py-1 text-bl-red">建設業</span>
+                <span className="rounded-full bg-white px-3 py-1 text-bl-gray">ほか 特定技能 全分野</span>
+              </div>
+              <h1 className="text-4xl font-black leading-tight text-ink sm:text-5xl">
+                日本で働く夢を、<br /><span className="text-bl-red">いっしょに</span>叶えよう。
+              </h1>
+              <p className="mt-4 max-w-xl text-bl-gray">特定技能の <b className="text-ink">製造・建設</b> を中心に、寮あり・ビザ支援つきの優良求人を多数掲載。手数料は完全無料です。</p>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-bl-gray">
+                <span className="text-bl-green">✓</span>完全無料
+                <span className="text-bl-green">✓</span>ビザ・書類サポート
+                <span className="text-bl-green">✓</span>寮あり多数
+              </div>
+
+              {/* Search box */}
+              <div className="mt-7 rounded-2xl border border-bl-line bg-white p-4 text-ink shadow-xl">
+                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="キーワード（溶接、惣菜 …）" className="rounded-xl bg-bl-bg px-4 py-3 text-sm outline-none" />
+                  <select value={area} onChange={(e) => setArea(e.target.value)} className="rounded-xl border border-bl-line px-3 py-3 text-sm font-semibold">
+                    <option value="">すべての地域</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}
+                  </select>
+                  <a href="#jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索</a>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <select value={field} onChange={(e) => setField(e.target.value)} className="rounded-xl border border-bl-line px-3 py-2 text-sm font-semibold">
+                    <option value="">特定技能分野（すべて）</option>{fields.map((f) => <option key={f}>{f}</option>)}
+                  </select>
+                  <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
+                    {STANDARD_TAGS.map((t) => (
+                      <button key={t} onClick={() => toggleTag(t)} className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold transition ${tags.includes(t) ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray hover:border-bl-red hover:text-bl-red"}`}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Search box */}
-            <div className="mt-8 rounded-2xl bg-white p-4 text-ink shadow-2xl">
-              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="キーワード（溶接、惣菜、足場 …）" className="rounded-xl bg-bl-bg px-4 py-3 text-sm outline-none" />
-                <select value={area} onChange={(e) => setArea(e.target.value)} className="rounded-xl border border-bl-line px-3 py-3 text-sm font-semibold">
-                  <option value="">すべての地域</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}
-                </select>
-                <select value={field} onChange={(e) => setField(e.target.value)} className="rounded-xl border border-bl-line px-3 py-3 text-sm font-semibold">
-                  <option value="">特定技能分野（すべて）</option>{fields.map((f) => <option key={f}>{f}</option>)}
-                </select>
-                <a href="#jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">この条件で検索</a>
-              </div>
-              <div className="mt-3">{TagChips}</div>
+            {/* Illustration */}
+            <div className="hidden lg:block">
+              <HeroArt className="mx-auto w-full max-w-md" />
             </div>
           </div>
         </section>
@@ -214,6 +222,16 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
       {/* ===================== MOBILE (app-shell) ===================== */}
       <div className="lg:hidden">
         <Shell active="jobs" searchValue={q} onSearchChange={setQ}>
+          {/* Friendly banner */}
+          <div className="flex items-center gap-2 bg-gradient-to-br from-[#FFF6F2] to-[#FFE0D6] px-4 py-3">
+            <HeroArt className="h-20 w-24 flex-none" />
+            <div>
+              <h2 className="text-sm font-black leading-snug text-ink">日本のお仕事を、<br />いっしょに見つけよう 🎌</h2>
+              <button onClick={fbRegister} className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-1.5 text-xs font-bold text-white">
+                <FbIcon size={13} /> Facebookで無料登録
+              </button>
+            </div>
+          </div>
           <div className="sticky top-[53px] z-20 border-b border-bl-line bg-white/95 px-4 py-3 backdrop-blur">
             <div className="flex flex-wrap items-center gap-2">
               <select value={field} onChange={(e) => setField(e.target.value)} className="rounded-xl border border-bl-line bg-white px-3 py-2 text-sm font-semibold"><option value="">特定技能分野</option>{fields.map((f) => <option key={f}>{f}</option>)}</select>

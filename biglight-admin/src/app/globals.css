@@ -38,3 +38,16 @@ body {
     @apply rounded-xl border border-slate-200 bg-white shadow-sm;
   }
 }
+
+/* Chuyển động nhẹ cho hero minh hoạ (hoạt hình thân thiện) */
+@keyframes bl-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes bl-bob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes bl-wave  { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(20deg); } }
+@keyframes bl-spin  { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.bl-float { animation: bl-float 5s ease-in-out infinite; }
+.bl-bob   { animation: bl-bob 3.6s ease-in-out infinite; }
+.bl-wave  { animation: bl-wave 1.8s ease-in-out infinite; }
+.bl-spin  { animation: bl-spin 40s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .bl-float, .bl-bob, .bl-wave, .bl-spin { animation: none; }
+}
