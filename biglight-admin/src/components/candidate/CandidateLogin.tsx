@@ -42,9 +42,10 @@ export default function CandidateLogin({ applyTitle, fbError }: { applyTitle?: s
   function loginFb() {
     if (!fbAppId) return;
     const redirectUri = `${PUBLIC_BASE_URL}/api/auth/candidate/facebook/callback`;
+    // Chỉ xin public_profile (luôn có). Email không bắt buộc — định danh bằng Facebook ID.
     const u =
       `https://www.facebook.com/v21.0/dialog/oauth?client_id=${encodeURIComponent(fbAppId)}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}&scope=public_profile,email&response_type=code`;
+      `&redirect_uri=${encodeURIComponent(redirectUri)}&scope=public_profile&response_type=code`;
     window.location.href = u;
   }
 
