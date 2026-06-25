@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,17 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Google Translate — nạp 1 lần, các nút LangSwitch sẽ điều khiển combo này */}
+        <div id="google_translate_element" />
+        <Script id="gt-init" strategy="afterInteractive">{`
+          function googleTranslateElementInit(){
+            new google.translate.TranslateElement({pageLanguage:'ja',includedLanguages:'ja,vi,en,zh-CN,id,my,ne,th',autoDisplay:false},'google_translate_element');
+          }
+        `}</Script>
+        <Script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" strategy="afterInteractive" />
+      </body>
     </html>
   );
 }

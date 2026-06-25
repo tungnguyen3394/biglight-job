@@ -51,3 +51,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .bl-float, .bl-bob, .bl-wave, .bl-spin { animation: none; }
 }
+
+/* Google Translate — ẩn banner/gadget, giữ combo ẩn để điều khiển */
+#google_translate_element { position: fixed; left: -9999px; top: 0; }
+.goog-te-banner-frame { display: none !important; }
+.goog-logo-link, .goog-te-gadget span { display: none !important; }
+body { top: 0 !important; }

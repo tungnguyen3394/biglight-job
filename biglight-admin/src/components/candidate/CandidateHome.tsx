@@ -8,6 +8,7 @@ import HeroArt from "./HeroArt";
 import Logo from "./Logo";
 import MultiSelect from "./MultiSelect";
 import SiteFooter from "./SiteFooter";
+import LangSwitch from "./LangSwitch";
 import { PREFECTURES } from "@/lib/prefectures";
 import { STANDARD_TAGS, FB_PAGE_URL } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
@@ -116,6 +117,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
               <Link href="/info" className="hover:text-ink">役に立つ情報</Link>
             </nav>
             <div className="ml-auto flex items-center gap-2">
+              <LangSwitch />
               <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white hover:bg-[#0C63D4]"><FbIcon /> 登録</a>
               <Link href="/mypage" className="rounded-lg bg-bl-red px-4 py-2 text-sm font-black text-white shadow-md hover:bg-bl-redd">マイページ</Link>
             </div>
