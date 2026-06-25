@@ -61,8 +61,11 @@ export default function AboutPage() {
             {/* Text */}
             <div className={i % 2 === 1 ? "sm:order-1" : ""}>
               <div className="text-xs font-black tracking-[0.2em] text-bl-red">ADVISOR 0{i + 1}</div>
-              <h2 className="mt-1 text-2xl font-black sm:text-3xl">{a.name}</h2>
-              <div className="mt-1 inline-block rounded-full bg-bl-redsoft px-3 py-1 text-sm font-bold text-bl-red">{a.role}</div>
+              <h2 className="mt-1 flex items-center gap-2 text-2xl font-black sm:text-3xl">{a.name}<span className="text-2xl" title="ベトナム">🇻🇳</span></h2>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <span className="inline-block rounded-full bg-bl-redsoft px-3 py-1 text-sm font-bold text-bl-red">{a.role}</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-bl-bg px-2.5 py-1 text-xs font-bold text-bl-gray">🇻🇳 ベトナム</span>
+              </div>
               <p className="mt-5 text-[15px] leading-loose text-bl-gray">{a.bio}</p>
             </div>
           </div>
