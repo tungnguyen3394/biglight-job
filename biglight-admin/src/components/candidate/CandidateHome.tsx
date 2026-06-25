@@ -80,6 +80,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [view, setView] = useState<"grid" | "list">("grid");
 
   const fields = useMemo(() => Array.from(new Set(jobs.map((j) => j.industry))).sort(), [jobs]);
   const list = useMemo(() => {
@@ -100,6 +101,18 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
     <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
   ) : (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{list.map((j) => <JobCard key={j.id} job={j} />)}</div>
+  );
+  const Body = list.length === 0 ? Grid : view === "list" ? <JobList jobs={list} /> : Grid;
+
+  const Toggle = (
+    <div className="flex overflow-hidden rounded-lg border border-bl-line">
+      <button onClick={() => setView("grid")} className={`flex h-8 w-9 items-center justify-center ${view === "grid" ? "bg-bl-red text-white" : "bg-white text-bl-gray hover:bg-bl-bg"}`} aria-label="カード表示">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></svg>
+      </button>
+      <button onClick={() => setView("list")} className={`flex h-8 w-9 items-center justify-center border-l border-bl-line ${view === "list" ? "bg-bl-red text-white" : "bg-white text-bl-gray hover:bg-bl-bg"}`} aria-label="リスト表示">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+      </button>
+    </div>
   );
 
   const searchProps = { area, setArea, field, setField, fields, tags, setTags };
@@ -146,11 +159,14 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
         {/* Jobs */}
         <section id="jobs" className="bg-bl-bg py-12">
           <div className="mx-auto max-w-6xl px-6">
-            <div className="mb-6 flex items-baseline justify-between">
+            <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-black"><span className="text-bl-red">{list.length}</span>件の特定技能求人</h2>
-              {(field || area || tags.length > 0) && <button onClick={() => { setField(""); setArea(""); setTags([]); }} className="text-sm font-semibold text-bl-gray2 underline">条件をクリア</button>}
+              <div className="flex items-center gap-3">
+                {(field || area || tags.length > 0) && <button onClick={() => { setField(""); setArea(""); setTags([]); }} className="text-sm font-semibold text-bl-gray2 underline">条件をクリア</button>}
+                {Toggle}
+              </div>
             </div>
-            {Grid}
+            {Body}
           </div>
         </section>
 
@@ -166,8 +182,11 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
             <div className="mt-3"><SearchBox {...searchProps} /></div>
           </div>
           <div className="px-4 py-5">
-            <h2 className="mb-4 text-lg font-black"><span className="text-bl-red">{list.length}</span>件の求人</h2>
-            {Grid}
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-black"><span className="text-bl-red">{list.length}</span>件の求人</h2>
+              {Toggle}
+            </div>
+            {Body}
           </div>
         </Shell>
       </div>
@@ -201,5 +220,29 @@ function JobCard({ job }: { job: PublicJob }) {
         {job.tags.length > 0 && <div className="mt-2.5 flex flex-wrap gap-1">{job.tags.slice(0, 3).map((t) => <span key={t} className="rounded bg-bl-bg px-1.5 py-0.5 text-[11px] text-bl-gray">#{t}</span>)}</div>}
       </div>
     </Link>
+  );
+}
+
+const COLS = "sm:grid sm:grid-cols-[120px_1fr_140px_1.4fr_72px] sm:items-center sm:gap-3";
+
+function JobList({ jobs }: { jobs: PublicJob[] }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-bl-line bg-white">
+      {/* Header (desktop) — 業種 / 勤務地 / 給与 / 職種 / 募集人数 */}
+      <div className={`hidden border-b border-bl-line bg-bl-bg px-4 py-2.5 text-xs font-black text-bl-gray ${COLS}`}>
+        <div>業種</div><div>勤務地</div><div>給与</div><div>職種（タイトル）</div><div>募集人数</div>
+      </div>
+      <div className="divide-y divide-bl-line">
+        {jobs.map((j) => (
+          <Link key={j.id} href={`/jobs/${j.id}`} className={`block px-4 py-3 transition hover:bg-bl-bg ${COLS}`}>
+            <div className="mb-1.5 sm:mb-0"><span className="rounded-full bg-bl-bluesoft px-2 py-0.5 text-[11px] font-bold text-bl-blue">{j.industry}</span></div>
+            <div className="text-sm text-bl-gray">📍 {j.location}{j.city ? ` ${j.city}` : ""}</div>
+            <div className="text-sm font-bold text-bl-red">{j.salaryMain ?? "—"}</div>
+            <div className="text-sm font-bold text-ink">{j.title}</div>
+            <div className="text-sm text-bl-gray">募集 {j.recruitCount}名</div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
