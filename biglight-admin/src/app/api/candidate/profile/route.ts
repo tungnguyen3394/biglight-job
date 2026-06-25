@@ -7,36 +7,53 @@ function toDate(s?: string | null) {
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
+const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
 
-// POST /api/candidate/profile — lưu hồ sơ của lao động đang đăng nhập.
+// POST /api/candidate/profile — lưu hồ sơ của lao động đang đăng nhập (đủ trường như bản gốc).
 export async function POST(req: Request) {
   const session = await getSessionUser();
-  if (!session || session.role !== "CANDIDATE") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session || session.role !== "CANDIDATE") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const candidate = await prisma.candidate.findUnique({ where: { userId: session.id } });
   if (!candidate) return NextResponse.json({ error: "No profile" }, { status: 404 });
 
   const b = await req.json().catch(() => ({}));
+  const reasons = arr(b.reasons);
+  const priorities = arr(b.priorities);
+  const fields = arr(b.fields);
+  const areas = arr(b.areas);
+
+  // Các trường nguyện vọng chi tiết (giữ đủ form gốc) → cột prefs (Json).
+  const prefs = {
+    arrival: b.arrival || "",
+    dorm: b.dorm || "",
+    start: b.start || "",
+    nightshift: b.nightshift || "",
+    shiftwork: b.shiftwork || "",
+    reasons,
+    reasonOther: b.reasonOther || "",
+    priorities,
+  };
 
   await prisma.candidate.update({
     where: { id: candidate.id },
     data: {
       name: typeof b.name === "string" && b.name.trim() ? b.name.trim() : candidate.name,
-      birthdate: toDate(b.birthdate),
+      birthdate: toDate(b.birth),
       gender: b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY",
-      nationality: b.nationality || null,
-      visaType: b.visaType || null,
-      currentTokuteiField: b.currentTokuteiField || null,
-      visaExpiryDate: toDate(b.visaExpiryDate),
-      japaneseLevel: b.japaneseLevel || null,
+      nationality: b.nat || null,
+      visaType: b.visa || null,
+      currentTokuteiField: b.cur || null,
+      visaExpiryDate: toDate(b.expiry),
+      japaneseLevel: b.jp || null,
       desiredSalary: typeof b.desiredSalary === "number" ? b.desiredSalary : null,
-      desiredIndustry: Array.isArray(b.desiredIndustry) ? b.desiredIndustry.join(",") : b.desiredIndustry || null,
-      desiredLocation: Array.isArray(b.desiredLocation) ? b.desiredLocation.join(",") : b.desiredLocation || null,
-      wantDormitory: !!b.wantDormitory,
-      canNightShift: !!b.canNightShift,
-      canShiftWork: !!b.canShiftWork,
-      changeReason: b.changeReason || null,
+      desiredIndustry: fields.length ? fields.join(",") : null,
+      desiredLocation: areas.length ? areas.join(",") : null,
+      // bool tiện lọc cho admin (rút từ lựa chọn 3-way)
+      wantDormitory: b.dorm === "寮を希望",
+      canNightShift: b.nightshift === "できる",
+      canShiftWork: b.shiftwork === "できる",
+      changeReason: [reasons.join("、"), b.reasonOther].filter(Boolean).join(" / ") || null,
+      prefs,
     },
   });
 

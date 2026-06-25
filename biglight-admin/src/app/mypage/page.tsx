@@ -65,22 +65,28 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     ended: ENDED.has(a.status),
   }));
 
+  const p = (candidate?.prefs as Record<string, unknown>) || {};
+  const sArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
   const profile: ProfileInit = {
     name: candidate?.name ?? session.name,
-    birthdate: ymd(candidate?.birthdate),
+    birth: ymd(candidate?.birthdate),
     gender: candidate?.gender ?? "ANY",
-    nationality: candidate?.nationality ?? "",
-    visaType: candidate?.visaType ?? "",
-    currentTokuteiField: candidate?.currentTokuteiField ?? "",
-    visaExpiryDate: ymd(candidate?.visaExpiryDate),
-    japaneseLevel: candidate?.japaneseLevel ?? "",
-    desiredSalaryMan: candidate?.desiredSalary ? Math.round(candidate.desiredSalary / 10000) : 25,
-    desiredIndustry: candidate?.desiredIndustry ? candidate.desiredIndustry.split(",").filter(Boolean) : [],
-    desiredLocation: candidate?.desiredLocation ? candidate.desiredLocation.split(",").filter(Boolean) : [],
-    wantDormitory: candidate?.wantDormitory ?? false,
-    canNightShift: candidate?.canNightShift ?? false,
-    canShiftWork: candidate?.canShiftWork ?? false,
-    changeReason: candidate?.changeReason ?? "",
+    nat: candidate?.nationality ?? "",
+    visa: candidate?.visaType ?? "",
+    cur: candidate?.currentTokuteiField ?? "",
+    expiry: ymd(candidate?.visaExpiryDate),
+    arrival: (p.arrival as string) ?? "",
+    jp: candidate?.japaneseLevel ?? "",
+    fields: candidate?.desiredIndustry ? candidate.desiredIndustry.split(",").filter(Boolean) : [],
+    areas: candidate?.desiredLocation ? candidate.desiredLocation.split(",").filter(Boolean) : [],
+    sal: candidate?.desiredSalary ? Math.round(candidate.desiredSalary / 10000) : 0,
+    dorm: (p.dorm as string) ?? "",
+    start: (p.start as string) ?? "",
+    nightshift: (p.nightshift as string) ?? "",
+    shiftwork: (p.shiftwork as string) ?? "",
+    reasons: sArr(p.reasons),
+    reasonOther: (p.reasonOther as string) ?? "",
+    priorities: sArr(p.priorities),
   };
 
   const docs = ((candidate?.documents as DocMap) ?? {}) as DocMap;

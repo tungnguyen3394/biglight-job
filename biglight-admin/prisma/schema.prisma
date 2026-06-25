@@ -298,6 +298,8 @@ model Candidate {
 
   // documents (file metadata as JSON for MVP)
   documents Json @default("{}")
+  // nguyện vọng chi tiết (来日日, 寮希望3択, いつから, 夜勤/交替3択, 転職理由[], 重視[]) — giữ đủ form gốc
+  prefs Json @default("{}")
 
   // notes
   consultNote  String? @db.Text // 相談メモ
