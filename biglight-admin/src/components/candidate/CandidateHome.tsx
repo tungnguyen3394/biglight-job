@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Shell from "./Shell";
 import FbChat from "./FbChat";
 import HeroArt from "./HeroArt";
@@ -70,12 +71,20 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
   );
 }
 
-export default function CandidateHome({ jobs, initialQ = "", loggedIn }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean }) {
+export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds = [] }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[] }) {
+  const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [savedSet, setSavedSet] = useState<Set<string>>(() => new Set(savedIds));
+
+  function toggleSave(id: string) {
+    if (!loggedIn) { router.push("/mypage"); return; }
+    setSavedSet((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+    fetch("/api/candidate/saved", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
+  }
 
   const fields = useMemo(() => Array.from(new Set(jobs.map((j) => j.industry))).sort(), [jobs]);
   const list = useMemo(() => {
@@ -95,7 +104,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn }: { jobs:
   const Grid = list.length === 0 ? (
     <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
   ) : (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{list.map((j) => <JobCard key={j.id} job={j} />)}</div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{list.map((j) => <JobCard key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} />)}</div>
   );
   const Body = list.length === 0 ? Grid : view === "list" ? <JobList jobs={list} /> : Grid;
 
@@ -177,7 +186,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn }: { jobs:
   );
 }
 
-function JobCard({ job }: { job: PublicJob }) {
+function JobCard({ job, saved, onToggleSave }: { job: PublicJob; saved: boolean; onToggleSave: () => void }) {
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
   return (
     <Link href={`/jobs/${job.id}`} className="group flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
@@ -187,6 +196,9 @@ function JobCard({ job }: { job: PublicJob }) {
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
           {job.dormitory && <span className="rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-bold text-bl-green">寮あり</span>}
         </div>
+        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSave(); }} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-lg leading-none shadow hover:bg-white" aria-label="お気に入り">
+          <span className={saved ? "text-bl-red" : "text-bl-gray2"}>{saved ? "♥" : "♡"}</span>
+        </button>
       </div>
       <div className="flex flex-1 flex-col p-4">
         <h3 className="text-[15px] font-bold leading-snug group-hover:text-bl-red">{job.title}</h3>

@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { APP_STATUS_LABEL } from "@/lib/constants";
+import { salaryRange } from "@/lib/site";
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
-import CandidateDashboard, { type AppView } from "@/components/candidate/CandidateDashboard";
-import { type ProfileInit, type DocMap } from "@/components/candidate/CandidateProfileForm";
+import CandidateDashboard, { type AppView, type SavedJob } from "@/components/candidate/CandidateDashboard";
+import { type ProfileInit } from "@/components/candidate/CandidateProfileForm";
+import { type DocMap } from "@/components/candidate/CandidateDocuments";
 
 const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
@@ -96,9 +98,23 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
 
   const docs = ((candidate?.documents as DocMap) ?? {}) as DocMap;
 
+  // お気に入り求人 (việc đã lưu)
+  const savedIds = candidate?.savedJobIds ?? [];
+  const savedRaw = savedIds.length
+    ? await prisma.job.findMany({ where: { id: { in: savedIds }, publicStatus: "PUBLIC" } })
+    : [];
+  const saved: SavedJob[] = savedRaw.map((j) => ({
+    id: j.id,
+    title: j.title,
+    industry: j.industry,
+    location: j.location,
+    city: j.city,
+    salaryMain: j.payType && j.baseSalary ? `${j.payType} ¥${j.baseSalary.toLocaleString("ja-JP")}` : salaryRange(j.salaryMin, j.salaryMax),
+  }));
+
   return (
     <Shell active="mypage" loggedIn={true}>
-      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} docs={docs} />
+      <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} docs={docs} saved={saved} />
       <FbChat />
     </Shell>
   );

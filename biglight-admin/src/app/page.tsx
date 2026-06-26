@@ -37,6 +37,11 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     img: industryImage(j.industry),
   }));
 
-  const loggedIn = !!(await getSessionUser());
-  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} loggedIn={loggedIn} />;
+  const session = await getSessionUser();
+  let savedIds: string[] = [];
+  if (session?.role === "CANDIDATE") {
+    const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
+    savedIds = cand?.savedJobIds ?? [];
+  }
+  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
 }

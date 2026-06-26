@@ -312,6 +312,7 @@ model Candidate {
   status         String  @default("新規") // operational status label
 
   userId String? @unique // tài khoản đăng nhập của lao động (login Facebook/Google)
+  savedJobIds String[] @default([]) // việc làm đã lưu (お気に入り)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
