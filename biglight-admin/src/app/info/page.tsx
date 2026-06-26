@@ -1,10 +1,11 @@
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import SiteFooter from "@/components/candidate/SiteFooter";
+import { getSessionUser } from "@/lib/auth";
 
 export const metadata = {
-  title: "役に立つ情報｜特定技能ビザ・日本の生活・仕事ガイド｜BIGLIGHT JOB",
-  description: "特定技能ビザの申請、日本での生活費や住まい、面接対策など、日本で働く外国人材に役立つ情報をやさしく解説します。",
+  title: "特定技能ガイド｜ビザ・日本の生活・仕事の情報｜BIGLIGHT JOB",
+  description: "特定技能ビザの申請、日本での生活費や住まい、面接対策など、日本で働く外国人材に役立つ情報をやさしく解説する特定技能ガイドです。",
 };
 
 type Cat = "ビザ" | "生活" | "仕事";
@@ -24,13 +25,14 @@ const ARTICLES: { cat: Cat; title: string; excerpt: string }[] = [
   { cat: "仕事", title: "面接でよく聞かれる質問と答え方", excerpt: "志望動機・経験・将来の希望。日本語が不安でも大丈夫。準備しておきたい受け答えのコツ。" },
 ];
 
-export default function InfoPage() {
+export default async function InfoPage() {
+  const loggedIn = !!(await getSessionUser());
   return (
-    <Shell active="info">
+    <Shell active="info" loggedIn={loggedIn}>
       <div className="mx-auto max-w-5xl px-4 py-8">
         <header className="text-center">
-          <div className="text-xs font-black tracking-widest text-bl-red">USEFUL INFO</div>
-          <h1 className="mt-1 text-2xl font-black sm:text-3xl">役に立つ情報</h1>
+          <div className="text-xs font-black tracking-widest text-bl-red">特定技能ガイド</div>
+          <h1 className="mt-1 text-2xl font-black sm:text-3xl">特定技能ガイド</h1>
           <p className="mx-auto mt-2 max-w-xl text-sm text-bl-gray">特定技能ビザ・日本の生活・仕事のことを、やさしく解説します。</p>
         </header>
 

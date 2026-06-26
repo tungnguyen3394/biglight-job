@@ -45,7 +45,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
   // Chưa đăng nhập (hoặc không phải lao động) → màn hình đăng nhập.
   if (!session || session.role !== "CANDIDATE") {
     return (
-      <Shell active="mypage">
+      <Shell active="mypage" loggedIn={false}>
         <CandidateLogin applyTitle={searchParams.t} fbError={searchParams.fberror ? "Facebookログインに失敗しました。もう一度お試しください。" : undefined} />
         <FbChat />
       </Shell>
@@ -97,7 +97,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
   const docs = ((candidate?.documents as DocMap) ?? {}) as DocMap;
 
   return (
-    <Shell active="mypage">
+    <Shell active="mypage" loggedIn={true}>
       <CandidateDashboard name={session.name} apps={apps} applied={searchParams.applied === "1"} profile={profile} docs={docs} />
       <FbChat />
     </Shell>

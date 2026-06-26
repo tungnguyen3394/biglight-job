@@ -5,12 +5,11 @@ import Link from "next/link";
 import Shell from "./Shell";
 import FbChat from "./FbChat";
 import HeroArt from "./HeroArt";
-import Logo from "./Logo";
 import MultiSelect from "./MultiSelect";
 import SiteFooter from "./SiteFooter";
-import LangSwitch from "./LangSwitch";
+import SiteHeader from "./SiteHeader";
 import { PREFECTURES } from "@/lib/prefectures";
-import { STANDARD_TAGS, FB_PAGE_URL } from "@/lib/site";
+import { STANDARD_TAGS } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type PublicJob = {
@@ -18,10 +17,6 @@ export type PublicJob = {
   location: string; city: string | null; salaryMain: string | null; monthlyExample: string | null; japaneseLevel: string | null;
   residence: string; dormitory: boolean; recruitCount: number; tags: string[]; img: string;
 };
-
-const FbIcon = ({ size = 17 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#fff" aria-hidden><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
-);
 
 const STEPS: [string, string, string][] = [
   ["1", "無料登録", "Facebookで30秒"],
@@ -75,7 +70,7 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
   );
 }
 
-export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob[]; initialQ?: string }) {
+export default function CandidateHome({ jobs, initialQ = "", loggedIn }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean }) {
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
@@ -121,21 +116,7 @@ export default function CandidateHome({ jobs, initialQ = "" }: { jobs: PublicJob
     <>
       {/* ===================== DESKTOP ===================== */}
       <div className="hidden bg-white text-ink lg:block">
-        <header className="sticky top-0 z-30 border-b border-bl-line bg-white/95 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
-            <Link href="/" className="flex items-center gap-2"><Logo size={36} /><span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span></Link>
-            <nav className="flex items-center gap-5 text-sm font-bold text-bl-gray">
-              <Link href="/" className="text-ink">求人を探す</Link>
-              <Link href="/about" className="hover:text-ink">私たちについて</Link>
-              <Link href="/info" className="hover:text-ink">役に立つ情報</Link>
-            </nav>
-            <div className="ml-auto flex items-center gap-2">
-              <LangSwitch />
-              <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white hover:bg-[#0C63D4]"><FbIcon /> 登録</a>
-              <Link href="/mypage" className="rounded-lg bg-bl-red px-4 py-2 text-sm font-black text-white shadow-md hover:bg-bl-redd">マイページ</Link>
-            </div>
-          </div>
-        </header>
+        <SiteHeader active="jobs" loggedIn={loggedIn} />
 
         {/* Hero */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFE7DF] to-[#FFD9CC]">

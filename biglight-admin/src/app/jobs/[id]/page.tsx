@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
 import { industryImage, CONTACT_EMAIL } from "@/lib/site";
+import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 
@@ -46,9 +47,10 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
 
   const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`【お問い合わせ】${job.code} ${job.title}`)}`;
+  const loggedIn = !!(await getSessionUser());
 
   return (
-    <Shell active="jobs">
+    <Shell active="jobs" loggedIn={loggedIn}>
       <div className="mx-auto max-w-5xl px-4 py-5">
         <Link href="/" className="text-sm font-semibold text-bl-gray hover:text-ink">← 求人一覧へ戻る</Link>
 

@@ -1,6 +1,7 @@
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import SiteFooter from "@/components/candidate/SiteFooter";
+import { getSessionUser } from "@/lib/auth";
 
 export const metadata = {
   title: "私たちについて｜キャリアアドバイザー紹介・体験談｜BIGLIGHT JOB",
@@ -34,9 +35,10 @@ const STORIES = [
   { name: "Cさん・23歳（女性）", meta: "飲食料品製造業 / 三重県", img: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=700&q=80", quote: "女性専用寮があって安心。日本語が不安でしたが、サポートのおかげでスムーズに入社できました。" },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const loggedIn = !!(await getSessionUser());
   return (
-    <Shell active="about">
+    <Shell active="about" loggedIn={loggedIn}>
       {/* Intro */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFEDE6] to-[#FFE0D6]">
         <div className="absolute -left-16 top-10 h-56 w-56 rounded-full bg-bl-red/10 blur-3xl" />

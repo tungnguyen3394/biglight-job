@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { industryImage, salaryRange } from "@/lib/site";
+import { getSessionUser } from "@/lib/auth";
 import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateHome";
 
 export const dynamic = "force-dynamic";
@@ -36,5 +37,6 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     img: industryImage(j.industry),
   }));
 
-  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} />;
+  const loggedIn = !!(await getSessionUser());
+  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} loggedIn={loggedIn} />;
 }
