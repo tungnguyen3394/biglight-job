@@ -9,9 +9,10 @@ import {
 } from "@/lib/candidateFields";
 import { SSW_JOBS } from "@/lib/sswJobs";
 import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
+import MultiUpload from "./MultiUpload";
 
 export type ProfileInit = {
-  name: string; birth: string; gender: string; nat: string;
+  name: string; birth: string; gender: string; nat: string; phone: string; email: string;
   visa: string; expiry: string; arrival: string; jp: string;
   sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
   fields: string[]; areas: string[]; sal: number;
@@ -31,10 +32,10 @@ function Card({ n, title, sub, children }: { n: number; title: string; sub?: str
     </section>
   );
 }
-function Field({ label, opt, children }: { label: string; opt?: boolean; children: React.ReactNode }) {
+function Field({ label, opt, req, children }: { label: string; opt?: boolean; req?: boolean; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-ink">{label}{opt && <span className="rounded bg-bl-bg px-1.5 py-0.5 text-[10px] font-bold text-bl-gray2">任意</span>}</label>
+      <label className="mb-1.5 flex items-center gap-2 text-sm font-bold text-ink">{label}{req && <span className="rounded bg-bl-redsoft px-1.5 py-0.5 text-[10px] font-bold text-bl-red">必須</span>}{opt && <span className="rounded bg-bl-bg px-1.5 py-0.5 text-[10px] font-bold text-bl-gray2">任意</span>}</label>
       {children}
     </div>
   );
@@ -54,11 +55,12 @@ function Many({ options, value, onChange, max, scroll }: { options: string[]; va
 }
 const inputCls = "w-full rounded-xl border border-bl-line px-3 py-2.5 text-sm outline-none focus:border-bl-red";
 
-export default function CandidateProfileForm({ init, initDocs }: { init: ProfileInit; initDocs: DocMap }) {
+export default function CandidateProfileForm({ init, initDocs, emailLocked }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean }) {
   const router = useRouter();
   const [f, setF] = useState<ProfileInit>(init);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [err, setErr] = useState("");
   const set = <K extends keyof ProfileInit>(k: K, v: ProfileInit[K]) => { setF((p) => ({ ...p, [k]: v })); setSaved(false); };
   const setSsw = (field: string, cat: string, task: string) => { setF((p) => ({ ...p, sswField: field, sswCategory: cat, sswTask: task })); setSaved(false); };
   const sswCats = SSW_JOBS.find((d) => d.field === f.sswField)?.categories ?? [];
@@ -80,6 +82,8 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
   }, [f, initDocs]);
 
   async function save() {
+    setErr("");
+    if (!emailLocked && !f.email.trim()) { setErr("メールアドレスを入力してください。"); return; }
     setSaving(true);
     const res = await fetch("/api/candidate/profile", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -87,6 +91,7 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
     });
     setSaving(false);
     if (res.ok) { setSaved(true); router.refresh(); }
+    else setErr((await res.json().catch(() => ({}))).error || "保存に失敗しました");
   }
 
   const genderJP = f.gender === "MALE" ? "男性" : f.gender === "FEMALE" ? "女性" : "";
@@ -101,14 +106,19 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
       </div>
 
       <Card n={1} title="基本情報">
-        <Field label="お名前（ローマ字）"><input value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="NGUYEN VAN A" className={inputCls} /></Field>
-        <Field label="生年月日"><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} className={inputCls} /></Field>
-        <Field label="性別"><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
-        <Field label="国籍"><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NATIONALITIES.map((n) => <option key={n}>{n}</option>)}</select></Field>
+        <Field label="お名前（ローマ字）" req><input value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="NGUYEN VAN A" className={inputCls} /></Field>
+        <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} className={inputCls} /></Field>
+        <Field label="性別" req><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
+        <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NATIONALITIES.map((n) => <option key={n}>{n}</option>)}</select></Field>
+        <Field label="電話番号" req><input type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" className={inputCls} /></Field>
+        <Field label="メールアドレス" req={!emailLocked}>
+          <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} readOnly={emailLocked} placeholder="example@email.com" className={`${inputCls} ${emailLocked ? "bg-bl-bg text-bl-gray2" : ""}`} />
+          <p className="mt-1 text-xs text-bl-gray2">{emailLocked ? "ログインアカウントのメールアドレスです（変更不可）。" : "Facebookログインのため、ご連絡用のメールアドレスをご入力ください。"}</p>
+        </Field>
       </Card>
 
       <Card n={2} title="在留資格（ビザ）">
-        <Field label="現在の在留資格"><One options={VISA_TYPES} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
+        <Field label="現在の在留資格" req><One options={VISA_TYPES} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
         <Field label="現在の職種（特定技能分野）" opt>
           <div className="space-y-2">
             <select value={f.sswField} onChange={(e) => setSsw(e.target.value, "", "")} className={inputCls}>
@@ -127,6 +137,10 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
         </Field>
         <Field label="その他の経験・スキル" opt>
           <textarea value={f.otherSkills} onChange={(e) => set("otherSkills", e.target.value)} rows={2} placeholder="例：フォークリフト免許、溶接3年 など" className={inputCls} />
+        </Field>
+        <Field label="製品の写真（溶接など）" opt>
+          <p className="mb-2 text-xs text-bl-gray2">溶接など、ものづくりの作業をする方は、ご自身が作った製品の写真を添付してください（複数可）。担当者があなたの技術をより正確に伝えられます。</p>
+          <MultiUpload slot="workphotos" initFiles={initDocs.workphotos ?? []} accept="image/*" addLabel="＋ 製品の写真を追加（複数可）" preview />
         </Field>
         <Field label="在留期限" opt><input type="date" value={f.expiry} onChange={(e) => set("expiry", e.target.value)} className={inputCls} /></Field>
         <Field label="来日年月日" opt><input type="date" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} className={inputCls} /></Field>
@@ -153,6 +167,7 @@ export default function CandidateProfileForm({ init, initDocs }: { init: Profile
       <CandidateDocuments initDocs={initDocs} />
 
       <div className="sticky bottom-20 z-10 lg:bottom-4">
+        {err && <p className="mb-2 rounded-lg bg-bl-redsoft px-3 py-2 text-center text-sm font-semibold text-bl-red">{err}</p>}
         <button onClick={save} disabled={saving} className="w-full rounded-xl bg-bl-red py-3.5 text-base font-bold text-white shadow-lg hover:bg-bl-redd disabled:opacity-60">
           {saving ? "保存中…" : saved ? "✓ 保存しました" : "プロフィールを保存する"}
         </button>

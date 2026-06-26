@@ -62,10 +62,21 @@ function Tracker({ stage }: { stage: number }) {
   );
 }
 
-export default function CandidateDashboard({ name, apps, applied, profile, docs, saved }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[] }) {
+export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean }) {
   const router = useRouter();
-  const [sec, setSec] = useState<SecKey>(applied ? "apps" : "profile");
+  const [sec, setSec] = useState<SecKey>(needProfile || !complete ? "profile" : applied ? "apps" : "profile");
   const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
+
+  // các trường bắt buộc còn thiếu (để hiện banner ở mục プロフィール入力)
+  const missing: string[] = [];
+  if (!profile.name?.trim()) missing.push("お名前");
+  if (!profile.birth) missing.push("生年月日");
+  if (profile.gender !== "MALE" && profile.gender !== "FEMALE") missing.push("性別");
+  if (!profile.nat?.trim()) missing.push("国籍");
+  if (!profile.phone?.trim()) missing.push("電話番号");
+  if (!profile.visa?.trim()) missing.push("現在の在留資格");
+  if (!emailLocked && !profile.email?.trim()) missing.push("メールアドレス");
 
   // chat tạm (UI) — chưa lưu DB
   const [chat, setChat] = useState(SEED_CHAT);
@@ -82,7 +93,13 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   }
   async function apply(id: string) {
     setBusy(id);
-    await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
+    const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
+    setBusy(null);
+    if (res.status === 422) {
+      setNotice("応募する前にプロフィールを完成してください。");
+      setSec("profile");
+      return;
+    }
     setSec("apps");
     router.refresh();
   }
@@ -101,13 +118,14 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   const heading = sec === "settings" ? "アカウント設定" : ITEMS.find((i) => i.key === sec)?.label ?? "";
 
   // nút điều hướng dùng chung
+  const go = (key: SecKey) => { setSec(key); setNotice(""); };
   const navBtn = (key: SecKey, label: string, vertical: boolean) =>
     vertical ? (
-      <button key={key} onClick={() => setSec(key)} className={`mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${sec === key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
+      <button key={key} onClick={() => go(key)} className={`mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${sec === key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
         <Ic d={ICONS[key]} />{label}
       </button>
     ) : (
-      <button key={key} onClick={() => setSec(key)} className={`flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-bold ${sec === key ? "bg-bl-red text-white" : "bg-white text-bl-gray"}`}>
+      <button key={key} onClick={() => go(key)} className={`flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-bold ${sec === key ? "bg-bl-red text-white" : "bg-white text-bl-gray"}`}>
         <Ic d={ICONS[key]} size={15} />{label}
       </button>
     );
@@ -152,8 +170,24 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         <div className="min-w-0">
           <h2 className="mb-3 hidden text-lg font-black lg:block">{heading}</h2>
 
+          {notice && (
+            <div className="mb-4 flex items-start gap-2 rounded-2xl border border-bl-red bg-bl-redsoft p-4 text-sm font-bold text-bl-red">
+              <Ic d={<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>} />{notice}
+            </div>
+          )}
+
           {/* プロフィール入力（提出書類を含む） */}
-          {sec === "profile" && <CandidateProfileForm init={profile} initDocs={docs} />}
+          {sec === "profile" && (
+            <>
+              {missing.length > 0 && (
+                <div className="mb-4 rounded-2xl border border-bl-line bg-[#FFF8E7] p-4 text-sm">
+                  <b className="text-ink">応募するには、次の必須項目を入力してください：</b>
+                  <p className="mt-1 font-semibold text-bl-red">{missing.join("・")}</p>
+                </div>
+              )}
+              <CandidateProfileForm init={profile} initDocs={docs} emailLocked={emailLocked} />
+            </>
+          )}
 
           {/* 応募状況・進捗 */}
           {sec === "apps" && (

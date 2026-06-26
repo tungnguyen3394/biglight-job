@@ -45,6 +45,8 @@ export async function POST(req: Request) {
       birthdate: toDate(b.birth),
       gender: b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY",
       nationality: b.nat || null,
+      phone: typeof b.phone === "string" && b.phone.trim() ? b.phone.trim() : null,
+      email: typeof b.email === "string" && b.email.trim() ? b.email.trim() : candidate.email,
       visaType: b.visa || null,
       currentTokuteiField: b.sswField || null,
       visaExpiryDate: toDate(b.expiry),

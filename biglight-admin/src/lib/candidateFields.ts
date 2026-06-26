@@ -47,6 +47,6 @@ export const PRIORITIES = [
 
 // Trọng số tính % hoàn thành (đúng bản gốc).
 export const WEIGHT: Record<string, number> = {
-  name: 8, birth: 7, gender: 4, nat: 5, visa: 10, jp: 9, fields: 12, areas: 8, cur: 5, expiry: 5,
+  name: 8, birth: 7, gender: 4, nat: 5, phone: 5, visa: 10, jp: 9, fields: 12, areas: 8, cur: 5, expiry: 5,
   arrival: 5, sal: 3, dorm: 3, start: 5, reasons: 4, priorities: 4, nightshift: 3, shiftwork: 3, docs: 9,
 };

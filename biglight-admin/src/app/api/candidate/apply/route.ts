@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
+import { isProfileComplete } from "@/lib/candidateProfile";
 
 async function getCandidate() {
   const session = await getSessionUser();
   if (!session || session.role !== "CANDIDATE") return null;
-  return prisma.candidate.findUnique({ where: { userId: session.id } });
+  return prisma.candidate.findUnique({ where: { userId: session.id }, include: { user: true } });
 }
 
 // POST /api/candidate/apply { jobId } — ứng tuyển: tạo đơn + bỏ khỏi お気に入り.
@@ -15,6 +16,11 @@ export async function POST(req: Request) {
 
   const { jobId } = await req.json().catch(() => ({}));
   if (!jobId) return NextResponse.json({ error: "No jobId" }, { status: 400 });
+
+  // Chặn ứng tuyển khi hồ sơ chưa đủ trường bắt buộc.
+  if (!isProfileComplete(candidate, candidate.user)) {
+    return NextResponse.json({ error: "応募する前にプロフィールを完成してください。", need: true }, { status: 422 });
+  }
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) return NextResponse.json({ error: "Job not found" }, { status: 404 });
