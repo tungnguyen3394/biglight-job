@@ -88,16 +88,35 @@ export interface NavItem {
 }
 
 const ALL: Role[] = ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY", "CANDIDATE"];
+const STAFF: Role[] = ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"];
 
-export const NAV: NavItem[] = [
-  { href: "/admin", label: "Dashboard", jp: "ダッシュボード", roles: ALL },
-  { href: "/admin/jobs", label: "Job Management", jp: "求人管理", roles: ALL },
-  { href: "/admin/candidates", label: "Candidates", jp: "応募者管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
-  { href: "/admin/pipeline", label: "Pipeline", jp: "応募・進捗管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY"] },
-  { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
-  { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
-  { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
-  { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
-  { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: ["SUPER_ADMIN"] },
-  { href: "/admin/settings", label: "Settings", jp: "設定", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
+export interface NavGroup {
+  title: string | null;
+  items: NavItem[];
+}
+
+// Menu admin chia nhóm (Recruitment / Business / Communication / System).
+export const NAV_GROUPS: NavGroup[] = [
+  { title: null, items: [
+    { href: "/admin", label: "Dashboard", jp: "ダッシュボード", roles: ALL },
+  ] },
+  { title: "Recruitment", items: [
+    { href: "/admin/jobs", label: "Jobs", jp: "求人管理", roles: ALL },
+    { href: "/admin/candidates", label: "Candidates", jp: "応募者管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
+    { href: "/admin/pipeline", label: "Pipeline", jp: "応募進捗", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY"] },
+  ] },
+  { title: "Business", items: [
+    { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: STAFF },
+    { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: STAFF },
+    { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
+  ] },
+  { title: "Communication", items: [
+    { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF },
+  ] },
+  { title: "System", items: [
+    { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: ["SUPER_ADMIN"] },
+    { href: "/admin/settings", label: "Settings", jp: "設定", roles: STAFF },
+  ] },
 ];
+
+export const NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
