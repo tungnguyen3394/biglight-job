@@ -78,12 +78,11 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   if (!body.companyId || !body.title || !body.industry || !body.location) {
-    return json({ error: "companyId, title, industry, location は必須です" }, 400);
+    return json({ error: "企業・業種・勤務地・タイトルは必須です" }, 400);
   }
 
   // generate a code if not supplied
-  const code: string =
-    body.code || `JOB-${Date.now().toString(36).toUpperCase()}`;
+  const code: string = body.code || `JOB-${Date.now().toString(36).toUpperCase()}`;
 
   const job = await prisma.job.create({
     data: {
@@ -98,21 +97,36 @@ export async function POST(req: Request) {
       recruitMale: body.recruitMale ?? 0,
       recruitFemale: body.recruitFemale ?? 0,
       hiredCount: body.hiredCount ?? 0,
-      employmentType: body.employmentType ?? null,
       residenceType: body.residenceType ?? "TOKUTEI_1",
+      payType: body.payType ?? null,
       salaryMin: body.salaryMin ?? null,
       salaryMax: body.salaryMax ?? null,
       baseSalary: body.baseSalary ?? null,
       expectedMonthly: body.expectedMonthly ?? null,
       expectedTakeHome: body.expectedTakeHome ?? null,
+      workHours: body.workHours ?? null,
+      overtimeHours: body.overtimeHours ?? null,
+      holidays: body.holidays ?? null,
+      bonus: body.bonus ?? null,
+      commuteMethod: body.commuteMethod ?? null,
+      japaneseLevel: body.japaneseLevel ?? null,
+      description: body.description ?? null,
+      appealPoints: body.appealPoints ?? null,
+      requiredQualification: body.requiredQualification ?? null,
+      dormitoryAvailable: !!body.dormitoryAvailable,
+      dormitoryFee: body.dormitoryFee ?? null,
+      utilitiesCost: body.utilitiesCost ?? null,
+      wifi: body.wifi ?? null,
       nightShift: !!body.nightShift,
       shiftWork: !!body.shiftWork,
-      dormitoryAvailable: !!body.dormitoryAvailable,
       status: body.status ?? "OPEN",
       publicStatus: body.publicStatus ?? "DRAFT",
       biglightStaffId: body.biglightStaffId ?? user.id,
-      ctvId: body.ctvId ?? null,
       tags: body.tags ?? [],
+      formData: body.formData ?? {},
+      internalMemo: body.internalMemo ?? null,
+      companyHistory: body.companyHistory ?? null,
+      riskNotes: body.riskNotes ?? null,
     },
   });
 

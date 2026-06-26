@@ -49,6 +49,7 @@ export function requireCan(user: SessionUser, action: Action, resource: Resource
 export function jobScopeWhere(user: SessionUser): Prisma.JobWhereInput {
   switch (user.role) {
     case "SUPER_ADMIN":
+    case "MANAGER":
     case "BIGLIGHT_STAFF":
       return {};
     case "CTV":
@@ -65,6 +66,7 @@ export function jobScopeWhere(user: SessionUser): Prisma.JobWhereInput {
 export function candidateScopeWhere(user: SessionUser): Prisma.CandidateWhereInput {
   switch (user.role) {
     case "SUPER_ADMIN":
+    case "MANAGER":
     case "BIGLIGHT_STAFF":
       return {};
     case "CTV":
@@ -81,6 +83,7 @@ export function commissionScopeWhere(
 ): Prisma.CandidateCommissionWhereInput | null {
   switch (user.role) {
     case "SUPER_ADMIN":
+    case "MANAGER":
     case "BIGLIGHT_STAFF":
       return {};
     case "CTV":
@@ -117,4 +120,4 @@ export function sanitizeJobs(user: SessionUser, jobs: AnyJob[]): AnyJob[] {
 }
 
 export const isBiglight = (role: Role) =>
-  role === "SUPER_ADMIN" || role === "BIGLIGHT_STAFF";
+  role === "SUPER_ADMIN" || role === "MANAGER" || role === "BIGLIGHT_STAFF";

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
@@ -13,12 +14,13 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // bỏ các trường tự sinh + trạng thái; phần còn lại copy nguyên
-  const { id, code, createdAt, updatedAt, hiredCount, publicStatus, status, ...rest } = job;
+  const { id, code, createdAt, updatedAt, hiredCount, publicStatus, status, formData, ...rest } = job;
   void id; void createdAt; void updatedAt; void hiredCount; void publicStatus; void status;
 
   const created = await prisma.job.create({
     data: {
       ...rest,
+      formData: (formData ?? {}) as Prisma.InputJsonValue,
       code: `${code}-COPY-${Date.now().toString(36).slice(-4).toUpperCase()}`,
       title: `${job.title}（コピー）`,
       publicStatus: "DRAFT",

@@ -1,0 +1,188 @@
+// Model dùng chung cho form tạo/sửa求人 (đúng cấu trúc biglight-job-admin-post.html),
+// Live Preview, API lưu, và trang ứng viên đọc lại.
+
+export const FIELDS = ["工業製品製造業", "建設業", "飲食料品製造業", "外食業", "介護業", "宿泊", "ビルクリーニング", "農業", "漁業", "自動車整備", "造船・舶用工業", "航空", "自動車運送業", "鉄道", "林業", "木材産業"];
+export const PREFS = ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県", "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県", "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"];
+export const PAY_TYPES = ["時給", "日給", "月給"];
+export const STD_BENEFITS = ["社会保険完備", "交通費支給", "制服貸与", "賞与あり", "寮完備", "送迎あり", "食事補助", "資格取得支援", "日本語学習サポート"];
+export const STD_TAGS = ["寮あり", "個室寮", "未経験OK", "高収入", "駅近", "賞与あり", "土日休み", "日本語不問", "特定技能2号可", "送迎あり", "女性活躍", "長期歓迎", "残業少なめ", "家賃補助"];
+export const JP_LEVELS = ["不問", "N5", "N4", "N3", "N2", "N1"];
+export const START_OPTS = ["即日", "1ヶ月以内", "1〜3ヶ月", "3ヶ月以上", "応相談"];
+export const HOUSE_TYPES = ["アパート寮", "一戸建て寮", "マンション", "社宅", "自分で手配"];
+export const CODEPREF: Record<string, string> = { "工業製品製造業": "MFG", "建設業": "CON", "飲食料品製造業": "FBM", "外食業": "FSV", "介護業": "CARE", "宿泊": "HTL", "ビルクリーニング": "CLN", "農業": "AGR", "漁業": "FSH", "自動車整備": "AUTO", "造船・舶用工業": "SHIP", "航空": "AIR", "自動車運送業": "TRK", "鉄道": "RAIL", "林業": "FRST", "木材産業": "WOOD" };
+
+export type Num = number | "";
+
+export type JobFormState = {
+  // ① 基本情報
+  companyId: string;
+  field: string;       // → industry
+  type: string;        // → jobTypeName (職種)
+  title: string;
+  pref: string;        // → location
+  city: string;
+  // 募集人数 (đầu ③)
+  recruitTotal: Num;
+  recruitMale: Num;
+  recruitFemale: Num;
+  // ② 給与
+  payType: string;
+  payAmount: Num;
+  monthly: Num;
+  takehome: Num;
+  payNote: string;
+  // ③ 募集要項
+  term: string;
+  hours: string;
+  overtime: string;
+  holiday: string;
+  commute: string;
+  bonus: string;
+  benefits: string[];
+  // ④ 仕事内容
+  desc: string;
+  appeal: string[];
+  active: string[];
+  // ⑤ 応募条件
+  jp: string;
+  quals: string[];
+  start: string;
+  // ⑥ 住居・生活
+  houseType: string;
+  room: string;        // 個室 / 相部屋
+  roommates: Num;
+  roomDesc: string;
+  rent: Num;
+  utility: string;
+  internet: string;
+  otherCost: string;
+  // ⑦ 近隣
+  nearby: string[];
+  // ⑧ タグ
+  tags: string[];
+  // 公開
+  publicStatus: string;
+  // 社内メモ (admin only — KHÔNG vào formData/preview)
+  internalMemo: string;
+  companyHistory: string;
+  riskNotes: string;
+};
+
+export function makeDefaultForm(companyId = ""): JobFormState {
+  return {
+    companyId, field: FIELDS[0], type: "", title: "", pref: "愛知県", city: "",
+    recruitTotal: "", recruitMale: "", recruitFemale: "",
+    payType: "時給", payAmount: "", monthly: "", takehome: "", payNote: "",
+    term: "特定技能1号（通算上限5年）", hours: "", overtime: "", holiday: "", commute: "", bonus: "", benefits: [],
+    desc: "", appeal: [], active: [],
+    jp: "不問", quals: [], start: "応相談",
+    houseType: "アパート寮", room: "個室", roommates: "", roomDesc: "", rent: "", utility: "", internet: "", otherCost: "",
+    nearby: [], tags: [],
+    publicStatus: "DRAFT",
+    internalMemo: "", companyHistory: "", riskNotes: "",
+  };
+}
+
+const N = (v: Num) => (v === "" || v == null ? null : Number(v));
+const lines = (a: string[]) => a.map((x) => x.trim()).filter(Boolean);
+
+// Phần public của form → lưu vào cột formData (KHÔNG gồm 社内メモ)
+export function publicFormData(s: JobFormState) {
+  return {
+    field: s.field, type: s.type, title: s.title, pref: s.pref, city: s.city,
+    recruitTotal: s.recruitTotal, recruitMale: s.recruitMale, recruitFemale: s.recruitFemale,
+    payType: s.payType, payAmount: s.payAmount, monthly: s.monthly, takehome: s.takehome, payNote: s.payNote,
+    term: s.term, hours: s.hours, overtime: s.overtime, holiday: s.holiday, commute: s.commute, bonus: s.bonus, benefits: s.benefits,
+    desc: s.desc, appeal: lines(s.appeal), active: lines(s.active),
+    jp: s.jp, quals: lines(s.quals), start: s.start,
+    houseType: s.houseType, room: s.room, roommates: s.roommates, roomDesc: s.roomDesc, rent: s.rent, utility: s.utility, internet: s.internet, otherCost: s.otherCost,
+    nearby: lines(s.nearby), tags: s.tags,
+  };
+}
+
+// Form → payload gửi API (cột thật + formData). Cột thật để bảng/lọc/ứng viên dùng.
+export function formToPayload(s: JobFormState, mode: "create" | "edit") {
+  const monthly = N(s.monthly);
+  const payload: Record<string, unknown> = {
+    companyId: s.companyId,
+    industry: s.field,
+    jobTypeName: s.type || null,
+    title: s.title.trim() || s.type.trim() || "（無題の求人）",
+    location: s.pref,
+    city: s.city || null,
+    recruitCount: N(s.recruitTotal) ?? 1,
+    recruitMale: N(s.recruitMale) ?? 0,
+    recruitFemale: N(s.recruitFemale) ?? 0,
+    payType: s.payType,
+    baseSalary: N(s.payAmount),
+    expectedMonthly: monthly,
+    expectedTakeHome: N(s.takehome),
+    salaryMin: monthly,
+    salaryMax: monthly,
+    workHours: s.hours || null,
+    overtimeHours: s.overtime || null,
+    holidays: s.holiday || null,
+    bonus: s.bonus || null,
+    commuteMethod: s.commute || null,
+    japaneseLevel: s.jp || null,
+    description: s.desc || null,
+    appealPoints: lines(s.appeal).join("\n") || null,
+    requiredQualification: lines(s.quals).join("\n") || null,
+    dormitoryAvailable: s.houseType !== "自分で手配",
+    dormitoryFee: N(s.rent),
+    utilitiesCost: s.utility || null,
+    wifi: s.internet || null,
+    tags: s.tags,
+    publicStatus: s.publicStatus,
+    internalMemo: s.internalMemo || null,
+    companyHistory: s.companyHistory || null,
+    riskNotes: s.riskNotes || null,
+    formData: publicFormData(s),
+  };
+  if (mode === "create") payload.code = makeCode(s.field);
+  return payload;
+}
+
+export function makeCode(field: string) {
+  return `${CODEPREF[field] || "JOB"}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+}
+
+// Job (DB) → FormState để mở edit. Ưu tiên formData (đủ 100%), fallback cột.
+export function jobToForm(job: Record<string, unknown>): JobFormState {
+  const d = makeDefaultForm((job.companyId as string) ?? "");
+  const fd = (job.formData as Partial<JobFormState> | null) || {};
+  const has = fd && typeof fd === "object" && Object.keys(fd).length > 0;
+  const s: JobFormState = {
+    ...d,
+    companyId: (job.companyId as string) ?? "",
+    publicStatus: (job.publicStatus as string) ?? "DRAFT",
+    internalMemo: (job.internalMemo as string) ?? "",
+    companyHistory: (job.companyHistory as string) ?? "",
+    riskNotes: (job.riskNotes as string) ?? "",
+  };
+  if (has) {
+    return { ...s, ...(fd as JobFormState), companyId: s.companyId, publicStatus: s.publicStatus, internalMemo: s.internalMemo, companyHistory: s.companyHistory, riskNotes: s.riskNotes };
+  }
+  // fallback từ cột (job cũ chưa có formData)
+  const str = (k: string) => (job[k] as string) ?? "";
+  const num = (k: string): Num => (job[k] == null ? "" : (job[k] as number));
+  const arr = (v: string) => (v ? v.split("\n").filter(Boolean) : []);
+  return {
+    ...s,
+    field: str("industry") || d.field,
+    type: str("jobTypeName"),
+    title: str("title"),
+    pref: str("location") || d.pref,
+    city: str("city"),
+    recruitTotal: num("recruitCount"), recruitMale: num("recruitMale"), recruitFemale: num("recruitFemale"),
+    payType: str("payType") || "時給",
+    payAmount: num("baseSalary"), monthly: num("expectedMonthly"), takehome: num("expectedTakeHome"),
+    hours: str("workHours"), overtime: str("overtimeHours"), holiday: str("holidays"), bonus: str("bonus"), commute: str("commuteMethod"),
+    jp: str("japaneseLevel") || "不問",
+    desc: str("description"),
+    appeal: arr(str("appealPoints")),
+    quals: arr(str("requiredQualification")),
+    rent: num("dormitoryFee"), utility: str("utilitiesCost"), internet: str("wifi"),
+    tags: (job.tags as string[]) ?? [],
+  };
+}

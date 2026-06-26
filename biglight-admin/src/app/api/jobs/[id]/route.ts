@@ -57,12 +57,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     "alternatingShift", "hasOvertime", "startDate", "dormitoryAvailable",
     "dormitoryFee", "utilitiesCost", "wifi", "commuteMethod", "stationDistance",
     "bicycleLease", "pickupService", "publicMemo", "appealPoints", "applyNotes",
-    "tags",
+    "tags", "payType", "formData",
   ];
   for (const k of basic) if (k in body) data[k] = body[k];
 
   // BIGLIGHT-only fields
-  if (user.role === "SUPER_ADMIN" || user.role === "BIGLIGHT_STAFF") {
+  if (user.role === "SUPER_ADMIN" || user.role === "MANAGER" || user.role === "BIGLIGHT_STAFF") {
     for (const k of ["internalMemo", "companyHistory", "riskNotes", "status", "publicStatus", "biglightStaffId", "ctvId", "code", "industry", "companyId"]) {
       if (k in body) data[k] = body[k];
     }

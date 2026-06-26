@@ -244,6 +244,9 @@ model Job {
   // tags
   tags String[] @default([])
 
+  // toàn bộ nội dung form tạo求人 (giữ 100% cấu trúc HTML: アピール/活躍/資格/近隣/住居詳細…) — public-safe
+  formData Json @default("{}")
+
   // status & assignment
   status       JobOpStatus     @default(OPEN)
   publicStatus JobPublicStatus @default(DRAFT)

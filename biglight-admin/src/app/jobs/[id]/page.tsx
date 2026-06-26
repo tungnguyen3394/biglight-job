@@ -43,6 +43,16 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   });
   if (!job) notFound();
 
+  // dữ liệu phong phú từ form tạo求人 (đúng cấu trúc HTML)
+  const fd = (job.formData as Record<string, unknown>) || {};
+  const arr = (v: unknown): string[] => (Array.isArray(v) ? v.filter(Boolean).map(String) : []);
+  const str = (v: unknown): string => (typeof v === "string" ? v : "");
+  const benefits = arr(fd.benefits);
+  const appeal = arr(fd.appeal);
+  const active = arr(fd.active);
+  const quals = arr(fd.quals);
+  const nearby = arr(fd.nearby);
+
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
   const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
 
@@ -73,49 +83,81 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
         <div className="mt-5 lg:grid lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
           {/* MAIN */}
           <div className="space-y-5 lg:order-1">
-            {(job.description || job.dailyFlow || job.appealPoints) && (
+            {(job.description || job.dailyFlow || appeal.length > 0 || active.length > 0) && (
               <Card title="仕事内容">
                 {job.description && <p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.description}</p>}
                 {job.dailyFlow && <div className="mt-4"><h3 className="mb-1 text-sm font-bold text-bl-red">一日の流れ</h3><p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.dailyFlow}</p></div>}
-                {job.appealPoints && <div className="mt-4"><h3 className="mb-1 text-sm font-bold text-bl-red">仕事の魅力</h3><p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.appealPoints}</p></div>}
+                {appeal.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="mb-1.5 text-sm font-bold text-bl-red">仕事の魅力</h3>
+                    <ul className="space-y-1.5">{appeal.map((a, i) => <li key={i} className="flex items-start gap-2 text-sm text-bl-gray"><span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-bl-red" />{a}</li>)}</ul>
+                  </div>
+                )}
+                {active.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="mb-1.5 text-sm font-bold text-bl-red">こんな人が活躍しています</h3>
+                    <ul className="space-y-1.5">{active.map((a, i) => <li key={i} className="flex items-start gap-2 text-sm text-bl-gray"><span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-bl-red" />{a}</li>)}</ul>
+                  </div>
+                )}
               </Card>
             )}
 
             <Card title="募集要項">
               <KV rows={[
-                ["雇用形態", job.employmentType],
+                ["雇用期間", str(fd.term) || job.employmentType],
                 ["在留資格", RESIDENCE_LABEL[job.residenceType] ?? job.residenceType],
                 ["勤務時間", job.workHours],
                 ["残業", job.overtimeHours],
                 ["休日・休暇", job.holidays],
-                ["賞与", job.bonus],
-                ["昇給", job.raise],
-                ["社会保険", job.socialInsurance],
-                ["交通費", job.transportAllowance],
+                ["賞与・昇給", job.bonus],
+                ["通勤手段", job.commuteMethod],
                 ["募集人数", `${job.recruitCount}名（男性${job.recruitMale}・女性${job.recruitFemale}）`],
               ]} />
+              {benefits.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="mb-1.5 text-sm font-bold text-bl-red">待遇・福利厚生</h3>
+                  <div className="flex flex-wrap gap-1.5">{benefits.map((b, i) => <span key={i} className="rounded-full bg-bl-greensoft px-2.5 py-1 text-xs font-semibold text-bl-green">{b}</span>)}</div>
+                </div>
+              )}
             </Card>
 
             <Card title="応募条件">
               <KV rows={[
                 ["日本語レベル", job.japaneseLevel],
+                ["入社できる時期", str(fd.start)],
                 ["年齢", job.ageMin || job.ageMax ? `${job.ageMin ?? ""}〜${job.ageMax ?? ""}歳` : null],
                 ["性別", job.genderCondition !== "ANY" ? GENDER_LABEL[job.genderCondition] : "不問"],
                 ["必要な経験", job.requiredExperience],
-                ["必要な資格", job.requiredQualification],
+                ["必要な資格", quals.length > 0 ? quals.join("\n") : job.requiredQualification],
               ]} />
             </Card>
 
-            {job.dormitoryAvailable && (
+            {(job.dormitoryAvailable || str(fd.houseType)) && (
               <Card title="住居・生活">
                 <KV rows={[
-                  ["寮", "あり"],
-                  ["寮費", job.dormitoryFee ? `${fmtYen(job.dormitoryFee)} / 月` : null],
-                  ["水道光熱費", job.utilitiesCost],
-                  ["Wi-Fi", job.wifi],
+                  ["住居タイプ", str(fd.houseType) || (job.dormitoryAvailable ? "寮あり" : null)],
+                  ["個室／相部屋", str(fd.room)],
+                  ["同居人数", typeof fd.roommates === "number" ? `${fd.roommates}人` : null],
+                  ["部屋の説明", str(fd.roomDesc)],
+                  ["家賃", job.dormitoryFee ? `${fmtYen(job.dormitoryFee)} / 月` : null],
+                  ["電気・水道・ガス", job.utilitiesCost],
+                  ["インターネット", job.wifi],
+                  ["その他実費", str(fd.otherCost)],
                   ["通勤方法", job.commuteMethod],
-                  ["駅からの距離", job.stationDistance],
                 ]} />
+              </Card>
+            )}
+
+            {nearby.length > 0 && (
+              <Card title="近隣情報（徒歩15分圏内）">
+                <ul className="space-y-2">
+                  {nearby.map((n, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-bl-gray">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D02E26" strokeWidth="2" className="flex-none"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                      {n}
+                    </li>
+                  ))}
+                </ul>
               </Card>
             )}
 
