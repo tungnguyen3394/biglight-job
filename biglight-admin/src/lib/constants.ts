@@ -108,6 +108,9 @@ export const NAV_GROUPS: NavGroup[] = [
   { title: "Business", items: [
     { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: STAFF },
   ] },
+  { title: "Content", items: [
+    { href: "/admin/articles", label: "Articles", jp: "記事管理", roles: STAFF },
+  ] },
   { title: "Communication", items: [
     { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF },
   ] },
