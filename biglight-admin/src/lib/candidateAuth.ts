@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { setSessionCookie } from "@/lib/auth";
+import { setSessionCookie, isAllowedAdminEmail } from "@/lib/auth";
 
 type Provider = {
   email?: string | null;
@@ -9,14 +9,28 @@ type Provider = {
   facebookId?: string;
 };
 
+// Lỗi khi tài khoản nội bộ BIGLIGHT cố đăng nhập qua cổng ứng viên.
+export class CandidateAuthError extends Error {}
+const ADMIN_ACCOUNT_MSG = "このアカウントは管理者用です。社員の方は管理画面からログインしてください。";
+
 // Tìm hoặc tạo tài khoản LAO ĐỘNG (role CANDIDATE) từ Google/Facebook, rồi set session.
 // Định danh theo googleId/facebookId/email; Facebook không có email vẫn được (email tổng hợp).
 export async function loginOrCreateCandidate(p: Provider) {
+  // #9 — Không cho phép admin (email @biglight.jp) đăng nhập từ màn hình ứng viên.
+  if (p.email && isAllowedAdminEmail(p.email)) {
+    throw new CandidateAuthError(ADMIN_ACCOUNT_MSG);
+  }
+
   let user =
     (p.googleId && (await prisma.user.findUnique({ where: { googleId: p.googleId } }))) ||
     (p.facebookId && (await prisma.user.findUnique({ where: { facebookId: p.facebookId } }))) ||
     (p.email && (await prisma.user.findUnique({ where: { email: p.email } }))) ||
     null;
+
+  // Tài khoản đã tồn tại nhưng KHÔNG phải ứng viên (admin/staff/CTV/company) → chặn.
+  if (user && user.role !== "CANDIDATE") {
+    throw new CandidateAuthError(ADMIN_ACCOUNT_MSG);
+  }
 
   if (user) {
     user = await prisma.user.update({

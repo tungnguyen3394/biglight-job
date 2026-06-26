@@ -2,6 +2,7 @@ import type { Role } from "@prisma/client";
 
 export const ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: "スーパー管理者",
+  MANAGER: "マネージャー",
   BIGLIGHT_STAFF: "BIGLIGHTスタッフ",
   CTV: "CTV / パートナー",
   COMPANY: "企業",
@@ -86,16 +87,16 @@ export interface NavItem {
   roles: Role[];
 }
 
-const ALL: Role[] = ["SUPER_ADMIN", "BIGLIGHT_STAFF", "CTV", "COMPANY", "CANDIDATE"];
+const ALL: Role[] = ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY", "CANDIDATE"];
 
 export const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", jp: "ダッシュボード", roles: ALL },
   { href: "/admin/jobs", label: "Job Management", jp: "求人管理", roles: ALL },
-  { href: "/admin/candidates", label: "Candidates", jp: "応募者管理", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF", "CTV"] },
-  { href: "/admin/pipeline", label: "Pipeline", jp: "応募・進捗管理", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF", "CTV", "COMPANY"] },
-  { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF"] },
-  { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF"] },
-  { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF", "CTV"] },
+  { href: "/admin/candidates", label: "Candidates", jp: "応募者管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
+  { href: "/admin/pipeline", label: "Pipeline", jp: "応募・進捗管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY"] },
+  { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
+  { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
+  { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
   { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: ["SUPER_ADMIN"] },
-  { href: "/admin/settings", label: "Settings", jp: "設定", roles: ["SUPER_ADMIN", "BIGLIGHT_STAFF"] },
+  { href: "/admin/settings", label: "Settings", jp: "設定", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
 ];

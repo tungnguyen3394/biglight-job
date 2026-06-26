@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   if (!isAllowedAdminEmail(payload.email)) {
     return NextResponse.json(
-      { error: "BIGLIGHT（@biglight.jp）のメールアドレスのみログインできます" },
+      { error: "BIGLIGHT社内アカウントのみログインできます。" },
       { status: 403 }
     );
   }
@@ -27,6 +27,14 @@ export async function POST(req: Request) {
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json(
       { error: "このメールアドレスのアカウントがありません。管理者にお問い合わせください。" },
+      { status: 403 }
+    );
+  }
+
+  // An toàn: tài khoản ứng viên (CANDIDATE) không được đăng nhập khu admin.
+  if (user.role === "CANDIDATE") {
+    return NextResponse.json(
+      { error: "BIGLIGHT社内アカウントのみログインできます。" },
       { status: 403 }
     );
   }

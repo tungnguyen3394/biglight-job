@@ -41,6 +41,18 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     dashboard: ["view"],
     settings: ["view", "update"],
   },
+  // Manager: quản lý 求人 (job)・ứng viên (candidate)・bài viết・tin nhắn — không quản lý User/設定 ở mức cao.
+  MANAGER: {
+    job: ["view", "create", "update", "delete"],
+    candidate: ["view", "create", "update", "delete"],
+    application: ["view", "create", "update", "delete"],
+    company: ["view", "create", "update"],
+    ctv: ["view", "create", "update"],
+    commission: ["view", "create", "update"],
+    user: [],
+    dashboard: ["view"],
+    settings: ["view"],
+  },
   BIGLIGHT_STAFF: {
     job: ["view", "create", "update", "delete"],
     candidate: ["view", "create", "update", "delete"],
@@ -83,19 +95,19 @@ export function can(role: Role, action: Action, resource: Resource): boolean {
 // ---- Field-level visibility ----
 // Commission data is sensitive. Company & Candidate must NEVER receive it.
 export function canSeeCommission(role: Role): boolean {
-  return role === "SUPER_ADMIN" || role === "BIGLIGHT_STAFF" || role === "CTV";
+  return role === "SUPER_ADMIN" || role === "MANAGER" || role === "BIGLIGHT_STAFF" || role === "CTV";
 }
 
 // CTV only sees commission for cases assigned to them (own).
 export function canSeeCommissionForCtv(user: SessionUser, jobCtvId: string | null): boolean {
-  if (user.role === "SUPER_ADMIN" || user.role === "BIGLIGHT_STAFF") return true;
+  if (user.role === "SUPER_ADMIN" || user.role === "MANAGER" || user.role === "BIGLIGHT_STAFF") return true;
   if (user.role === "CTV") return !!jobCtvId && jobCtvId === user.ctvId;
   return false;
 }
 
 // Internal memos / company-negotiation / risk notes are BIGLIGHT-only.
 export function canSeeInternalMemo(role: Role): boolean {
-  return role === "SUPER_ADMIN" || role === "BIGLIGHT_STAFF";
+  return role === "SUPER_ADMIN" || role === "MANAGER" || role === "BIGLIGHT_STAFF";
 }
 
 export function canManageUsers(role: Role): boolean {
