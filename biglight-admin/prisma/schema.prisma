@@ -429,6 +429,26 @@ model CandidateCommission {
   @@map("candidate_commissions")
 }
 
+// 記事 (SEO CMS) — nội dung đầy đủ lưu ở data (Json), cột chính để list/lọc
+model Article {
+  id           String    @id @default(cuid())
+  title        String
+  slug         String?
+  status       String    @default("DRAFT") // DRAFT / PUBLISHED / SCHEDULED
+  category     String?
+  author       String?
+  focusKeyword String?
+  seoScore     Int       @default(0)
+  publishAt    DateTime?
+  data         Json      @default("{}")
+  authorUserId String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+  @@map("articles")
+}
+
 model StatusHistory {
   id            String   @id @default(cuid())
   applicationId String

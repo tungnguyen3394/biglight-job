@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ACMS_CSS, Card, Icon } from "./ACMS";
 import { ArticleBasicInfo, ArticleSEO, ArticleSummary, FeaturedImage, OpenGraph } from "./sections-content";
 import { GooglePreview } from "./GooglePreview";
@@ -10,46 +11,62 @@ import { SeoScoreCard, SEOChecklist, AIAssistantPanel, PublishSidebar } from "./
 import { computeSeo } from "@/lib/seoScore";
 import { makeDefaultArticle, nextId, slugify, type ArticleState } from "@/lib/articleModel";
 
-const KEY = "biglight_article_draft";
-const textOf = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const textOf = (h: string) => (h || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
-  const [a, setA] = useState<ArticleState>(makeDefaultArticle);
+export function ArticleCMS({ jobs, initialId, initialData }: { jobs: JobOpt[]; initialId?: string; initialData?: ArticleState }) {
+  const router = useRouter();
+  const [a, setA] = useState<ArticleState>(initialData ?? makeDefaultArticle);
+  const [articleId, setArticleId] = useState<string | null>(initialId ?? null);
   const [dark, setDark] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState("");
+  const [edSync, setEdSync] = useState(0);
   const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const creating = useRef(false);
 
   const up = useCallback((p: Partial<ArticleState>) => setA((prev) => ({ ...prev, ...p })), []);
   const seo = computeSeo(a);
+  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2600); };
 
-  // load draft + theme once
-  useEffect(() => {
-    try { const raw = localStorage.getItem(KEY); if (raw) setA({ ...makeDefaultArticle(), ...JSON.parse(raw) }); } catch {}
-    setDark(localStorage.getItem("biglight_admin_dark") === "1");
-  }, []);
+  useEffect(() => { setDark(localStorage.getItem("biglight_admin_dark") === "1"); }, []);
 
-  // autosave (debounce)
-  useEffect(() => {
+  // lưu thật vào DB (tạo nếu chưa có id, ngược lại cập nhật)
+  const savePayload = useCallback(async (state: ArticleState): Promise<boolean> => {
+    if (!articleId && creating.current) return false;
     setSaving(true);
-    if (tRef.current) clearTimeout(tRef.current);
-    tRef.current = setTimeout(() => {
-      try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {}
-      setSaving(false);
-      setLastSaved(new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }));
-    }, 800);
-    return () => { if (tRef.current) clearTimeout(tRef.current); };
-  }, [a]);
+    const body = JSON.stringify({ ...state, seoScore: computeSeo(state).score });
+    let ok = false;
+    try {
+      if (articleId) {
+        const res = await fetch(`/api/articles/${articleId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body });
+        ok = res.ok;
+      } else {
+        creating.current = true;
+        const res = await fetch("/api/articles", { method: "POST", headers: { "Content-Type": "application/json" }, body });
+        creating.current = false;
+        if (res.ok) { const d = await res.json().catch(() => ({})); if (d.id) setArticleId(d.id); ok = true; }
+      }
+    } catch { ok = false; }
+    setSaving(false);
+    if (ok) setLastSaved(new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }));
+    return ok;
+  }, [articleId]);
 
-  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
-  const saveNow = useCallback(() => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {}; setLastSaved(new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })); flash("下書きを保存しました"); }, [a]);
-  const publish = useCallback(() => { up({ status: "PUBLISHED" }); flash("公開しました（プロトタイプ：ローカル保存）"); }, [up]);
+  // autosave (debounce) — chỉ khi có tiêu đề
+  useEffect(() => {
+    if (tRef.current) clearTimeout(tRef.current);
+    if (!a.title.trim()) return;
+    tRef.current = setTimeout(() => { savePayload(a); }, 1000);
+    return () => { if (tRef.current) clearTimeout(tRef.current); };
+  }, [a, savePayload]);
+
+  const saveNow = useCallback(async () => { if (!a.title.trim()) { flash("タイトルを入力してください"); return; } const ok = await savePayload(a); flash(ok ? "保存しました" : "保存に失敗しました"); }, [a, savePayload]);
+  const publish = useCallback(async () => { if (!a.title.trim()) { flash("タイトルを入力してください"); return; } const next = { ...a, status: "PUBLISHED" as const }; setA(next); const ok = await savePayload(next); flash(ok ? "公開しました" : "公開に失敗しました"); }, [a, savePayload]);
 
   function toggleDark() { setDark((d) => { localStorage.setItem("biglight_admin_dark", d ? "0" : "1"); return !d; }); }
 
-  // keyboard shortcuts
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && !e.shiftKey) { e.preventDefault(); saveNow(); }
@@ -66,32 +83,39 @@ export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
     w.document.close();
   }
 
-  function onAI(k: string, label: string) {
+  // AI thật (Claude) — /api/ai/article
+  async function onAI(k: string, label: string) {
     setBusy(k);
-    setTimeout(() => {
-      if (k === "seoTitle") up({ seoTitle: (a.title || "BIGLIGHT Job").slice(0, 60) });
-      else if (k === "meta") up({ metaDescription: (a.excerpt || textOf(a.content)).slice(0, 158) });
-      else if (k === "faq") up({ faqs: [...a.faqs, { id: nextId("faq"), q: "特定技能で日本に行くには？", a: "" }, { id: nextId("faq"), q: "費用はどのくらいかかりますか？", a: "" }] });
-      else if (k === "cta") up({ ctas: [...a.ctas, { id: nextId("cta"), kind: "相談予約", label: "無料で相談する", url: "/mypage" }] });
-      else if (k === "jobs") flash("「関連求人」セクションで募集中の求人を選べます。");
-      else if (k === "guides") flash("「関連コンテンツ」でガイドを追加できます。");
-      else flash(`${label}：AI連携は近日対応（API接続後に有効化）`);
-      if (["seoTitle", "meta", "faq", "cta"].includes(k)) flash(`${label} を反映しました`);
-      setBusy(null);
-    }, 500);
+    let d: { text?: string; faqs?: { q: string; a: string }[]; error?: string } = {};
+    try {
+      const res = await fetch("/api/ai/article", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: k, article: a }) });
+      d = await res.json().catch(() => ({}));
+      if (!res.ok) { setBusy(null); flash(d.error || "AIに失敗しました"); return; }
+    } catch { setBusy(null); flash("AIに接続できませんでした"); return; }
+    setBusy(null);
+
+    if (k === "seoTitle" && d.text) up({ seoTitle: d.text.slice(0, 60) });
+    else if (k === "meta" && d.text) up({ metaDescription: d.text.slice(0, 160) });
+    else if ((k === "readability" || k === "improve") && d.text) { up({ content: d.text }); setEdSync((v) => v + 1); }
+    else if (k === "faq" && d.faqs?.length) up({ faqs: [...a.faqs, ...d.faqs.map((f) => ({ id: nextId("faq"), q: f.q, a: f.a }))] });
+    else if (d.text) { up({ content: a.content + `<div class="callout"><b>${label}</b><br>${d.text.replace(/\n/g, "<br>")}</div>` }); setEdSync((v) => v + 1); }
+    flash(`${label} を反映しました`);
   }
 
-  // auto slug nếu chưa nhập
   useEffect(() => { if (!a.slug && a.title) up({ slug: slugify(a.title) }); /* eslint-disable-next-line */ }, [a.title]);
+
+  async function doDelete() {
+    if (articleId) { await fetch(`/api/articles/${articleId}`, { method: "DELETE" }); router.push("/admin/articles"); router.refresh(); }
+    else { setA(makeDefaultArticle()); flash("クリアしました"); }
+  }
 
   return (
     <div className={`acms${dark ? " dark" : ""}`} style={{ margin: "-24px", padding: 0, minHeight: "calc(100vh - 64px)" }}>
       <style dangerouslySetInnerHTML={{ __html: ACMS_CSS }} />
 
-      {/* sticky header */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--card)", borderBottom: "1px solid var(--border)", padding: "12px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ fontSize: 16, fontWeight: 900 }}>記事を作成</div>
-        <span className="hint">{saving ? "保存中…" : lastSaved ? `自動保存 ${lastSaved}` : "新規"}</span>
+        <div style={{ fontSize: 16, fontWeight: 900 }}>記事を{initialId ? "編集" : "作成"}</div>
+        <span className="hint">{saving ? "保存中…" : lastSaved ? `保存 ${lastSaved}` : "下書き未保存"}</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button className="a-btn" onClick={preview}><Icon name="globe" size={15} />プレビュー</button>
           <button className="a-btn primary" onClick={publish}><Icon name="rocket" size={15} />公開</button>
@@ -100,7 +124,6 @@ export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
 
       <div style={{ padding: 24, display: "grid", gridTemplateColumns: "1fr", gap: 20 }} className="acms-layout">
         <style dangerouslySetInnerHTML={{ __html: "@media(min-width:1100px){.acms-layout{grid-template-columns:1fr 340px!important;align-items:start}.acms-side{position:sticky;top:78px}}" }} />
-        {/* MAIN */}
         <div>
           <ArticleBasicInfo a={a} up={up} />
           <ArticleSEO a={a} up={up} seo={seo} />
@@ -108,7 +131,7 @@ export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
           <OpenGraph a={a} up={up} />
           <FeaturedImage a={a} up={up} />
           <ArticleSummary a={a} up={up} />
-          <ArticleEditor a={a} up={up} />
+          <ArticleEditor a={a} up={up} syncSignal={edSync} />
           <FAQEditor a={a} up={up} />
           <RelatedContent a={a} up={up} jobs={jobs} />
           <CTASection a={a} up={up} />
@@ -117,7 +140,6 @@ export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
           <SEOChecklist seo={seo} />
         </div>
 
-        {/* SIDEBAR (sticky) */}
         <aside className="acms-side">
           <SeoScoreCard seo={seo} />
           <div style={{ height: 14 }} />
@@ -125,9 +147,9 @@ export function ArticleCMS({ jobs }: { jobs: JobOpt[] }) {
           <PublishSidebar
             a={a} saving={saving} lastSaved={lastSaved} dark={dark} onToggleDark={toggleDark}
             onSave={saveNow} onPreview={preview} onPublish={publish}
-            onSchedule={() => { up({ status: "SCHEDULED" }); flash("予約に設定しました"); }}
-            onDuplicate={() => flash("複製（保存後に有効化）")}
-            onDelete={() => { if (confirm("この下書きを削除しますか？")) { localStorage.removeItem(KEY); setA(makeDefaultArticle()); flash("削除しました"); } }}
+            onSchedule={() => { const next = { ...a, status: "SCHEDULED" as const }; setA(next); savePayload(next); flash("予約に設定しました"); }}
+            onDuplicate={() => flash("複製は近日対応")}
+            onDelete={() => { if (confirm(articleId ? "この記事を削除しますか？" : "下書きをクリアしますか？")) doDelete(); }}
           />
           <AIAssistantPanel onAI={onAI} busy={busy} />
         </aside>

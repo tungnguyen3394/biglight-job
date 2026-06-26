@@ -30,10 +30,10 @@ const EDCSS = `
 
 type Up = (p: Partial<ArticleState>) => void;
 
-export function ArticleEditor({ a, up }: { a: ArticleState; up: Up }) {
+export function ArticleEditor({ a, up, syncSignal = 0 }: { a: ArticleState; up: Up; syncSignal?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (ref.current && ref.current.innerHTML !== a.content) ref.current.innerHTML = a.content || ""; /* init once */ // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => { if (ref.current && ref.current.innerHTML !== a.content) ref.current.innerHTML = a.content || ""; /* init + sync khi AI thay content */ // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncSignal]);
   const sync = () => up({ content: ref.current?.innerHTML ?? "" });
   const exec = (cmd: string, val?: string) => { ref.current?.focus(); document.execCommand(cmd, false, val); sync(); };
   const insert = (html: string) => { ref.current?.focus(); document.execCommand("insertHTML", false, html); sync(); };
