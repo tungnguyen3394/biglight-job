@@ -269,6 +269,7 @@ model Job {
 model Candidate {
   id            String   @id @default(cuid())
   name          String
+  kana          String? // フリガナ
   birthdate     DateTime?
   nationality   String?
   gender        Gender   @default(ANY)

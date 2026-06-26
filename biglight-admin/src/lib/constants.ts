@@ -97,6 +97,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
   { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
   { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
+  { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
   { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: ["SUPER_ADMIN"] },
   { href: "/admin/settings", label: "Settings", jp: "設定", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] },
 ];
