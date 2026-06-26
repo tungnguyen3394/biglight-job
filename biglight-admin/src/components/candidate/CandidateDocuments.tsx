@@ -35,7 +35,11 @@ export default function CandidateDocuments({ initDocs }: { initDocs: DocMap }) {
 
   return (
     <div className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
-      <h2 className="mb-1 flex items-center gap-2 text-base font-black"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bl-red text-xs text-white">📄</span>提出書類</h2>
+      <h2 className="mb-1 flex items-center gap-2 text-base font-black">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-bl-red text-white">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
+        </span>提出書類
+      </h2>
       <p className="mb-4 text-xs text-bl-gray">画像・PDF（1ファイル最大10MB）。アップロードした書類は担当者のみ閲覧します。</p>
       <div className="grid gap-4 sm:grid-cols-2">
         {DOCSLOTS.map((d) => (
@@ -50,7 +54,7 @@ export default function CandidateDocuments({ initDocs }: { initDocs: DocMap }) {
               <ul className="mt-2 space-y-1.5">
                 {docs[d.id].map((file) => (
                   <li key={file.file} className="flex items-center gap-2 rounded-lg border border-bl-line bg-white px-3 py-2 text-sm">
-                    <span className="flex-1 truncate">📎 {file.name}</span>
+                    <span className="flex flex-1 items-center gap-1.5 truncate"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9AA2AE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M21.4 11.05 12.25 20.2a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49" /></svg>{file.name}</span>
                     <a href={`/api/candidate/documents?slot=${d.id}&file=${encodeURIComponent(file.file)}`} className="text-xs font-semibold text-bl-blue hover:underline">DL</a>
                     <button type="button" onClick={() => removeDoc(d.id, file.file)} className="text-xs font-bold text-bl-gray2 hover:text-bl-red">×</button>
                   </li>

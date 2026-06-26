@@ -61,6 +61,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
 
   const apps: AppView[] = (candidate?.applications ?? []).map((a) => ({
     id: a.id,
+    jobId: a.jobId,
     code: a.job.code,
     title: a.job.title,
     company: a.job.company.name,

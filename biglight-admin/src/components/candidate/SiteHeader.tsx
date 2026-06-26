@@ -35,7 +35,6 @@ export default function SiteHeader({ active, loggedIn }: { active: NavActive; lo
         <nav className="flex items-center gap-5 text-sm font-bold">
           <Link href="/" className={cls("jobs")}>求人を探す</Link>
           <Link href="/about" className={cls("about")}>私たちについて</Link>
-          <Link href="/info" className={cls("info")}>特定技能ガイド</Link>
           <div ref={ref} className="relative">
             <button onClick={() => setOpen((o) => !o)} className={`flex items-center gap-1 ${cls("tokutei2")}`}>
               特定技能2号情報

@@ -8,6 +8,7 @@ import {
   REASONS, PRIORITIES, WEIGHT,
 } from "@/lib/candidateFields";
 import { SSW_JOBS } from "@/lib/sswJobs";
+import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
 
 export type ProfileInit = {
   name: string; birth: string; gender: string; nat: string;
@@ -18,7 +19,7 @@ export type ProfileInit = {
   reasons: string[]; reasonOther: string; priorities: string[];
 };
 
-const PROFILE_KEYS = Object.keys(WEIGHT).filter((k) => k !== "docs");
+const PROFILE_KEYS = Object.keys(WEIGHT);
 const TOTAL_WEIGHT = PROFILE_KEYS.reduce((a, k) => a + WEIGHT[k], 0);
 
 function Card({ n, title, sub, children }: { n: number; title: string; sub?: string; children: React.ReactNode }) {
@@ -53,7 +54,7 @@ function Many({ options, value, onChange, max, scroll }: { options: string[]; va
 }
 const inputCls = "w-full rounded-xl border border-bl-line px-3 py-2.5 text-sm outline-none focus:border-bl-red";
 
-export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
+export default function CandidateProfileForm({ init, initDocs }: { init: ProfileInit; initDocs: DocMap }) {
   const router = useRouter();
   const [f, setF] = useState<ProfileInit>(init);
   const [saving, setSaving] = useState(false);
@@ -67,6 +68,7 @@ export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
     const filled = (k: string): boolean => {
       if (k === "gender") return f.gender === "MALE" || f.gender === "FEMALE";
       if (k === "cur") return !!f.sswField;
+      if (k === "docs") return Object.values(initDocs).some((a) => a.length > 0);
       const v = (f as Record<string, unknown>)[k];
       if (Array.isArray(v)) return v.length > 0;
       if (k === "sal") return (v as number) > 0;
@@ -75,7 +77,7 @@ export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
     let s = 0;
     for (const k of PROFILE_KEYS) if (filled(k)) s += WEIGHT[k];
     return Math.round((s / TOTAL_WEIGHT) * 100);
-  }, [f]);
+  }, [f, initDocs]);
 
   async function save() {
     setSaving(true);
@@ -147,6 +149,8 @@ export default function CandidateProfileForm({ init }: { init: ProfileInit }) {
         </Field>
         <Field label="最も重視すること（3つまで）" opt><Many options={PRIORITIES} value={f.priorities} onChange={(v) => set("priorities", v)} max={3} /></Field>
       </Card>
+
+      <CandidateDocuments initDocs={initDocs} />
 
       <div className="sticky bottom-20 z-10 lg:bottom-4">
         <button onClick={save} disabled={saving} className="w-full rounded-xl bg-bl-red py-3.5 text-base font-bold text-white shadow-lg hover:bg-bl-redd disabled:opacity-60">
