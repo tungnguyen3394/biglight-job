@@ -107,8 +107,6 @@ export const NAV_GROUPS: NavGroup[] = [
   ] },
   { title: "Business", items: [
     { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: STAFF },
-    { href: "/admin/partners", label: "Partners", jp: "CTV管理", roles: STAFF },
-    { href: "/admin/commissions", label: "Commission", jp: "報酬管理", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV"] },
   ] },
   { title: "Communication", items: [
     { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF },

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { can, canSeeInternalMemo, canSeeCommission } from "@/lib/permissions";
 import { JobForm } from "@/components/jobs/JobForm";
 
-export default async function NewJobPage() {
+export default async function NewJobPage({ searchParams }: { searchParams: { company?: string } }) {
   const user = (await getSessionUser())!;
   if (!can(user.role, "create", "job")) redirect("/admin/jobs");
 
@@ -17,12 +17,17 @@ export default async function NewJobPage() {
     orderBy: { name: "asc" },
   });
 
+  // preselect công ty khi đến từ 企業管理
+  const initial = searchParams.company && companies.some((c) => c.id === searchParams.company)
+    ? { companyId: searchParams.company }
+    : {};
+
   return (
     <div>
       <h1 className="mb-4 text-xl font-black text-navy">新規求人の作成</h1>
       <JobForm
         mode="create"
-        initial={{}}
+        initial={initial}
         companies={companies}
         ctvs={ctvs}
         canInternal={canSeeInternalMemo(user.role)}

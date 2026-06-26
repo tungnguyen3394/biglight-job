@@ -71,6 +71,69 @@ function DateInput({ label, value, onChange }: { label: string; value: string; o
   );
 }
 
+// 募集人数: 総数 / 男 / 女 — số nguyên, 男+女 ≤ 総数 (tự kẹp). Dễ thống kê.
+function RecruitCount({
+  total, male, female, onChange,
+}: {
+  total: number | "";
+  male: number | "";
+  female: number | "";
+  onChange: (total: number | "", male: number | "", female: number | "") => void;
+}) {
+  const T = total === "" ? 0 : total;
+  const M = male === "" ? 0 : male;
+  const F = female === "" ? 0 : female;
+  const parse = (v: string): number | "" => (v === "" ? "" : Math.max(0, Math.floor(Number(v) || 0)));
+
+  function onTotal(v: string) {
+    const t = parse(v);
+    const tn = t === "" ? 0 : t;
+    let m: number | "" = male, f: number | "" = female;
+    if (M + F > tn) { f = Math.max(0, tn - M); if (M > tn) { m = tn; f = 0; } }
+    onChange(t, m, f);
+  }
+  function onMale(v: string) {
+    const raw = parse(v);
+    onChange(total, raw === "" ? "" : Math.min(raw, Math.max(0, T - F)), female);
+  }
+  function onFemale(v: string) {
+    const raw = parse(v);
+    onChange(total, male, raw === "" ? "" : Math.min(raw, Math.max(0, T - M)));
+  }
+  const remaining = T - M - F;
+
+  const Cell = ({ label, value, on, max }: { label: string; value: number | ""; on: (v: string) => void; max?: number }) => (
+    <div>
+      <div className="mb-1 text-xs font-semibold text-slate-500">{label}</div>
+      <div className="flex items-center gap-1.5">
+        <input type="number" inputMode="numeric" min={0} max={max} value={value} onChange={(e) => on(e.target.value)}
+          onKeyDown={(e) => { if (["e", "E", "+", "-", "."].includes(e.key)) e.preventDefault(); }}
+          className="input text-center font-bold" placeholder="0" />
+        <span className="text-sm font-bold text-slate-500">名</span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="text-sm font-bold text-ink">募集人数</span>
+        <span className="rounded bg-bl-redsoft px-1.5 py-0.5 text-[10px] font-bold text-bl-red">数字のみ</span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <Cell label="総募集人数" value={total} on={onTotal} />
+        <Cell label="男" value={male} on={onMale} max={T - F} />
+        <Cell label="女" value={female} on={onFemale} max={T - M} />
+      </div>
+      <p className="mt-2 text-xs text-slate-400">
+        男＋女は総数（{T}名）を超えられません。
+        {remaining > 0 ? <span className="ml-1 font-semibold text-bl-amber">未指定 {remaining}名</span>
+          : remaining === 0 && T > 0 ? <span className="ml-1 font-semibold text-bl-green">男女の内訳が一致しています</span> : null}
+      </p>
+    </div>
+  );
+}
+
 const TABS = [
   "基本情報",
   "仕事内容",
@@ -161,14 +224,17 @@ export function JobForm({
       <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2">
         {tab === 0 && (
           <>
+            <RecruitCount
+              total={n("recruitCount")}
+              male={n("recruitMale")}
+              female={n("recruitFemale")}
+              onChange={(t, m, fe) => setF((p) => ({ ...p, recruitCount: t, recruitMale: m, recruitFemale: fe }))}
+            />
             <Text label="求人タイトル" value={s("title")} onChange={(v) => set("title", v)} />
             <Select label="企業" value={s("companyId")} onChange={(v) => set("companyId", v)} options={companies.map((c) => [c.id, c.name])} />
             <Text label="職種" value={s("jobTypeName")} onChange={(v) => set("jobTypeName", v)} />
             <Text label="勤務地（都道府県）" value={s("location")} onChange={(v) => set("location", v)} />
             <Text label="市区町村" value={s("city")} onChange={(v) => set("city", v)} />
-            <Num label="募集人数" value={n("recruitCount")} onChange={(v) => set("recruitCount", v)} />
-            <Num label="募集人数（男）" value={n("recruitMale")} onChange={(v) => set("recruitMale", v)} />
-            <Num label="募集人数（女）" value={n("recruitFemale")} onChange={(v) => set("recruitFemale", v)} />
             <Num label="採用人数" value={n("hiredCount")} onChange={(v) => set("hiredCount", v)} />
             <Text label="雇用形態" value={s("employmentType")} onChange={(v) => set("employmentType", v)} />
             <Select label="在留資格区分" value={s("residenceType")} onChange={(v) => set("residenceType", v)} options={Object.entries(RESIDENCE_LABEL)} />
