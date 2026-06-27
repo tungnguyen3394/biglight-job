@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { guard } from "@/lib/guard";
 import { isAllowedAdminEmail } from "@/lib/auth";
 import { shapeMessage } from "@/lib/messageServer";
-import { translate } from "@/lib/translate";
+import { translate, detectLang } from "@/lib/translate";
 import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +68,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const conv = await prisma.conversation.findUnique({ where: { id: params.id }, include: { candidate: { select: { userId: true } } } });
   if (!conv) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const translated = await translate(text, "vi", "ja"); // ứng viên xem tiếng Việt
+  // Nếu admin gõ ngôn ngữ khác tiếng Nhật → tự động dịch sang tiếng Nhật để lưu chuẩn.
+  const src = detectLang(text);
+  const jaText = src === "ja" ? text : await translate(text, "ja", src);
+  const translated = await translate(jaText, "vi", "ja"); // ứng viên xem tiếng Việt
   const role: MessageSender = g.level === "ADMIN" ? "ADMIN" : "STAFF";
 
   const msg = await prisma.message.create({
@@ -77,7 +80,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       senderId: g.user.id,
       senderRole: role,
       originalLanguage: "ja",
-      originalText: text,
+      originalText: jaText,
       translatedText: translated,
       translatedLanguage: "vi",
       isRead: false,
@@ -85,9 +88,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   });
   await prisma.conversation.update({
     where: { id: conv.id },
-    data: { lastMessage: text, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
+    data: { lastMessage: jaText, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
   });
-  await notify(conv.candidate.userId, { type: "message", title: "新しいメッセージが届きました", body: text.slice(0, 80), link: "/mypage?sec=messages" });
+  await notify(conv.candidate.userId, { type: "message", title: "新しいメッセージが届きました", body: jaText.slice(0, 80), link: "/mypage?sec=messages" });
 
   return NextResponse.json({ message: { ...shapeMessage(msg), senderName: g.user.name } });
 }

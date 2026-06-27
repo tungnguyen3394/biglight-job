@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CONV_STATUS_LABEL, CONV_STATUS_TONE } from "@/lib/messageConstants";
+import { ChatComposer } from "@/components/chat/ChatComposer";
 
 type Conv = { id: string; candidateId: string; name: string; image: string | null; lastMessage: string | null; lastMessageAt: string | null; unread: boolean; status: keyof typeof CONV_STATUS_LABEL };
 type Msg = { id: string; senderRole: string; senderName?: string | null; originalText: string; originalLanguage: string; translatedText: string | null; translatedLanguage: string | null; createdAt: string };
@@ -70,7 +71,6 @@ export default function MessagesAdmin({ canReply, canDelete }: { canReply: boole
     await fetch(`/api/admin/messages/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: s }) });
     setList((p) => p.map((c) => (c.id === activeId ? { ...c, status: s } : c)));
   }
-  function onKey(e: React.KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }
   function toggle(id: string) { setShowOrig((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
   async function deleteMessage(id: string) {
@@ -186,10 +186,7 @@ export default function MessagesAdmin({ canReply, canDelete }: { canReply: boole
               </div>
 
               {canReply ? (
-                <div className="flex items-end gap-2 border-t border-slate-100 p-3">
-                  <textarea value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKey} rows={1} placeholder="日本語で返信…（Enterで送信 / Shift+Enterで改行）" className="max-h-28 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-bl-red" />
-                  <button onClick={send} disabled={sending || !draft.trim()} className="btn btn-navy btn-sm h-10 px-4 disabled:opacity-50">送信</button>
-                </div>
+                <ChatComposer value={draft} onChange={setDraft} onSend={send} sending={sending} target="ja" variant="button" placeholder="返信を入力…（日本語以外は自動で日本語に翻訳されます）" />
               ) : (
                 <div className="border-t border-slate-100 p-3 text-center text-xs text-slate-400">閲覧のみ（返信権限がありません）</div>
               )}
