@@ -4,6 +4,7 @@ import { useState } from "react";
 import Logo from "./Logo";
 import { PUBLIC_BASE_URL } from "@/lib/site";
 import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
+import { isInAppBrowser, openExternalBrowser } from "@/lib/webview";
 
 const BENEFITS = [
   "応募状況をいつでも確認できます",
@@ -18,8 +19,17 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
   const dest = redirect.startsWith("/") ? redirect : "/mypage";
   const googleHref = `/api/auth/candidate/google/start?redirect=${encodeURIComponent(dest)}`;
 
+  // Trong webview (app FB/Zalo...) Google chặn OAuth → mở trang này bằng Chrome/Safari trước.
+  function onGoogleClick(e: React.MouseEvent) {
+    if (isInAppBrowser()) {
+      e.preventDefault();
+      openExternalBrowser(window.location.href);
+    }
+  }
+
   function loginFb() {
     if (!fbAppId) return;
+    if (isInAppBrowser()) { openExternalBrowser(window.location.href); return; }
     const redirectUri = `${PUBLIC_BASE_URL}/api/auth/candidate/facebook/callback`;
     const u = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${encodeURIComponent(fbAppId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}&scope=public_profile&response_type=code&state=${encodeURIComponent(dest)}`;
@@ -42,7 +52,7 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
 
           <div className="mt-6 space-y-3">
             {/* Google — nút trắng viền nhẹ */}
-            <a href={googleHref} className="flex w-full items-center justify-center gap-2.5 rounded-full border border-bl-line bg-white py-3 text-[15px] font-bold text-ink shadow-sm transition hover:border-bl-gray2 hover:shadow">
+            <a href={googleHref} onClick={onGoogleClick} className="flex w-full items-center justify-center gap-2.5 rounded-full border border-bl-line bg-white py-3 text-[15px] font-bold text-ink shadow-sm transition hover:border-bl-gray2 hover:shadow">
               <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.3 13.3 17.7 9.5 24 9.5z" /><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-17z" /><path fill="#FBBC05" d="M10.5 28.4c-.5-1.5-.8-3-.8-4.4s.3-3 .8-4.4l-7.9-6.2C1 16.6 0 20.2 0 24s1 7.4 2.6 10.6l7.9-6.2z" /><path fill="#34A853" d="M24 48c6.2 0 11.5-2 15.3-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.2 2.2-6.3 0-11.7-3.8-13.5-9.4l-7.9 6.2C6.5 42.6 14.6 48 24 48z" /></svg>
               Googleで続ける
             </a>

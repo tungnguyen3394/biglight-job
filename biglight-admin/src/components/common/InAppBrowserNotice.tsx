@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isInAppBrowser, osOf, openExternalBrowser } from "@/lib/webview";
 
 // Phát hiện in-app browser (webview của Facebook/Zalo/Instagram/Line...). Google
 // CHẶN đăng nhập OAuth trong webview → phải mở bằng Chrome/Safari mới login được.
@@ -10,13 +11,8 @@ export default function InAppBrowserNotice({ className }: { className?: string }
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const ua = navigator.userAgent || "";
-    const webview = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|NAVER|Zalo|MicroMessenger|KAKAOTALK|TikTok|musical_ly|Snapchat|Twitter/i.test(ua);
-    // Một số webview Android lộ diện qua "; wv)"
-    const androidWv = /Android.*; wv\)/i.test(ua);
-    setShow(webview || androidWv);
-    if (/android/i.test(ua)) setOs("android");
-    else if (/iphone|ipad|ipod/i.test(ua)) setOs("ios");
+    setShow(isInAppBrowser());
+    setOs(osOf());
   }, []);
 
   if (!show) return null;
@@ -24,13 +20,7 @@ export default function InAppBrowserNotice({ className }: { className?: string }
   const url = typeof window !== "undefined" ? window.location.href : "";
 
   function openExternal() {
-    if (os === "android") {
-      const noScheme = url.replace(/^https?:\/\//, "");
-      window.location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
-    } else if (os === "ios") {
-      // thử mở Chrome trên iOS; nếu không có Chrome, người dùng dùng hướng dẫn thủ công bên dưới
-      window.location.href = url.replace(/^https:\/\//, "googlechromes://").replace(/^http:\/\//, "googlechrome://");
-    }
+    openExternalBrowser(url);
   }
   async function copy() {
     try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* ignore */ }
