@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Completion, TabKey } from "@/lib/adminCandidate";
-import { NATIONALITIES, VISA_TYPES, JP_LEVELS, SKILL_FIELDS } from "@/lib/candidateFields";
+import { NATIONALITIES, VISA_TYPES, JP_LEVELS, SKILL_FIELDS, DORM_OPTIONS, START_OPTIONS, NIGHTSHIFT_OPTIONS, SHIFTWORK_OPTIONS, REASONS, PRIORITIES } from "@/lib/candidateFields";
+import { PREFECTURES } from "@/lib/prefectures";
 
 export type DetailData = {
   id: string;
@@ -26,9 +27,29 @@ export type DetailData = {
   canChangeJobFrom: string;
   internalMemo: string;
   status: string;
+  address: string;
+  facebookUrl: string; instagramUrl: string; tiktokUrl: string;
+  arrival: string;
+  sswCategory: string; sswTask: string; otherSkills: string;
+  desiredJobType: string;
+  dorm: string; start: string; nightshift: string; shiftwork: string;
+  reasons: string[]; reasonOther: string; priorities: string[];
   zairyuDocs: { name: string; file: string }[];
+  workphotosDocs: { name: string; file: string }[];
   apps: { id: string; code: string; title: string; company: string; status: string; statusLabel: string; createdAt: string }[];
 };
+
+// chip multi-select (cho 転職理由 / 重視) — module scope để input giữ focus.
+function Chips({ options, value, onChange, scroll }: { options: string[]; value: string[]; onChange: (v: string[]) => void; scroll?: boolean }) {
+  const toggle = (o: string) => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o]);
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${scroll ? "max-h-44 overflow-y-auto" : ""}`}>
+      {options.map((o) => (
+        <button key={o} type="button" onClick={() => toggle(o)} className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition ${value.includes(o) ? "border-navy bg-navy text-white" : "border-slate-200 text-slate-600 hover:border-navy"}`}>{o}</button>
+      ))}
+    </div>
+  );
+}
 
 type Tab = TabKey | "history" | "memo";
 const TABS: { key: Tab; label: string }[] = [
@@ -87,6 +108,11 @@ export function CandidateDetail({ data, completion, canEdit, canDelete }: { data
         desiredLocation: f.desiredLocation, desiredIndustry: f.desiredIndustry,
         desiredSalary: f.desiredSalary ? f.desiredSalary * 10000 : null, canChangeJobFrom: f.canChangeJobFrom,
         internalMemo: f.internalMemo,
+        // các trường user nhập thêm (cột + prefs)
+        currentAddress: f.address, facebookUrl: f.facebookUrl, instagramUrl: f.instagramUrl, tiktokUrl: f.tiktokUrl,
+        arrival: f.arrival, sswCategory: f.sswCategory, sswTask: f.sswTask, otherSkills: f.otherSkills,
+        desiredJobType: f.desiredJobType, dorm: f.dorm, start: f.start, nightshift: f.nightshift, shiftwork: f.shiftwork,
+        reasons: f.reasons, reasonOther: f.reasonOther, priorities: f.priorities,
       }),
     });
     setSaving(false);
@@ -196,6 +222,12 @@ export function CandidateDetail({ data, completion, canEdit, canDelete }: { data
               </Row>
               <Row editing={editing} label="電話番号" view={f.phone}><input className="input" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" /></Row>
               <Row editing={editing} label="メールアドレス" view={f.email}><input type="email" className="input" value={f.email} onChange={(e) => set("email", e.target.value)} /></Row>
+              <Row editing={editing} label="現在の住所（都道府県）" view={f.address}>
+                <select className="input" value={f.address} onChange={(e) => set("address", e.target.value)}><option value="">未選択</option>{f.address && !PREFECTURES.includes(f.address) && <option value={f.address}>{f.address}</option>}{PREFECTURES.map((p) => <option key={p}>{p}</option>)}</select>
+              </Row>
+              <Row editing={editing} label="Facebook" view={f.facebookUrl ? <a href={f.facebookUrl} target="_blank" rel="noreferrer" className="text-brand-blue hover:underline">{f.facebookUrl}</a> : ""}><input className="input" value={f.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} placeholder="https://facebook.com/…" /></Row>
+              <Row editing={editing} label="Instagram" view={f.instagramUrl ? <a href={f.instagramUrl} target="_blank" rel="noreferrer" className="text-brand-blue hover:underline">{f.instagramUrl}</a> : ""}><input className="input" value={f.instagramUrl} onChange={(e) => set("instagramUrl", e.target.value)} placeholder="https://instagram.com/…" /></Row>
+              <Row editing={editing} label="TikTok" view={f.tiktokUrl ? <a href={f.tiktokUrl} target="_blank" rel="noreferrer" className="text-brand-blue hover:underline">{f.tiktokUrl}</a> : ""}><input className="input" value={f.tiktokUrl} onChange={(e) => set("tiktokUrl", e.target.value)} placeholder="https://tiktok.com/@…" /></Row>
             </div>
           )}
 
@@ -212,6 +244,16 @@ export function CandidateDetail({ data, completion, canEdit, canDelete }: { data
               <Row editing={editing} label="日本語レベル" view={f.japaneseLevel}>
                 <select className="input" value={f.japaneseLevel} onChange={(e) => set("japaneseLevel", e.target.value)}><option value="">未選択</option>{JP_LEVELS.map((j) => <option key={j}>{j}</option>)}</select>
               </Row>
+              <Row editing={editing} label="来日年月日" view={f.arrival}><input type="date" className="input" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} /></Row>
+              <Row editing={editing} label="業務区分" view={f.sswCategory}><input className="input" value={f.sswCategory} onChange={(e) => set("sswCategory", e.target.value)} placeholder="例）溶接" /></Row>
+              <Row editing={editing} label="従事する主な業務" view={f.sswTask}><input className="input" value={f.sswTask} onChange={(e) => set("sswTask", e.target.value)} /></Row>
+              <div className="sm:col-span-2"><Row editing={editing} label="その他の経験・スキル" view={f.otherSkills}><textarea className="input" rows={2} value={f.otherSkills} onChange={(e) => set("otherSkills", e.target.value)} /></Row></div>
+              <div className="py-3 sm:col-span-2">
+                <div className="mb-1.5 text-xs font-semibold text-slate-500">製品の写真（溶接など）</div>
+                {data.workphotosDocs.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">{data.workphotosDocs.map((d) => <a key={d.file} href={`/api/candidates/${data.id}/document?slot=workphotos&file=${encodeURIComponent(d.file)}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-slate-200"><img src={`/api/candidates/${data.id}/document?slot=workphotos&file=${encodeURIComponent(d.file)}`} alt={d.name} className="h-28 w-44 object-cover" /></a>)}</div>
+                ) : <div className="text-sm text-slate-400">未提出</div>}
+              </div>
               <div className="py-3 sm:col-span-2">
                 <div className="mb-1.5 text-xs font-semibold text-slate-500">在留カード画像</div>
                 {data.zairyuDocs.length > 0 ? (
@@ -236,6 +278,19 @@ export function CandidateDetail({ data, completion, canEdit, canDelete }: { data
                 <div className="flex items-center gap-2"><input type="number" className="input" value={f.desiredSalary || ""} onChange={(e) => set("desiredSalary", Number(e.target.value))} /><span className="text-sm text-slate-500">万円</span></div>
               </Row>
               <Row editing={editing} label="転職可能時期" view={f.canChangeJobFrom}><input type="date" className="input" value={f.canChangeJobFrom} onChange={(e) => set("canChangeJobFrom", e.target.value)} /></Row>
+              <Row editing={editing} label="希望職種" view={f.desiredJobType}><input className="input" value={f.desiredJobType} onChange={(e) => set("desiredJobType", e.target.value)} placeholder="例）溶接 / 介護 / 惣菜製造" /></Row>
+              <Row editing={editing} label="寮の希望" view={f.dorm}><select className="input" value={f.dorm} onChange={(e) => set("dorm", e.target.value)}><option value="">未選択</option>{DORM_OPTIONS.map((o) => <option key={o}>{o}</option>)}</select></Row>
+              <Row editing={editing} label="いつから働けますか" view={f.start}><select className="input" value={f.start} onChange={(e) => set("start", e.target.value)}><option value="">未選択</option>{START_OPTIONS.map((o) => <option key={o}>{o}</option>)}</select></Row>
+              <Row editing={editing} label="夜勤できますか" view={f.nightshift}><select className="input" value={f.nightshift} onChange={(e) => set("nightshift", e.target.value)}><option value="">未選択</option>{NIGHTSHIFT_OPTIONS.map((o) => <option key={o}>{o}</option>)}</select></Row>
+              <Row editing={editing} label="交替勤務できますか" view={f.shiftwork}><select className="input" value={f.shiftwork} onChange={(e) => set("shiftwork", e.target.value)}><option value="">未選択</option>{SHIFTWORK_OPTIONS.map((o) => <option key={o}>{o}</option>)}</select></Row>
+              <div className="sm:col-span-2">
+                <Row editing={editing} label="転職理由・希望する働き方" view={f.reasons.length ? f.reasons.join("、") + (f.reasonOther ? ` / ${f.reasonOther}` : "") : ""}>
+                  <div className="space-y-2"><Chips options={REASONS} value={f.reasons} onChange={(v) => set("reasons", v)} scroll />{f.reasons.includes("その他（自由入力）") && <textarea className="input" rows={2} value={f.reasonOther} onChange={(e) => set("reasonOther", e.target.value)} placeholder="その他の理由" />}</div>
+                </Row>
+              </div>
+              <div className="sm:col-span-2">
+                <Row editing={editing} label="最も重視すること（3つまで）" view={f.priorities.join("、")}><Chips options={PRIORITIES} value={f.priorities} onChange={(v) => set("priorities", v)} /></Row>
+              </div>
             </div>
           )}
 

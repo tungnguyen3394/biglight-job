@@ -44,6 +44,30 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if ("canChangeJobFrom" in b) data.canChangeJobFrom = toDate(b.canChangeJobFrom);
   // メモ (admin only)
   if ("internalMemo" in b) data.internalMemo = typeof b.internalMemo === "string" ? b.internalMemo : null;
+  // các trường cột thêm (đồng bộ với form user)
+  if ("currentAddress" in b) data.currentAddress = str(b.currentAddress);
+  if ("facebookUrl" in b) data.facebookUrl = str(b.facebookUrl);
+
+  // các trường lưu trong prefs (JSON) — gộp để không mất key cũ
+  const PREF_KEYS = ["instagramUrl", "tiktokUrl", "arrival", "sswCategory", "sswTask", "otherSkills", "desiredJobType", "dorm", "start", "nightshift", "shiftwork", "reasonOther"];
+  const touchesPrefs = PREF_KEYS.some((k) => k in b) || "reasons" in b || "priorities" in b || "currentTokuteiField" in b;
+  if (touchesPrefs) {
+    const cur = await prisma.candidate.findUnique({ where: { id: params.id }, select: { prefs: true } });
+    const prefs = { ...((cur?.prefs as Record<string, unknown>) || {}) };
+    for (const k of PREF_KEYS) if (k in b) prefs[k] = typeof b[k] === "string" ? b[k] : "";
+    if ("reasons" in b) prefs.reasons = Array.isArray(b.reasons) ? b.reasons.map(String) : [];
+    if ("priorities" in b) prefs.priorities = Array.isArray(b.priorities) ? b.priorities.map(String) : [];
+    if ("currentTokuteiField" in b) prefs.sswField = str(b.currentTokuteiField) ?? "";
+    data.prefs = prefs;
+    // bool tiện lọc cho admin (giống form user)
+    if ("dorm" in b) data.wantDormitory = b.dorm === "寮を希望";
+    if ("nightshift" in b) data.canNightShift = b.nightshift === "できる";
+    if ("shiftwork" in b) data.canShiftWork = b.shiftwork === "できる";
+    if ("reasons" in b || "reasonOther" in b) {
+      const rs = Array.isArray(b.reasons) ? b.reasons.map(String) : [];
+      data.changeReason = [rs.join("、"), typeof b.reasonOther === "string" ? b.reasonOther : ""].filter(Boolean).join(" / ") || null;
+    }
+  }
 
   if (Object.keys(data).length === 0) return NextResponse.json({ error: "No fields" }, { status: 400 });
 

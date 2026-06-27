@@ -20,6 +20,9 @@ export default async function Page({ params }: { params: { id: string } }) {
   if (!c) return <Forbidden />;
 
   const docs = (c.documents as Record<string, DocFile[]>) || {};
+  const prefs = (c.prefs as Record<string, unknown>) || {};
+  const sArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
+  const sStr = (v: unknown): string => (typeof v === "string" ? v : "");
   const completion = computeCompletion({
     name: c.name, kana: c.kana, gender: c.gender, birthdate: c.birthdate, nationality: c.nationality,
     phone: c.phone, email: c.email, visaType: c.visaType, visaExpiryDate: c.visaExpiryDate,
@@ -48,7 +51,25 @@ export default async function Page({ params }: { params: { id: string } }) {
     canChangeJobFrom: ymd(c.canChangeJobFrom),
     internalMemo: c.internalMemo ?? "",
     status: c.status,
+    // ----- các trường user nhập thêm (cột + prefs) -----
+    address: c.currentAddress ?? "",
+    facebookUrl: c.facebookUrl ?? "",
+    instagramUrl: sStr(prefs.instagramUrl),
+    tiktokUrl: sStr(prefs.tiktokUrl),
+    arrival: sStr(prefs.arrival),
+    sswCategory: sStr(prefs.sswCategory),
+    sswTask: sStr(prefs.sswTask),
+    otherSkills: sStr(prefs.otherSkills),
+    desiredJobType: sStr(prefs.desiredJobType),
+    dorm: sStr(prefs.dorm),
+    start: sStr(prefs.start),
+    nightshift: sStr(prefs.nightshift),
+    shiftwork: sStr(prefs.shiftwork),
+    reasons: sArr(prefs.reasons),
+    reasonOther: sStr(prefs.reasonOther),
+    priorities: sArr(prefs.priorities),
     zairyuDocs: (docs.zairyu ?? []).map((d) => ({ name: d.name, file: d.file })),
+    workphotosDocs: (docs.workphotos ?? []).map((d) => ({ name: d.name, file: d.file })),
     apps: c.applications.map((a) => ({
       id: a.id,
       code: a.job.code,
