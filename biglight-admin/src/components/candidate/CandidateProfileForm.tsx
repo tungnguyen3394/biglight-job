@@ -13,13 +13,30 @@ import MultiUpload from "./MultiUpload";
 
 export type ProfileInit = {
   name: string; birth: string; gender: string; nat: string; phone: string; email: string;
-  address: string; facebookUrl: string; lineId: string;
+  address: string; facebookUrl: string; lineId: string; instagramUrl: string; tiktokUrl: string;
   visa: string; expiry: string; arrival: string; jp: string;
   sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
   fields: string[]; areas: string[]; desiredJobType: string; sal: number;
   dorm: string; start: string; nightshift: string; shiftwork: string;
   reasons: string[]; reasonOther: string; priorities: string[];
 };
+
+// 47 都道府県（現在の住所の選択肢）
+const PREFECTURES = [
+  "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+  "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
+  "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
+  "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
+  "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
+  "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県",
+];
+
+// SNS URL 任意。入力時のみ http:// / https:// で始まるか簡易チェック。
+function badUrl(v: string): boolean {
+  const s = v.trim();
+  return s !== "" && !/^https?:\/\//i.test(s);
+}
 
 const PROFILE_KEYS = Object.keys(WEIGHT);
 const TOTAL_WEIGHT = PROFILE_KEYS.reduce((a, k) => a + WEIGHT[k], 0);
@@ -85,6 +102,10 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
   async function save() {
     setErr("");
     if (!emailLocked && !f.email.trim()) { setErr("メールアドレスを入力してください。"); return; }
+    // SNS URL は任意だが、入力する場合は http:// / https:// で始まる必要あり（LINE IDは対象外）。
+    if (badUrl(f.facebookUrl)) { setErr("Facebook URL は http:// または https:// で始まる必要があります。"); return; }
+    if (badUrl(f.instagramUrl)) { setErr("Instagram URL は http:// または https:// で始まる必要があります。"); return; }
+    if (badUrl(f.tiktokUrl)) { setErr("TikTok URL は http:// または https:// で始まる必要があります。"); return; }
     setSaving(true);
     const res = await fetch("/api/candidate/profile", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -116,12 +137,25 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
           <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} readOnly={emailLocked} placeholder="example@email.com" className={`${inputCls} ${emailLocked ? "bg-bl-bg text-bl-gray2" : ""}`} />
           <p className="mt-1 text-xs text-bl-gray2">{emailLocked ? "ログインアカウントのメールアドレスです（変更不可）。" : "Facebookログインのため、ご連絡用のメールアドレスをご入力ください。"}</p>
         </Field>
-        <Field label="現在の住所" opt><input value={f.address} onChange={(e) => set("address", e.target.value)} placeholder="例）愛知県名古屋市…" className={inputCls} /></Field>
-        <Field label="Facebook URL" opt><input value={f.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} placeholder="https://facebook.com/…" className={inputCls} /></Field>
-        <Field label="LINE ID" opt><input value={f.lineId} onChange={(e) => set("lineId", e.target.value)} placeholder="LINE ID" className={inputCls} /></Field>
+        <Field label="現在の住所（都道府県）" opt>
+          <select value={f.address} onChange={(e) => set("address", e.target.value)} className={inputCls}>
+            <option value="">選択してください</option>
+            {f.address && !PREFECTURES.includes(f.address) && <option value={f.address}>{f.address}（現在の登録）</option>}
+            {PREFECTURES.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </Field>
       </Card>
 
-      <Card n={2} title="在留資格（ビザ）">
+      <Card n={2} title="SNSアカウント" sub="任意。担当者からのご連絡や本人確認に使わせていただくことがあります。">
+        <div className="mt-4 grid gap-x-4 sm:grid-cols-2">
+          <Field label="Facebook URL" opt><input value={f.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} placeholder="https://facebook.com/…" className={inputCls} /></Field>
+          <Field label="LINE ID" opt><input value={f.lineId} onChange={(e) => set("lineId", e.target.value)} placeholder="LINE ID" className={inputCls} /></Field>
+          <Field label="Instagram URL" opt><input value={f.instagramUrl} onChange={(e) => set("instagramUrl", e.target.value)} placeholder="https://instagram.com/…" className={inputCls} /></Field>
+          <Field label="TikTok URL" opt><input value={f.tiktokUrl} onChange={(e) => set("tiktokUrl", e.target.value)} placeholder="https://tiktok.com/@…" className={inputCls} /></Field>
+        </div>
+      </Card>
+
+      <Card n={3} title="在留資格（ビザ）">
         <Field label="現在の在留資格" req><One options={VISA_TYPES} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
         <Field label="現在の職種（特定技能分野）" opt>
           <div className="space-y-2">
@@ -151,7 +185,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
         <Field label="日本語レベル"><One options={JP_LEVELS} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
       </Card>
 
-      <Card n={3} title="希望する仕事">
+      <Card n={4} title="希望する仕事">
         <Field label={`希望月給（手取り）：${f.sal || 16}万円`} opt><input type="range" min={16} max={40} value={f.sal || 16} onChange={(e) => set("sal", Number(e.target.value))} className="w-full accent-bl-red" /></Field>
         <Field label="希望する特定技能分野"><Many options={SKILL_FIELDS} value={f.fields} onChange={(v) => set("fields", v)} /></Field>
         <Field label="希望勤務地"><Many options={PREF_OPTIONS} value={f.areas} onChange={(v) => set("areas", v)} scroll /></Field>

@@ -31,6 +31,8 @@ export async function POST(req: Request) {
     otherSkills: b.otherSkills || "",
     desiredJobType: b.desiredJobType || "",
     lineId: b.lineId || "",
+    instagramUrl: b.instagramUrl || "",
+    tiktokUrl: b.tiktokUrl || "",
     dorm: b.dorm || "",
     start: b.start || "",
     nightshift: b.nightshift || "",
