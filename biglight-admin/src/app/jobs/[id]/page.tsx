@@ -2,10 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
-import { industryImage, CONTACT_EMAIL } from "@/lib/site";
+import { industryImage, CONTACT_EMAIL, FB_PAGE_URL } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
+import { SaveButton } from "@/components/candidate/SaveButton";
+
+const LINE_URL = "https://line.me/R/ti/p/@biglight";
+const FLOW = ["応募", "書類選考", "面接（オンライン可）", "内定", "ビザ申請", "入社"];
 
 export const dynamic = "force-dynamic";
 
@@ -57,25 +61,40 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
 
   const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`【お問い合わせ】${job.code} ${job.title}`)}`;
-  const loggedIn = !!(await getSessionUser());
+  const session = await getSessionUser();
+  const loggedIn = !!session;
+  const open = job.status === "OPEN" && job.recruitCount > job.hiredCount;
+  let saved = false;
+  if (session?.role === "CANDIDATE") {
+    const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
+    saved = (cand?.savedJobIds ?? []).includes(job.id);
+  }
+  const updatedAt = job.updatedAt.toLocaleDateString("ja-JP");
 
   return (
     <Shell active="jobs" loggedIn={loggedIn}>
       <div className="mx-auto max-w-5xl px-4 py-5">
-        <Link href="/" className="text-sm font-semibold text-bl-gray hover:text-ink">← 求人一覧へ戻る</Link>
+        <Link href="/jobs" className="inline-flex items-center gap-1 text-sm font-semibold text-bl-gray hover:text-ink">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>求人一覧へ戻る
+        </Link>
 
         {/* Hero image (full width) */}
         <div className="relative mt-3 h-52 overflow-hidden rounded-2xl sm:h-64">
-          <img src={industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
+          <img src={job.imageUrl || industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute right-3 top-3"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
           <div className="absolute bottom-4 left-5 right-5 text-white">
             <div className="mb-2 flex flex-wrap gap-1.5">
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.code}</span>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${chip}`}>{job.industry}</span>
               {job.jobTypeName && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.jobTypeName}</span>}
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${open ? "bg-bl-green text-white" : "bg-bl-gray text-white"}`}>{open ? "募集中" : "募集終了"}</span>
             </div>
             <h1 className="text-2xl font-black sm:text-3xl">{job.title}</h1>
-            <p className="text-sm text-white/90">📍 {job.location}{job.city ? ` ${job.city}` : ""}</p>
+            <p className="flex items-center gap-1 text-sm text-white/90">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              {job.location}{job.city ? ` ${job.city}` : ""}
+            </p>
           </div>
         </div>
 
@@ -161,6 +180,21 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
               </Card>
             )}
 
+            <Card title="選考フロー">
+              <ol className="flex flex-wrap items-center gap-y-3">
+                {FLOW.map((step, i) => (
+                  <li key={step} className="flex items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-bl-redsoft text-xs font-black text-bl-red">{i + 1}</span>
+                      <span className="text-sm font-semibold text-ink">{step}</span>
+                    </div>
+                    {i < FLOW.length - 1 && <svg width="22" height="16" viewBox="0 0 24 24" fill="none" stroke="#D7DBE0" strokeWidth="2" className="mx-1"><path d="M9 6l6 6-6 6" /></svg>}
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-3 text-xs text-bl-gray2">面接はオンライン可。書類準備からビザ・渡航まで担当者がサポートします。</p>
+            </Card>
+
             {job.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {job.tags.map((t) => <span key={t} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-bl-gray shadow-sm">#{t}</span>)}
@@ -193,7 +227,23 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
 
               <Link href={applyHref} className="mt-5 block rounded-xl bg-bl-red py-3.5 text-center font-bold text-white shadow-lg hover:bg-bl-redd">この求人に応募する</Link>
               <p className="mt-1.5 text-center text-xs text-bl-gray2">無料・Facebook/Googleで登録</p>
-              <a href={mailto} className="mt-2 block text-center text-xs text-bl-gray underline">メールで問い合わせる</a>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#06C755] py-2.5 text-sm font-bold text-white hover:opacity-90">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.4 7.9.3.07.8.22.9.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1 .9.55 1.1-.46 5.9-3.5 8.05-5.98C21.4 14.6 22 12.9 22 11c0-4.4-4.5-8-10-8z" /></svg>
+                  LINEで相談
+                </a>
+                <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-bl-fb py-2.5 text-sm font-bold text-white hover:bg-[#0C63D4]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
+                  Facebook
+                </a>
+              </div>
+
+              <dl className="mt-4 space-y-1.5 border-t border-bl-line pt-3 text-xs">
+                <div className="flex justify-between"><dt className="text-bl-gray2">求人ID</dt><dd className="font-mono font-bold text-bl-gray">{job.code}</dd></div>
+                <div className="flex justify-between"><dt className="text-bl-gray2">更新日</dt><dd className="font-semibold text-bl-gray">{updatedAt}</dd></div>
+              </dl>
+              <a href={mailto} className="mt-3 block text-center text-xs text-bl-gray underline">メールで問い合わせる</a>
             </div>
           </aside>
         </div>

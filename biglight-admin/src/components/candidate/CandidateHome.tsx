@@ -124,7 +124,7 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
           {fields.map((f) => <option key={f}>{f}</option>)}
         </select>
         <MultiSelect label="タグ" options={STANDARD_TAGS} value={tags} onChange={setTags} />
-        <a href="#jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索する</a>
+        <a href="/jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索する</a>
       </div>
     </div>
   );

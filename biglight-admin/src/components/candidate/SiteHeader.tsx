@@ -32,7 +32,7 @@ export default function SiteHeader({ active, loggedIn }: { active: NavActive; lo
       <div className="mx-auto flex max-w-6xl items-center gap-5 px-6 py-3">
         <Link href="/" className="flex items-center gap-2"><Logo size={36} /><span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span></Link>
         <nav className="flex items-center gap-5 text-sm font-bold">
-          <Link href="/" className={cls("jobs")}>求人を探す</Link>
+          <Link href="/jobs" className={cls("jobs")}>求人を探す</Link>
           <Link href="/about" className={cls("about")}>私たちについて</Link>
           <div ref={ref} className="relative">
             <button onClick={() => setOpen((o) => !o)} className={`flex items-center gap-1 ${cls("tokutei2")}`}>

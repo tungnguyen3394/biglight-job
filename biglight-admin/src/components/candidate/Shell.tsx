@@ -10,7 +10,7 @@ import SiteHeader, { type NavActive } from "./SiteHeader";
 type Active = NavActive;
 
 const NAV: { key: Active; label: string; href: string; icon: React.ReactNode }[] = [
-  { key: "jobs", label: "求人", href: "/", icon: <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /> },
+  { key: "jobs", label: "求人", href: "/jobs", icon: <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /> },
   { key: "about", label: "私たち", href: "/about", icon: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5" /><circle cx="17.5" cy="9" r="2.2" /><path d="M15 20c0-2 1.2-3.4 4-3.4" /></> },
   { key: "tokutei2", label: "2号情報", href: "/tokutei2", icon: <><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" /><path d="M9 12l2 2 4-4" /></> },
   { key: "mypage", label: "マイ", href: "/mypage", icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></> },
