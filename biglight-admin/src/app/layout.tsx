@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
+import CookiePolicyConsent from "@/components/CookiePolicyConsent";
 
 export const metadata: Metadata = {
   title: "BIGLIGHT Job — Admin",
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <CookiePolicyConsent />
         {/* Google Translate — nạp 1 lần, các nút LangSwitch sẽ điều khiển combo này */}
         <div id="google_translate_element" />
         <Script id="gt-init" strategy="afterInteractive">{`

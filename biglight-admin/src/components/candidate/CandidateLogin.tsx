@@ -5,6 +5,7 @@ import Logo from "./Logo";
 import { PUBLIC_BASE_URL } from "@/lib/site";
 import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 import { isInAppBrowser, openExternalBrowser } from "@/lib/webview";
+import { hasCookieConsent, requestCookieConsent } from "@/lib/cookieConsent";
 
 const BENEFITS = [
   "応募状況をいつでも確認できます",
@@ -21,6 +22,8 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
 
   // Trong webview (app FB/Zalo...) Google chặn OAuth → mở trang này bằng Chrome/Safari trước.
   function onGoogleClick(e: React.MouseEvent) {
+    // Chưa đồng ý policy → mở popup đồng ý, KHÔNG bắt đầu đăng nhập.
+    if (!hasCookieConsent()) { e.preventDefault(); requestCookieConsent(); return; }
     if (isInAppBrowser()) {
       e.preventDefault();
       openExternalBrowser(window.location.href);
@@ -29,6 +32,7 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
 
   function loginFb() {
     if (!fbAppId) return;
+    if (!hasCookieConsent()) { requestCookieConsent(); return; }
     if (isInAppBrowser()) { openExternalBrowser(window.location.href); return; }
     const redirectUri = `${PUBLIC_BASE_URL}/api/auth/candidate/facebook/callback`;
     const u = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${encodeURIComponent(fbAppId)}` +
@@ -67,7 +71,9 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
 
           {error && <p className="mt-3 text-sm font-semibold text-bl-red">ログインに失敗しました。もう一度お試しください。</p>}
 
-          <p className="mt-6 text-center text-[11px] text-bl-gray2">続行すると、利用規約・プライバシーポリシーに同意したものとみなします。</p>
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-bl-gray2">
+            GoogleまたはFacebookでログインすることにより、<a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-bl-blue underline">プライバシーポリシー</a>に同意したものとみなされます。
+          </p>
         </div>
 
         {/* Benefits */}
