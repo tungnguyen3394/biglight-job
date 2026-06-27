@@ -59,3 +59,24 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ message: shapeMessage(msg) });
 }
+
+// PATCH { id, action: "recall" } — ứng viên thu hồi tin của chính mình.
+export async function PATCH(req: Request) {
+  const session = await getSessionUser();
+  if (!session || session.role !== "CANDIDATE") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const candidate = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { id: true } });
+  if (!candidate) return NextResponse.json({ error: "No profile" }, { status: 404 });
+
+  const b = await req.json().catch(() => ({}));
+  if (b.action !== "recall" || typeof b.id !== "string") return NextResponse.json({ error: "Bad request" }, { status: 400 });
+
+  const msg = await prisma.message.findUnique({ where: { id: b.id }, include: { conversation: { select: { candidateId: true } } } });
+  if (!msg || msg.conversation.candidateId !== candidate.id) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (msg.senderRole !== "CANDIDATE" || msg.senderId !== session.id) return NextResponse.json({ error: "自分のメッセージのみ取り消せます。" }, { status: 403 });
+  if (msg.recalledAt) return NextResponse.json({ ok: true });
+
+  await prisma.message.update({ where: { id: msg.id }, data: { recalledAt: new Date(), recalledById: session.id } });
+  const last = await prisma.message.findFirst({ where: { conversationId: msg.conversationId, deletedAt: null, recalledAt: null }, orderBy: { createdAt: "desc" } });
+  await prisma.conversation.update({ where: { id: msg.conversationId }, data: { lastMessage: last?.originalText ?? null, lastMessageAt: last?.createdAt ?? null } });
+  return NextResponse.json({ ok: true });
+}

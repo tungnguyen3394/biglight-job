@@ -95,9 +95,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   return NextResponse.json({ message: { ...shapeMessage(msg), senderName: g.user.name } });
 }
 
-// DELETE — xoá toàn bộ hội thoại (kèm tin nhắn). Chỉ cấp có quyền messages.delete (Admin).
+// DELETE — xoá toàn bộ hội thoại (kèm tin nhắn). Admin/Staff được xóa, View không.
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const g = await guard("messages.delete");
+  const g = await guard("messages.reply");
   if (!g.ok) return g.res;
   await prisma.conversation.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });

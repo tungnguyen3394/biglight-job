@@ -27,6 +27,7 @@ export async function getOrCreateConversation(candidateId: string) {
 }
 
 // Định dạng message trả về client (nguyên bản + bản dịch; client tự chọn hiển thị).
+// Khi đã 削除/取り消し → ẩn nội dung, chỉ trả cờ trạng thái (client hiện tombstone).
 export function shapeMessage(m: {
   id: string;
   senderRole: string;
@@ -36,15 +37,22 @@ export function shapeMessage(m: {
   translatedText: string | null;
   translatedLanguage: string | null;
   createdAt: Date;
+  deletedAt?: Date | null;
+  recalledAt?: Date | null;
 }) {
+  const deleted = !!m.deletedAt;
+  const recalled = !!m.recalledAt;
+  const hidden = deleted || recalled;
   return {
     id: m.id,
     senderRole: m.senderRole,
     senderId: m.senderId,
     originalLanguage: m.originalLanguage,
-    originalText: m.originalText,
-    translatedText: m.translatedText,
-    translatedLanguage: m.translatedLanguage,
+    originalText: hidden ? "" : m.originalText,
+    translatedText: hidden ? null : m.translatedText,
+    translatedLanguage: hidden ? null : m.translatedLanguage,
     createdAt: m.createdAt.toISOString(),
+    deleted,
+    recalled,
   };
 }

@@ -436,6 +436,12 @@ model Message {
   translatedLanguage String?
   isRead             Boolean       @default(false)
   createdAt          DateTime      @default(now())
+  // 削除 (kiểm duyệt): "このメッセージは削除されました"
+  deletedAt          DateTime?
+  deletedById        String?
+  // 送信取消 / 取り消し (thu hồi bởi người gửi/Admin): "このメッセージは取り消されました"
+  recalledAt         DateTime?
+  recalledById       String?
 
   @@index([conversationId, createdAt])
   @@map("messages")

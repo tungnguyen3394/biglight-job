@@ -8,6 +8,7 @@ type Msg = {
   originalText: string; originalLanguage: string;
   translatedText: string | null; translatedLanguage: string | null;
   createdAt: string;
+  deleted?: boolean; recalled?: boolean;
 };
 
 function hhmm(iso: string) {
@@ -43,6 +44,13 @@ export default function CandidateMessages() {
   }
   function scrollEnd() { setTimeout(() => endRef.current?.scrollIntoView({ block: "end" }), 300); }
   function toggle(id: string) { setShowOrig((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
+  const [menu, setMenu] = useState<string | null>(null);
+  async function recall(id: string) {
+    setMenu(null);
+    if (!window.confirm("このメッセージを取り消しますか？ / Thu hồi tin nhắn này?")) return;
+    const r = await fetch("/api/candidate/messages", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "recall" }) });
+    if (r.ok) setMsgs((m) => m.map((x) => (x.id === id ? { ...x, recalled: true, originalText: "", translatedText: null } : x)));
+  }
 
   function disp(m: Msg) {
     const mine = m.senderRole === "CANDIDATE";
@@ -70,22 +78,46 @@ export default function CandidateMessages() {
         ) : msgs.map((m) => {
           const mine = m.senderRole === "CANDIDATE";
           const name = senderName(m);
-          const translatable = !mine && m.translatedText && m.translatedText !== m.originalText;
+          const tomb = m.deleted || m.recalled;
+          const translatable = !mine && !tomb && m.translatedText && m.translatedText !== m.originalText;
+          const canRecall = mine && !tomb;
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className="max-w-[80%]">
                 {name && <div className="mb-0.5 text-[11px] font-semibold text-bl-gray2">{name}</div>}
-                <div className={`whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${mine ? "rounded-br-sm bg-bl-red text-white" : "rounded-bl-sm border border-bl-line bg-white text-ink"}`}>
-                  {disp(m)}
-                </div>
-                <div className={`mt-0.5 flex items-center gap-2 text-[10px] text-bl-gray2 ${mine ? "justify-end" : ""}`}>
-                  <span>{hhmm(m.createdAt)}</span>
-                  {translatable && (
-                    <button onClick={() => toggle(m.id)} className="font-semibold text-bl-blue hover:underline">
-                      {showOrig.has(m.id) ? "翻訳を見る / Xem bản dịch" : "原文を見る / Xem bản gốc"}
-                    </button>
+                <div className="flex items-end gap-1">
+                  {tomb ? (
+                    <div className={`rounded-2xl border border-dashed px-3.5 py-2 text-sm italic text-bl-gray2 ${mine ? "border-bl-red/30 bg-bl-redsoft/30" : "border-bl-line bg-white"}`}>
+                      {m.recalled ? "このメッセージは取り消されました / Đã thu hồi" : "このメッセージは削除されました / Đã bị xóa"}
+                    </div>
+                  ) : (
+                    <div className={`whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${mine ? "rounded-br-sm bg-bl-red text-white" : "rounded-bl-sm border border-bl-line bg-white text-ink"}`}>
+                      {disp(m)}
+                    </div>
+                  )}
+                  {canRecall && (
+                    <div className="relative">
+                      <button onClick={() => setMenu(menu === m.id ? null : m.id)} className="flex h-6 w-6 items-center justify-center rounded-full text-bl-gray2 hover:bg-bl-line" aria-label="操作">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
+                      </button>
+                      {menu === m.id && (
+                        <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-bl-line bg-white py-1 shadow-lg">
+                          <button onClick={() => recall(m.id)} className="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-bl-bg">送信取消 / Thu hồi</button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
+                {!tomb && (
+                  <div className={`mt-0.5 flex items-center gap-2 text-[10px] text-bl-gray2 ${mine ? "justify-end" : ""}`}>
+                    <span>{hhmm(m.createdAt)}</span>
+                    {translatable && (
+                      <button onClick={() => toggle(m.id)} className="font-semibold text-bl-blue hover:underline">
+                        {showOrig.has(m.id) ? "翻訳を見る / Xem bản dịch" : "原文を見る / Xem bản gốc"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
