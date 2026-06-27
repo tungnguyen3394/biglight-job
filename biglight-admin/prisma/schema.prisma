@@ -256,6 +256,7 @@ model Job {
   // hiển thị / đề xuất ở user site
   isFeatured     Boolean @default(false) // おすすめ求人
   isRecommended  Boolean @default(false) // 推奨
+  isUrgent       Boolean @default(false) // 急募 (募集中 + khẩn)
   imageUrl       String? // 求人画像
   seoTitle       String? // SEO用タイトル
   seoDescription String? // SEO用説明

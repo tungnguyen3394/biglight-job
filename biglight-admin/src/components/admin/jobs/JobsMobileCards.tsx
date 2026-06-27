@@ -23,12 +23,20 @@ export function JobsMobileCards({
         <div key={j.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
           <div className="flex items-start justify-between gap-2">
             <span className="font-mono text-[11px] font-bold text-slate-400">{j.code}</span>
-            <JobStatusBadge status={j.publicStatus} />
+            <div className="flex items-center gap-1.5">
+              {j.opStatus === "OPEN"
+                ? (j.isUrgent
+                  ? <span className="rounded-full bg-bl-redsoft px-2 py-0.5 text-[10px] font-bold text-bl-red">急募</span>
+                  : <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">募集中</span>)
+                : <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">終了</span>}
+              <JobStatusBadge status={j.publicStatus} />
+            </div>
           </div>
           <Link href={`/admin/jobs/${j.id}`} className="mt-1 block line-clamp-2 text-[15px] font-bold text-ink">{j.title}</Link>
           <div className="mt-0.5 line-clamp-1 text-xs text-slate-500">{j.company ?? "—"}</div>
 
           <div className="mt-3 grid grid-cols-2 gap-y-1.5 text-xs">
+            <div className="text-slate-400">業種</div><div className="font-medium text-slate-700">{j.industry}</div>
             <div className="text-slate-400">勤務地</div><div className="font-medium text-slate-700">{j.location}{j.city ? ` ${j.city}` : ""}</div>
             <div className="text-slate-400">職種</div><div className="font-medium text-slate-700">{j.jobType ?? "—"}</div>
             <div className="text-slate-400">募集人数</div><div className="font-medium text-slate-700">{j.recruitCount}名（男{j.recruitMale}/女{j.recruitFemale}）</div>

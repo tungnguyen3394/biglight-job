@@ -58,7 +58,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // API công khai cho user site (không cần đăng nhập)
-  const isPublicApi = pathname.startsWith("/api/jobs/public") || pathname.startsWith("/api/jobs/featured");
+  const isPublicApi = pathname.startsWith("/api/jobs/public") || pathname.startsWith("/api/jobs/featured") || pathname.startsWith("/api/uploads");
 
   // Bảo vệ API (trừ auth + public): 401 JSON
   if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !isPublicApi && !valid) {

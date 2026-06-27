@@ -23,6 +23,7 @@ export type JobRow = {
   commission: number | null;
   isFeatured: boolean;
   isRecommended: boolean;
+  isUrgent: boolean;
   updatedAt: string; // ISO
 };
 

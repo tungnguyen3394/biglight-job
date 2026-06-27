@@ -90,6 +90,20 @@ export function JobForm({
   const [err, setErr] = useState("");
   const [benefitCustom, setBenefitCustom] = useState("");
   const [tagCustom, setTagCustom] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadImg(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true); setErr("");
+    const fd = new FormData(); fd.append("file", file);
+    const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    setUploading(false);
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.url) set("imageUrl", j.url);
+    else setErr(j.error || "画像のアップロードに失敗しました。");
+  }
 
   const set = <K extends keyof JobFormState>(k: K, v: JobFormState[K]) => setS((p) => ({ ...p, [k]: v }));
   const companyName = companies.find((c) => c.id === s.companyId)?.name ?? "";
@@ -167,6 +181,16 @@ export function JobForm({
       <div className="jf-layout">
         {/* ============ FORM ============ */}
         <div className="jf-form">
+          {/* 求人コード・募集状況 (đầu form) */}
+          <div className="section">
+            <h2><span className="num">#</span>求人コード・募集状況</h2>
+            <p className="sdesc">管理用の番号と募集の状況</p>
+            <div className="grid">
+              <div className="field"><label>求人コード</label><input className="inp" value={s.code} onChange={(e) => set("code", e.target.value)} placeholder="例）MFG-001（空欄なら自動採番）" /><span className="hint">社内管理用の番号。自由に設定できます。</span></div>
+              <div className="field"><label>募集状況</label><select className="sel" value={s.recruitStatus} onChange={(e) => set("recruitStatus", e.target.value)}><option value="URGENT">急募</option><option value="OPEN">募集中</option><option value="CLOSED">終了</option></select><span className="hint">急募・募集中＝公開／終了＝募集終了。</span></div>
+            </div>
+          </div>
+
           {/* 1 基本情報 */}
           <div className="section">
             <h2><span className="num">1</span>基本情報</h2>
@@ -279,7 +303,18 @@ export function JobForm({
               <div className="field"><label>公開ステータス</label><select className="sel" value={s.publicStatus} onChange={(e) => set("publicStatus", e.target.value)}>{Object.entries(PUBLIC_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select><span className="hint">公開／非公開／下書きなど</span></div>
               <div className="field"><label>おすすめ求人</label><div className="toggle">{[["1", "おすすめ"], ["0", "通常"]].map(([v, l]) => <button type="button" key={v} className={(s.isFeatured ? "1" : "0") === v ? "on" : ""} onClick={() => set("isFeatured", v === "1")}>{l}</button>)}</div><span className="hint">トップページの「おすすめ求人」に表示</span></div>
               <div className="field"><label>推奨（Recommended）</label><div className="toggle">{[["1", "推奨"], ["0", "通常"]].map(([v, l]) => <button type="button" key={v} className={(s.isRecommended ? "1" : "0") === v ? "on" : ""} onClick={() => set("isRecommended", v === "1")}>{l}</button>)}</div></div>
-              <div className="field full"><label>求人画像URL</label><input className="inp" value={s.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://…（空欄なら業種の既定画像）" /></div>
+              <div className="field full">
+                <label>求人画像（募集用）</label>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+                  {s.imageUrl && <img src={s.imageUrl} alt="" style={{ width: 200, height: 112, objectFit: "cover", borderRadius: 10, border: "1px solid #e5e7eb" }} />}
+                  <label className="btn btn-ghost" style={{ cursor: "pointer" }}>
+                    <input type="file" accept="image/*" onChange={uploadImg} style={{ display: "none" }} />
+                    {uploading ? "アップロード中…" : s.imageUrl ? "画像を変更" : "＋ 募集画像をアップロード"}
+                  </label>
+                  {s.imageUrl && <button type="button" className="btn btn-ghost" onClick={() => set("imageUrl", "")}>削除</button>}
+                </div>
+                <span className="hint">推奨サイズ：<b>横長 1200×630px</b>（比率 約16:9）。スマホでは横長画像がカードにきれいに収まります。JPG/PNG/WebP・5MBまで。空欄なら業種の既定画像を使用します。</span>
+              </div>
               <div className="field full"><label>SEOタイトル</label><input className="inp" value={s.seoTitle} onChange={(e) => set("seoTitle", e.target.value)} placeholder="検索結果用タイトル（空欄なら求人タイトル）" /></div>
               <div className="field full"><label>SEOディスクリプション</label><input className="inp" value={s.seoDescription} onChange={(e) => set("seoDescription", e.target.value)} placeholder="検索結果用の説明文（120〜160文字）" /></div>
             </div>

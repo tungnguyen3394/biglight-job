@@ -47,6 +47,7 @@ export default async function JobsPage() {
       : null,
     isFeatured: j.isFeatured,
     isRecommended: j.isRecommended,
+    isUrgent: j.isUrgent,
     updatedAt: j.updatedAt.toISOString(),
   }));
 

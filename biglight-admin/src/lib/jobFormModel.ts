@@ -16,6 +16,8 @@ export type Num = number | "";
 export type JobFormState = {
   // ① 基本情報
   companyId: string;
+  code: string;          // 求人コード (admin tự đặt; trống → auto khi tạo)
+  recruitStatus: string; // "URGENT" | "OPEN" | "CLOSED" → 急募 / 募集中 / 終了
   field: string;       // → industry
   type: string;        // → jobTypeName (職種)
   title: string;
@@ -75,7 +77,7 @@ export type JobFormState = {
 
 export function makeDefaultForm(companyId = ""): JobFormState {
   return {
-    companyId, field: FIELDS[0], type: "", title: "", pref: "愛知県", city: "",
+    companyId, code: "", recruitStatus: "OPEN", field: FIELDS[0], type: "", title: "", pref: "愛知県", city: "",
     recruitTotal: "", recruitMale: "", recruitFemale: "",
     payType: "時給", payAmount: "", monthly: "", takehome: "", payNote: "",
     term: "特定技能1号（通算上限5年）", hours: "", overtime: "", holiday: "", commute: "", bonus: "", benefits: [],
@@ -150,7 +152,13 @@ export function formToPayload(s: JobFormState, mode: "create" | "edit") {
     riskNotes: s.riskNotes || null,
     formData: publicFormData(s),
   };
-  if (mode === "create") payload.code = makeCode(s.field);
+  // 求人コード: admin tự đặt; trống thì auto khi tạo.
+  const codeVal = s.code.trim();
+  if (codeVal) payload.code = codeVal;
+  else if (mode === "create") payload.code = makeCode(s.field);
+  // 募集状況: 急募/募集中 → OPEN (+isUrgent), 終了 → CLOSED.
+  payload.status = s.recruitStatus === "CLOSED" ? "CLOSED" : "OPEN";
+  payload.isUrgent = s.recruitStatus === "URGENT";
   return payload;
 }
 
@@ -166,6 +174,8 @@ export function jobToForm(job: Record<string, unknown>): JobFormState {
   const s: JobFormState = {
     ...d,
     companyId: (job.companyId as string) ?? "",
+    code: (job.code as string) ?? "",
+    recruitStatus: job.status === "CLOSED" || job.status === "PAUSED" || job.status === "FILLED" ? "CLOSED" : (job.isUrgent ? "URGENT" : "OPEN"),
     publicStatus: (job.publicStatus as string) ?? "DRAFT",
     isFeatured: !!job.isFeatured,
     isRecommended: !!job.isRecommended,
@@ -177,7 +187,7 @@ export function jobToForm(job: Record<string, unknown>): JobFormState {
     riskNotes: (job.riskNotes as string) ?? "",
   };
   if (has) {
-    return { ...s, ...(fd as JobFormState), companyId: s.companyId, publicStatus: s.publicStatus, internalMemo: s.internalMemo, companyHistory: s.companyHistory, riskNotes: s.riskNotes };
+    return { ...s, ...(fd as JobFormState), companyId: s.companyId, code: s.code, recruitStatus: s.recruitStatus, publicStatus: s.publicStatus, internalMemo: s.internalMemo, companyHistory: s.companyHistory, riskNotes: s.riskNotes };
   }
   // fallback từ cột (job cũ chưa có formData)
   const str = (k: string) => (job[k] as string) ?? "";

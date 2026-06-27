@@ -65,7 +65,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
   // BIGLIGHT-only fields
   if (user.role === "SUPER_ADMIN" || user.role === "MANAGER" || user.role === "BIGLIGHT_STAFF") {
-    for (const k of ["internalMemo", "companyHistory", "riskNotes", "status", "publicStatus", "biglightStaffId", "ctvId", "code", "industry", "companyId"]) {
+    for (const k of ["internalMemo", "companyHistory", "riskNotes", "status", "isUrgent", "publicStatus", "biglightStaffId", "ctvId", "code", "industry", "companyId"]) {
       if (k in body) data[k] = body[k];
     }
   }

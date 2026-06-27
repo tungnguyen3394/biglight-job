@@ -106,7 +106,7 @@ export function JobsManager({
       </div>
 
       <JobsTable
-        rows={filtered} sort={sort} onSort={onSort} seeCommission={seeCommission}
+        rows={filtered} sort={sort} onSort={onSort}
         canEdit={canEdit} canDelete={canDelete} onDelete={setDelId} onDuplicate={doDuplicate} busyId={busyId}
       />
       <JobsMobileCards

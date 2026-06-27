@@ -126,6 +126,7 @@ export async function POST(req: Request) {
       publicStatus: body.publicStatus ?? "DRAFT",
       isFeatured: !!body.isFeatured,
       isRecommended: !!body.isRecommended,
+      isUrgent: !!body.isUrgent,
       imageUrl: body.imageUrl ?? null,
       seoTitle: body.seoTitle ?? null,
       seoDescription: body.seoDescription ?? null,

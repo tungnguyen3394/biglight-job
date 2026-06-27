@@ -12,10 +12,10 @@ import { PREFECTURES } from "@/lib/prefectures";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
 export type BrowseJob = {
-  id: string; title: string; industry: string; jobType: string | null;
+  id: string; code: string; title: string; industry: string; jobType: string | null;
   prefecture: string; city: string | null; salaryMain: string | null; salaryValue: number;
   recruitCount: number; dormitory: boolean; nightShift: boolean; japaneseLevel: string | null;
-  gender: string; residence: string; isFeatured: boolean; isRecommended: boolean;
+  gender: string; residence: string; isFeatured: boolean; isRecommended: boolean; isUrgent: boolean;
   open: boolean; createdAt: string; tags: string[]; img: string;
 };
 
@@ -38,7 +38,8 @@ function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; on
       <Link href={`/jobs/${job.id}`} className="relative block h-32 overflow-hidden">
         <img src={job.img} alt="" className="h-full w-full object-cover" />
         <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-1.5">
-          {job.isFeatured && <span className="rounded-full bg-bl-red px-2 py-0.5 text-[11px] font-black text-white shadow">おすすめ</span>}
+          {job.open && job.isUrgent && <span className="rounded-full bg-bl-red px-2 py-0.5 text-[11px] font-black text-white shadow">急募</span>}
+          {job.isFeatured && <span className="rounded-full bg-bl-amber px-2 py-0.5 text-[11px] font-black text-white shadow">おすすめ</span>}
           {!job.open && <span className="rounded-full bg-bl-gray px-2 py-0.5 text-[11px] font-bold text-white">募集終了</span>}
         </div>
         <button onClick={(e) => { e.preventDefault(); onToggleSave(); }} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-lg leading-none shadow hover:bg-white" aria-label="お気に入り">
@@ -46,6 +47,7 @@ function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; on
         </button>
       </Link>
       <div className="flex flex-1 flex-col p-4">
+        <div className="mb-1 font-mono text-[11px] font-bold text-bl-gray2">{job.code}</div>
         <div className="mb-1.5 flex flex-wrap gap-1.5">
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
           <span className="rounded-full bg-bl-redsoft px-2 py-0.5 text-[11px] font-bold text-bl-red">{RESIDENCE_LABEL[job.residence] ?? "特定技能"}</span>
@@ -80,6 +82,9 @@ function Row({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; onT
       <div className="min-w-0 flex-1">
         <Link href={`/jobs/${job.id}`} className="line-clamp-1 text-sm font-bold leading-snug hover:text-bl-red">{job.title}</Link>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-bl-gray">
+          <span className="font-mono font-bold text-bl-gray2">{job.code}</span>
+          {job.open && job.isUrgent && <span className="font-bold text-bl-red">急募</span>}
+          {!job.open && <span className="font-bold text-bl-gray2">募集終了</span>}
           {job.salaryMain && <span className="font-black text-bl-red">{job.salaryMain}</span>}
           <span className="inline-flex items-center gap-0.5"><Ico d={I_PIN} size={12} />{job.prefecture}{job.city ? ` ${job.city}` : ""}</span>
           <span>{job.industry}</span>

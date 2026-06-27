@@ -17,6 +17,7 @@ export default async function JobsPage() {
     const salaryValue = j.expectedMonthly ?? (j.payType === "月給" ? j.baseSalary ?? 0 : j.salaryMin ?? 0);
     return {
       id: j.id,
+      code: j.code,
       title: j.title,
       industry: j.industry,
       jobType: j.jobTypeName,
@@ -32,6 +33,7 @@ export default async function JobsPage() {
       residence: j.residenceType,
       isFeatured: j.isFeatured,
       isRecommended: j.isRecommended,
+      isUrgent: j.isUrgent,
       open: j.status === "OPEN" && j.recruitCount > j.hiredCount,
       createdAt: j.createdAt.toISOString(),
       tags: j.tags,
