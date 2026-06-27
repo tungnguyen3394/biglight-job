@@ -252,8 +252,15 @@ function Many({ options, value, onChange, max, scroll }: { options: string[]; va
   return <div className={`flex flex-wrap gap-1.5 ${scroll ? "max-h-44 overflow-y-auto" : ""}`}>{options.map((o) => <button key={o} type="button" onClick={() => toggle(o)} className={chipCls(value.includes(o))}>{o}</button>)}</div>;
 }
 
-export default function CandidateProfileForm({ init, initDocs, emailLocked }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean }) {
+export type FieldOptions = { nationality?: string[]; visa?: string[]; jpLevel?: string[]; industry?: string[] };
+
+export default function CandidateProfileForm({ init, initDocs, emailLocked, options }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions }) {
   const router = useRouter();
+  // Định nghĩa từ 設定 (DB); fallback về hằng số gốc nếu chưa có.
+  const NAT = options?.nationality ?? NATIONALITIES;
+  const VISA = options?.visa ?? VISA_TYPES;
+  const JP = options?.jpLevel ?? JP_LEVELS;
+  const IND = options?.industry ?? SKILL_FIELDS;
   const [f, setF] = useState<ProfileInit>(init);
   const [baseline, setBaseline] = useState<ProfileInit>(init);
   const [editing, setEditing] = useState<boolean>(!init.name || !init.phone); // người mới → mở sẵn chế độ sửa
@@ -321,7 +328,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
           <Field label="お名前（ローマ字）" req><input value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="NGUYEN VAN A" className={inputCls} /></Field>
           <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="性別" req><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
-          <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NATIONALITIES.map((n) => <option key={n}>{n}</option>)}</select></Field>
+          <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NAT.map((n) => <option key={n}>{n}</option>)}</select></Field>
           <Field label="電話番号" opt><input type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" className={inputCls} /></Field>
           <Field label="メールアドレス" req={!emailLocked}>
             <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} readOnly={emailLocked} placeholder="example@email.com" className={`${inputCls} ${emailLocked ? "bg-bl-bg text-bl-gray2" : ""}`} />
@@ -344,7 +351,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
         </Card>
 
         <Card n={2} title="在留資格（ビザ）">
-          <Field label="現在の在留資格" req><One options={VISA_TYPES} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
+          <Field label="現在の在留資格" req><One options={VISA} value={f.visa} onChange={(v) => set("visa", v)} /></Field>
           <Field label="現在の職種（特定技能分野）" opt>
             <div className="space-y-2">
               <select value={f.sswField} onChange={(e) => setSsw(e.target.value, "", "")} className={inputCls}>
@@ -370,12 +377,12 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
           </Field>
           <Field label="在留期限" opt><input type="date" value={f.expiry} onChange={(e) => set("expiry", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="来日年月日" opt><input type="date" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
-          <Field label="日本語レベル"><One options={JP_LEVELS} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
+          <Field label="日本語レベル"><One options={JP} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
         </Card>
 
         <Card n={3} title="希望する仕事">
           <Field label={`希望月給（手取り）：${f.sal || 16}万円`} opt><input type="range" min={16} max={40} value={f.sal || 16} onChange={(e) => set("sal", Number(e.target.value))} className="w-full accent-bl-red" /></Field>
-          <Field label="希望する特定技能分野"><Many options={SKILL_FIELDS} value={f.fields} onChange={(v) => set("fields", v)} /></Field>
+          <Field label="希望する特定技能分野"><Many options={IND} value={f.fields} onChange={(v) => set("fields", v)} /></Field>
           <Field label="希望勤務地"><Many options={PREF_OPTIONS} value={f.areas} onChange={(v) => set("areas", v)} scroll /></Field>
           <Field label="希望職種" opt><input value={f.desiredJobType} onChange={(e) => set("desiredJobType", e.target.value)} placeholder="例）溶接 / 介護 / 惣菜製造 など" className={inputCls} /></Field>
           <Field label="寮の希望" opt><One options={DORM_OPTIONS} value={f.dorm} onChange={(v) => set("dorm", v)} /></Field>

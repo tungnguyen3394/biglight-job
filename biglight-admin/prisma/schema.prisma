@@ -382,6 +382,31 @@ model Conversation {
   @@map("conversations")
 }
 
+// ===== Master-data (設定): danh sách định nghĩa dùng chung (dropdown/tag...) =====
+model OptionSet {
+  id        String       @id @default(cuid())
+  key       String       @unique // "nationality" | "visa" | "jpLevel" | "industry" | "tags"
+  label     String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  items     OptionItem[]
+
+  @@map("option_sets")
+}
+
+model OptionItem {
+  id        String    @id @default(cuid())
+  setId     String
+  set       OptionSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  value     String
+  sortOrder Int       @default(0)
+  enabled   Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  @@index([setId, sortOrder])
+  @@map("option_items")
+}
+
 // Thông báo (chuông) — polling ~30s. userId = người nhận (tài khoản ứng viên).
 model Notification {
   id        String   @id @default(cuid())

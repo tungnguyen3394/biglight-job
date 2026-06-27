@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canSeeInternalMemo } from "@/lib/permissions";
 import { uiCan } from "@/lib/adminAccess";
+import { getAllOptions } from "@/lib/options";
 import { JobForm } from "@/components/jobs/JobForm";
 import { makeDefaultForm } from "@/lib/jobFormModel";
 
@@ -16,6 +17,7 @@ export default async function NewJobPage({ searchParams }: { searchParams: { com
   const preselect = searchParams.company && companies.some((c) => c.id === searchParams.company)
     ? searchParams.company
     : companies[0]?.id ?? "";
+  const opts = await getAllOptions();
 
   return (
     <JobForm
@@ -23,6 +25,7 @@ export default async function NewJobPage({ searchParams }: { searchParams: { com
       companies={companies}
       canInternal={canSeeInternalMemo(user.role)}
       initialForm={makeDefaultForm(preselect)}
+      options={{ industry: opts.industry, tags: opts.tags }}
     />
   );
 }

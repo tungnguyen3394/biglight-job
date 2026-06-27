@@ -71,7 +71,7 @@ const CSS = `
 `;
 
 export function JobForm({
-  mode, jobId, companies, canInternal, initialForm, code,
+  mode, jobId, companies, canInternal, initialForm, code, options,
 }: {
   mode: "create" | "edit";
   jobId?: string;
@@ -79,8 +79,12 @@ export function JobForm({
   canInternal: boolean;
   initialForm?: JobFormState;
   code?: string;
+  options?: { industry?: string[]; tags?: string[] };
 }) {
   const router = useRouter();
+  // Định nghĩa từ 設定 (DB); fallback hằng số gốc.
+  const FIELD_OPTS = options?.industry ?? FIELDS;
+  const TAG_OPTS = options?.tags ?? STD_TAGS;
   const [s, setS] = useState<JobFormState>(initialForm ?? makeDefaultForm(companies[0]?.id ?? ""));
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -168,7 +172,7 @@ export function JobForm({
             <h2><span className="num">1</span>基本情報</h2>
             <p className="sdesc">求人の業種・職種・会社・勤務地</p>
             <div className="grid">
-              <div className="field full"><label>業種（特定技能分野）<span className="req">*</span></label><select className="sel" value={s.field} onChange={(e) => set("field", e.target.value)}>{FIELDS.map((x) => <option key={x}>{x}</option>)}</select><span className="hint">特定技能の正式名称から選択。求人コードの接頭辞に使われます。</span></div>
+              <div className="field full"><label>業種（特定技能分野）<span className="req">*</span></label><select className="sel" value={s.field} onChange={(e) => set("field", e.target.value)}>{FIELD_OPTS.map((x) => <option key={x}>{x}</option>)}</select><span className="hint">特定技能の正式名称から選択。求人コードの接頭辞に使われます。</span></div>
               <div className="field"><label>職種<span className="req">*</span></label><input className="inp" value={s.type} onChange={(e) => set("type", e.target.value)} placeholder="例）半自動溶接 / 型枠大工 / 惣菜製造" /><span className="hint">具体的な仕事の呼び名</span></div>
               <div className="field"><label>掲載企業<span className="req">*</span></label><select className="sel" value={s.companyId} onChange={(e) => set("companyId", e.target.value)}><option value="">選択してください</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select><span className="hint">企業管理に登録された企業から選択（応募者には非公開）。</span></div>
               <div className="field full"><label>求人タイトル</label><input className="inp" value={s.title} onChange={(e) => set("title", e.target.value)} placeholder="例）半自動溶接スタッフ（未経験OK・寮あり）" /><span className="hint">空欄なら「職種」を見出しに使用します。</span></div>
@@ -264,7 +268,7 @@ export function JobForm({
           <div className="section">
             <h2><span className="num">8</span>タグ</h2>
             <p className="sdesc">検索・絞り込み用のタグ（複数選択可）</p>
-            <div className="field full"><div className="chips">{STD_TAGS.map((t) => <button type="button" key={t} className={`chip-btn tag${s.tags.includes(t) ? " on" : ""}`} onClick={() => toggleArr("tags", t)}>{t}</button>)}{s.tags.filter((t) => !STD_TAGS.includes(t)).map((t) => <button type="button" key={t} className="chip-btn tag on" onClick={() => toggleArr("tags", t)}>{t} ×</button>)}</div><div className="chip-add"><input className="inp" value={tagCustom} onChange={(e) => setTagCustom(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom("tags", tagCustom, () => setTagCustom("")); } }} placeholder="カスタムタグを追加（例：駅徒歩5分）" /><button type="button" onClick={() => addCustom("tags", tagCustom, () => setTagCustom(""))}>＋ 追加</button></div><span className="hint">標準タグから選択、または独自タグを追加できます。</span></div>
+            <div className="field full"><div className="chips">{TAG_OPTS.map((t) => <button type="button" key={t} className={`chip-btn tag${s.tags.includes(t) ? " on" : ""}`} onClick={() => toggleArr("tags", t)}>{t}</button>)}{s.tags.filter((t) => !TAG_OPTS.includes(t)).map((t) => <button type="button" key={t} className="chip-btn tag on" onClick={() => toggleArr("tags", t)}>{t} ×</button>)}</div><div className="chip-add"><input className="inp" value={tagCustom} onChange={(e) => setTagCustom(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustom("tags", tagCustom, () => setTagCustom("")); } }} placeholder="カスタムタグを追加（例：駅徒歩5分）" /><button type="button" onClick={() => addCustom("tags", tagCustom, () => setTagCustom(""))}>＋ 追加</button></div><span className="hint">標準タグから選択、または独自タグを追加できます。</span></div>
           </div>
 
           {/* 9 公開・社内メモ (管理) */}

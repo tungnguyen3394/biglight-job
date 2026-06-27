@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { APP_STATUS_LABEL } from "@/lib/constants";
 import { salaryRange } from "@/lib/site";
 import { isProfileComplete } from "@/lib/candidateProfile";
+import { getAllOptions } from "@/lib/options";
 import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
@@ -130,6 +131,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
   }));
 
   const complete = candidate ? isProfileComplete(candidate, candidate.user) : false;
+  const fieldOptions = await getAllOptions(); // 国籍・在留資格・日本語・業種 từ 設定 (đồng bộ)
 
   return (
     <Shell active="mypage" loggedIn={true}>
@@ -144,6 +146,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
         complete={complete}
         needProfile={searchParams.need === "1"}
         initialSec={searchParams.sec}
+        fieldOptions={fieldOptions}
       />
       <MessengerPopupButton />
     </Shell>
