@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
 
-export type NavActive = "jobs" | "about" | "info" | "tokutei2" | "mypage";
+export type NavActive = "jobs" | "about" | "info" | "tokutei2" | "guide" | "mypage";
 
 // Các mục trong dropdown 特定技能2号情報
 export const TOKUTEI2_LINKS = [
@@ -18,13 +17,6 @@ export const TOKUTEI2_LINKS = [
 
 // Header trên cùng dùng chung cho desktop (trang chủ + mọi trang). Mobile dùng Shell riêng.
 export default function SiteHeader({ active, loggedIn, onRegister }: { active: NavActive; loggedIn?: boolean; onRegister?: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
   const cls = (key: NavActive) => (active === key ? "text-bl-red" : "text-bl-gray hover:text-ink");
 
   return (
@@ -34,19 +26,7 @@ export default function SiteHeader({ active, loggedIn, onRegister }: { active: N
         <nav className="flex items-center gap-5 text-sm font-bold">
           <Link href="/jobs" className={cls("jobs")}>求人を探す</Link>
           <Link href="/about" className={cls("about")}>私たちについて</Link>
-          <div ref={ref} className="relative">
-            <button onClick={() => setOpen((o) => !o)} className={`flex items-center gap-1 ${cls("tokutei2")}`}>
-              特定技能2号情報
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6" /></svg>
-            </button>
-            {open && (
-              <div className="absolute left-0 top-8 z-50 w-56 rounded-xl border border-bl-line bg-white p-1 shadow-xl">
-                {TOKUTEI2_LINKS.map((t) => (
-                  <Link key={t.label} href={t.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-semibold text-bl-gray hover:bg-bl-bg hover:text-ink">{t.label}</Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <Link href="/guide" className={cls("guide")}>特定技能ガイド</Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LangSwitch />
