@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
+import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 
 declare global {
   interface Window {
@@ -63,6 +64,8 @@ function LoginForm() {
           <h1 className="text-xl font-black text-navy">BIGLIGHT Admin</h1>
           <p className="mt-1 text-sm text-slate-500">管理システムにログイン</p>
         </div>
+
+        <InAppBrowserNotice className="mb-4" />
 
         {/* Google sign-in (chỉ @biglight.jp) */}
         <div className="flex justify-center">

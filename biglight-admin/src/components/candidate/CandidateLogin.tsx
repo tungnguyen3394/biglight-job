@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Logo from "./Logo";
 import { PUBLIC_BASE_URL } from "@/lib/site";
+import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 
 const BENEFITS = [
   "応募状況をいつでも確認できます",
@@ -36,6 +37,8 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
           {applyTitle && (
             <p className="mt-3 rounded-lg bg-bl-redsoft px-3 py-2 text-xs font-semibold text-bl-red">「{applyTitle}」への応募を続けるにはログインしてください。</p>
           )}
+
+          <InAppBrowserNotice className="mt-4" />
 
           <div className="mt-6 space-y-3">
             {/* Google — nút trắng viền nhẹ */}
