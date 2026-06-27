@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import MessengerLink from "@/components/common/MessengerLink";
 
 type Noti = { id: string; type: string; title: string; body: string | null; link: string | null; isRead: boolean; createdAt: string };
 
@@ -47,7 +48,10 @@ export default function MobileHeaderActions({ loggedIn }: { loggedIn?: boolean }
   const unreadMsg = loggedIn && items.some((i) => !i.isRead && i.type === "message");
 
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-1">
+      {/* Messenger (Facebook) — nổi bật, ưu tiên nhắn qua FB */}
+      <MessengerLink variant="compact" />
+
       {/* メッセージ */}
       <Link href="/mypage?sec=messages" className="relative flex h-9 w-9 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg" aria-label="メッセージ">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" /></svg>

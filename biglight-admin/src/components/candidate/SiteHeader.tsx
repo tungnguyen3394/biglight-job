@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
+import MessengerLink from "@/components/common/MessengerLink";
 
 export type NavActive = "jobs" | "about" | "info" | "tokutei2" | "guide" | "mypage";
 
@@ -29,6 +30,7 @@ export default function SiteHeader({ active, loggedIn, onRegister }: { active: N
           <Link href="/guide" className={cls("guide")}>特定技能ガイド</Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <MessengerLink variant="pill" />
           <LangSwitch />
           {loggedIn ? (
             <Link href="/mypage" className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-black text-white shadow-md ${active === "mypage" ? "bg-bl-redd" : "bg-bl-red hover:bg-bl-redd"}`}>
