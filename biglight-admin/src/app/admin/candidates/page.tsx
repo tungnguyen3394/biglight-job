@@ -15,20 +15,31 @@ export default async function Page() {
     orderBy: { createdAt: "desc" },
   });
 
-  const rows: CandidateRow[] = candidates.map((c) => ({
-    id: c.id,
-    name: c.name,
-    kana: c.kana,
-    image: c.user?.image ?? null,
-    nationality: c.nationality,
-    phone: c.phone,
-    email: c.email ?? c.user?.email ?? null,
-    visaType: c.visaType,
-    japaneseLevel: c.japaneseLevel,
-    createdAt: c.createdAt.toISOString(),
-    status: c.status,
-    apps: c._count.applications,
-  }));
+  const rows: CandidateRow[] = candidates.map((c) => {
+    const prefs = (c.prefs as Record<string, unknown>) || {};
+    const hasSNS = !!(c.facebookUrl || prefs.lineId || prefs.instagramUrl || prefs.tiktokUrl);
+    const lastActive = [c.user?.lastLoginAt, c.updatedAt, c.createdAt]
+      .filter(Boolean)
+      .map((d) => new Date(d as Date).getTime())
+      .reduce((a, b) => Math.max(a, b), 0);
+    return {
+      id: c.id,
+      name: c.name,
+      kana: c.kana,
+      image: c.user?.image ?? null,
+      nationality: c.nationality,
+      phone: c.phone,
+      email: c.email ?? c.user?.email ?? null,
+      visaType: c.visaType,
+      japaneseLevel: c.japaneseLevel,
+      address: c.currentAddress,
+      createdAt: c.createdAt.toISOString(),
+      lastActive: new Date(lastActive).toISOString(),
+      hasSNS,
+      status: c.status,
+      apps: c._count.applications,
+    };
+  });
 
   return (
     <div>
