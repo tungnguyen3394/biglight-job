@@ -343,9 +343,60 @@ model Candidate {
   user          User?         @relation("CandidateAccount", fields: [userId], references: [id])
   applications  Application[]
   candidateCommissions CandidateCommission[]
+  conversation  Conversation?
 
   @@index([referralCtvId])
   @@map("candidates")
+}
+
+// ===== メッセージ (chat ứng viên ⇄ admin) =====
+enum ConversationStatus {
+  WAITING      // 返信待ち
+  IN_PROGRESS  // 対応中
+  DONE         // 完了
+}
+
+enum MessageSender {
+  CANDIDATE
+  ADMIN
+  STAFF
+  SYSTEM
+}
+
+model Conversation {
+  id                String             @id @default(cuid())
+  candidateId       String             @unique
+  candidate         Candidate          @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  status            ConversationStatus @default(WAITING)
+  lastMessage       String?            @db.Text
+  lastMessageAt     DateTime?
+  unreadByAdmin     Boolean            @default(false)
+  unreadByCandidate Boolean            @default(false)
+  welcomedAt        DateTime? // welcome chỉ tạo 1 lần
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  messages          Message[]
+
+  @@index([status])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id                 String        @id @default(cuid())
+  conversationId     String
+  conversation       Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId           String? // userId; null cho SYSTEM
+  senderRole         MessageSender
+  originalLanguage   String        @default("ja")
+  originalText       String        @db.Text
+  translatedText     String?       @db.Text
+  translatedLanguage String?
+  isRead             Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
 }
 
 model Application {

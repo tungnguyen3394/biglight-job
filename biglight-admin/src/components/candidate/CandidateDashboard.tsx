@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit } from "./CandidateProfileForm";
+import CandidateMessages from "./CandidateMessages";
 import { type DocMap } from "./CandidateDocuments";
 
 const STAGES = ["応募", "面談", "面接", "内定", "ビザ申請中", "入社"];
@@ -36,11 +37,6 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "apps", label: "応募状況・進捗" },
   { key: "saved", label: "お気に入り求人" },
   { key: "messages", label: "メッセージ" },
-];
-
-const SEED_CHAT = [
-  { me: false, from: "BIGLIGHT サポート", text: "ようこそ！プロフィールを完成させると、あなたに合う求人をご紹介できます。", time: "10:00" },
-  { me: false, from: "担当アドバイザー", text: "ご希望の勤務地や職種があれば、いつでもこちらにメッセージしてください。日本語・ベトナム語どちらでもOKです。", time: "10:05" },
 ];
 
 function Tracker({ stage }: { stage: number }) {
@@ -78,10 +74,6 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   if (!profile.visa?.trim()) missing.push("現在の在留資格");
   if (!emailLocked && !profile.email?.trim()) missing.push("メールアドレス");
 
-  // chat tạm (UI) — chưa lưu DB
-  const [chat, setChat] = useState(SEED_CHAT);
-  const [draft, setDraft] = useState("");
-
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.refresh();
@@ -108,13 +100,6 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
     await fetch("/api/candidate/apply", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId }) });
     router.refresh();
   }
-  function sendChat() {
-    const t = draft.trim();
-    if (!t) return;
-    setChat((c) => [...c, { me: true, from: name, text: t, time: "" }]);
-    setDraft("");
-  }
-
   const heading = sec === "settings" ? "アカウント設定" : ITEMS.find((i) => i.key === sec)?.label ?? "";
 
   // nút điều hướng dùng chung
@@ -244,29 +229,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
             )
           )}
 
-          {/* メッセージ — cửa sổ chat (UI tạm) */}
-          {sec === "messages" && (
-            <div className="flex h-[60vh] min-h-[420px] flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm">
-              <div className="flex items-center gap-2 border-b border-bl-line px-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-bl-red text-white"><Ic d={ICONS.messages} /></div>
-                <div><b className="text-sm">BIGLIGHT 担当チーム</b><div className="text-[11px] text-bl-gray2">通常24時間以内に返信します</div></div>
-              </div>
-              <div className="flex-1 space-y-3 overflow-y-auto bg-bl-bg p-4">
-                {chat.map((m, i) => (
-                  <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
-                    <div className="max-w-[78%]">
-                      {!m.me && <div className="mb-0.5 text-[11px] font-semibold text-bl-gray2">{m.from}</div>}
-                      <div className={`rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${m.me ? "rounded-br-sm bg-bl-red text-white" : "rounded-bl-sm border border-bl-line bg-white text-ink"}`}>{m.text}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 border-t border-bl-line p-3">
-                <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendChat(); }} placeholder="メッセージを入力…" className="flex-1 rounded-full border border-bl-line bg-bl-bg px-4 py-2.5 text-sm outline-none focus:border-bl-red" />
-                <button onClick={sendChat} className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-bl-red text-white hover:bg-bl-redd" aria-label="送信"><Ic d={ICONS.send} /></button>
-              </div>
-            </div>
-          )}
+          {/* メッセージ — chat thật (lưu DB) */}
+          {sec === "messages" && <CandidateMessages />}
 
           {/* アカウント設定 */}
           {sec === "settings" && (

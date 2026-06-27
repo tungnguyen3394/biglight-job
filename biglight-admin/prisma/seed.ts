@@ -297,6 +297,38 @@ async function main() {
     },
   });
 
+  // ---- demo メッセージ (4 ứng viên + hội thoại) ----
+  const WELCOME_JA =
+    "BIGLIGHT JOBへようこそ。\nお仕事探しや応募についてご不明な点がございましたら、お気軽にこちらからメッセージをお送りください。\nBIGLIGHTスタッフが順次ご返信いたします。";
+  const WELCOME_VI =
+    "Chào mừng bạn đến với BIGLIGHT JOB.\nNếu bạn có thắc mắc về công việc, cách ứng tuyển, hồ sơ, visa hoặc lịch phỏng vấn, hãy nhắn tin tại đây.\nNhân viên BIGLIGHT sẽ kiểm tra và trả lời bạn trong thời gian sớm nhất.";
+  const detect = (t: string): string =>
+    /[぀-ヿ㐀-䶿一-龯]/.test(t) ? "ja" : /[ăâđêôơưáàảãạấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộơớờúùủũụư]/i.test(t) ? "vi" : "en";
+
+  const DEMO: { id: string; name: string; nat: string; jp: string; phone: string; email: string; msg: string; reply?: string; status: "WAITING" | "IN_PROGRESS" | "DONE" }[] = [
+    { id: "seed-msg-c1", name: "Nguyen Van An", nat: "ベトナム", jp: "N3", phone: "080-1111-1111", email: "an@example.com", msg: "Xin chào, tôi muốn hỏi về công việc hàn ở Aichi.", status: "WAITING" },
+    { id: "seed-msg-c2", name: "Tran Thi Linh", nat: "ベトナム", jp: "N4", phone: "080-2222-2222", email: "linh@example.com", msg: "応募の流れを教えてください。", reply: "ご応募ありがとうございます。担当者より追ってご連絡いたします。", status: "IN_PROGRESS" },
+    { id: "seed-msg-c3", name: "Siti Aisyah", nat: "インドネシア", jp: "N4", phone: "080-3333-3333", email: "siti@example.com", msg: "Is the dormitory available for women?", status: "WAITING" },
+    { id: "seed-msg-c4", name: "Muhammad Rizki", nat: "インドネシア", jp: "N3", phone: "080-4444-4444", email: "rizki@example.com", msg: "介護の求人に興味があります。", reply: "介護のお仕事をご紹介できます。ご希望の勤務地を教えてください。", status: "DONE" },
+  ];
+  for (const d of DEMO) {
+    const c = await prisma.candidate.upsert({
+      where: { id: d.id },
+      update: {},
+      create: { id: d.id, name: d.name, nationality: d.nat, gender: "ANY", phone: d.phone, email: d.email, japaneseLevel: d.jp, status: "新規" },
+    });
+    const conv = await prisma.conversation.upsert({
+      where: { candidateId: c.id },
+      update: {},
+      create: { candidateId: c.id, status: d.status, welcomedAt: new Date(), unreadByAdmin: !d.reply, lastMessage: d.reply ?? d.msg, lastMessageAt: new Date() },
+    });
+    if ((await prisma.message.count({ where: { conversationId: conv.id } })) === 0) {
+      await prisma.message.create({ data: { conversationId: conv.id, senderRole: "SYSTEM", originalLanguage: "ja", originalText: WELCOME_JA, translatedText: WELCOME_VI, translatedLanguage: "vi", isRead: true } });
+      await prisma.message.create({ data: { conversationId: conv.id, senderRole: "CANDIDATE", originalLanguage: detect(d.msg), originalText: d.msg, translatedText: d.msg, translatedLanguage: "ja", isRead: !!d.reply } });
+      if (d.reply) await prisma.message.create({ data: { conversationId: conv.id, senderRole: "STAFF", originalLanguage: "ja", originalText: d.reply, translatedText: d.reply, translatedLanguage: "vi", isRead: true } });
+    }
+  }
+
   console.log("Seed done. Login with any of these (password: " + PASSWORD + "):");
   console.log("  admin@biglight.jp      (SUPER_ADMIN)");
   console.log("  staff@biglight.jp      (BIGLIGHT_STAFF)");
