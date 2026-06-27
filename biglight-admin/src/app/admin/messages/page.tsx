@@ -12,5 +12,6 @@ export default async function Page() {
 
   // Chỉ @biglight.jp + có quyền reply mới được trả lời.
   const canReply = adminCan(level, "messages.reply") && isAllowedAdminEmail(user.email);
-  return <MessagesAdmin canReply={canReply} />;
+  const canDelete = adminCan(level, "messages.delete") && isAllowedAdminEmail(user.email);
+  return <MessagesAdmin canReply={canReply} canDelete={canDelete} />;
 }

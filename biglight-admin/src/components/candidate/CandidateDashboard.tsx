@@ -70,8 +70,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   if (!profile.birth) missing.push("生年月日");
   if (profile.gender !== "MALE" && profile.gender !== "FEMALE") missing.push("性別");
   if (!profile.nat?.trim()) missing.push("国籍");
-  if (!profile.phone?.trim()) missing.push("電話番号");
   if (!profile.visa?.trim()) missing.push("現在の在留資格");
+  if (!profile.facebookUrl?.trim() && !profile.instagramUrl?.trim() && !profile.tiktokUrl?.trim()) missing.push("SNSアカウント");
   if (!emailLocked && !profile.email?.trim()) missing.push("メールアドレス");
 
   async function logout() {

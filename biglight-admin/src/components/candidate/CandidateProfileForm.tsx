@@ -155,7 +155,7 @@ function SnsEditor({ values, onChange }: { values: Record<SnsField, string>; onC
     <div className="mb-5">
       <div className="mb-2 flex items-center gap-2">
         <span className="text-sm font-bold text-ink">SNSアカウント</span>
-        <span className="rounded bg-bl-bg px-1.5 py-0.5 text-[10px] font-bold text-bl-gray2">任意</span>
+        <span className="rounded bg-bl-redsoft px-1.5 py-0.5 text-[10px] font-bold text-bl-red">必須</span>
         <button type="button" onClick={() => setShowHelp(true)} className="ml-auto inline-flex items-center gap-1 rounded-lg border border-bl-line px-2 py-1 text-xs font-semibold text-bl-gray hover:border-bl-red hover:text-bl-red">
           <IconHelp /> 使い方
         </button>
@@ -322,7 +322,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
           <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="性別" req><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
           <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NATIONALITIES.map((n) => <option key={n}>{n}</option>)}</select></Field>
-          <Field label="電話番号" req><input type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" className={inputCls} /></Field>
+          <Field label="電話番号" opt><input type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" className={inputCls} /></Field>
           <Field label="メールアドレス" req={!emailLocked}>
             <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} readOnly={emailLocked} placeholder="example@email.com" className={`${inputCls} ${emailLocked ? "bg-bl-bg text-bl-gray2" : ""}`} />
             <p className="mt-1 text-xs text-bl-gray2">{emailLocked ? "ログインアカウントのメールアドレスです（変更不可）。" : "Facebookログインのため、ご連絡用のメールアドレスをご入力ください。"}</p>

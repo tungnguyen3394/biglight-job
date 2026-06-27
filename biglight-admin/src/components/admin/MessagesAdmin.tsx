@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CONV_STATUS_LABEL, CONV_STATUS_TONE } from "@/lib/messageConstants";
 
 type Conv = { id: string; candidateId: string; name: string; image: string | null; lastMessage: string | null; lastMessageAt: string | null; unread: boolean; status: keyof typeof CONV_STATUS_LABEL };
-type Msg = { id: string; senderRole: string; originalText: string; originalLanguage: string; translatedText: string | null; translatedLanguage: string | null; createdAt: string };
+type Msg = { id: string; senderRole: string; senderName?: string | null; originalText: string; originalLanguage: string; translatedText: string | null; translatedLanguage: string | null; createdAt: string };
 type Cand = { id: string; name: string; email: string | null; phone: string | null; nationality: string | null; japaneseLevel: string | null; image: string | null; jobs: string[] };
 const STATUSES: (keyof typeof CONV_STATUS_LABEL)[] = ["WAITING", "IN_PROGRESS", "DONE"];
 
@@ -21,7 +21,7 @@ function Avatar({ name, image, size = 9 }: { name: string; image: string | null;
   return <span className={`${cls} flex shrink-0 items-center justify-center rounded-full bg-navy/10 text-xs font-bold text-navy`}>{(name || "?").charAt(0)}</span>;
 }
 
-export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
+export default function MessagesAdmin({ canReply, canDelete }: { canReply: boolean; canDelete: boolean }) {
   const [list, setList] = useState<Conv[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [cand, setCand] = useState<Cand | null>(null);
@@ -29,8 +29,12 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [unansweredOnly, setUnansweredOnly] = useState(false);
   const [showOrig, setShowOrig] = useState<Set<string>>(new Set());
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Lọc "chỉ chưa trả lời" = 返信待ち (WAITING). Danh sách đã sắp tin mới nhất lên trên (API order desc).
+  const shownList = unansweredOnly ? list.filter((c) => c.status === "WAITING") : list;
 
   async function loadList() {
     const r = await fetch("/api/admin/messages");
@@ -69,6 +73,17 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
   function onKey(e: React.KeyboardEvent) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }
   function toggle(id: string) { setShowOrig((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
+  async function deleteMessage(id: string) {
+    if (!activeId || !window.confirm("このメッセージを削除しますか？")) return;
+    const r = await fetch(`/api/admin/messages/${activeId}/msg/${id}`, { method: "DELETE" });
+    if (r.ok) setMsgs((m) => m.filter((x) => x.id !== id));
+  }
+  async function deleteConversation() {
+    if (!activeId || !window.confirm("この会話をすべて削除しますか？この操作は元に戻せません。")) return;
+    const r = await fetch(`/api/admin/messages/${activeId}`, { method: "DELETE" });
+    if (r.ok) { setList((p) => p.filter((c) => c.id !== activeId)); setActiveId(null); setMsgs([]); setCand(null); }
+  }
+
   // Admin đọc tiếng Nhật: tin ứng viên → bản dịch ja; còn lại → nguyên văn ja.
   function disp(m: Msg) {
     if (showOrig.has(m.id)) return m.originalText;
@@ -77,8 +92,10 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
   }
   function roleName(m: Msg) {
     if (m.senderRole === "SYSTEM") return "システム";
-    if (m.senderRole === "ADMIN") return "管理者";
-    if (m.senderRole === "STAFF") return "スタッフ";
+    if (m.senderRole === "ADMIN" || m.senderRole === "STAFF") {
+      const role = m.senderRole === "ADMIN" ? "管理者" : "スタッフ";
+      return m.senderName ? `${m.senderName}（${role}）` : role;
+    }
     return cand?.name ?? "応募者";
   }
 
@@ -92,13 +109,19 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
       <div className="grid h-[74vh] grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:grid-cols-[300px_1fr] xl:grid-cols-[300px_1fr_290px]">
         {/* ===== Left: conversation list ===== */}
         <div className={`flex flex-col border-r border-slate-100 ${activeId ? "hidden md:flex" : "flex"}`}>
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-sm font-bold text-ink">会話一覧</span>
-            <button onClick={loadList} className="text-xs font-semibold text-slate-400 hover:text-bl-red" title="更新">更新</button>
+          <div className="border-b border-slate-100 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-ink">会話一覧</span>
+              <button onClick={loadList} className="text-xs font-semibold text-slate-400 hover:text-bl-red" title="更新">更新</button>
+            </div>
+            <label className="mt-2 flex w-fit cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <input type="checkbox" checked={unansweredOnly} onChange={(e) => setUnansweredOnly(e.target.checked)} className="h-3.5 w-3.5 accent-bl-red" />
+              未返信のみ表示
+            </label>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {list.length === 0 && <div className="p-6 text-center text-sm text-slate-400">会話がありません。</div>}
-            {list.map((c) => (
+            {shownList.length === 0 && <div className="p-6 text-center text-sm text-slate-400">会話がありません。</div>}
+            {shownList.map((c) => (
               <button key={c.id} onClick={() => open(c.id)} className={`flex w-full items-center gap-3 border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 ${activeId === c.id ? "bg-bl-redsoft/40" : ""}`}>
                 <Avatar name={c.name} image={c.image} size={10} />
                 <div className="min-w-0 flex-1">
@@ -134,6 +157,11 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
                 ) : (
                   <span className={`ml-auto rounded-full px-2 py-1 text-xs font-semibold ${CONV_STATUS_TONE[status]}`}>{CONV_STATUS_LABEL[status]}</span>
                 )}
+                {canDelete && (
+                  <button onClick={deleteConversation} title="会話を削除" className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>
+                  </button>
+                )}
               </div>
 
               <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
@@ -148,6 +176,7 @@ export default function MessagesAdmin({ canReply }: { canReply: boolean }) {
                         <div className={`mt-0.5 flex items-center gap-2 text-[10px] text-slate-400 ${left ? "" : "justify-end"}`}>
                           <span>{hhmm(m.createdAt)}</span>
                           {translatable && <button onClick={() => toggle(m.id)} className="font-semibold text-brand-blue hover:underline">{showOrig.has(m.id) ? "翻訳を見る" : "原文を見る"}</button>}
+                          {canDelete && <button onClick={() => deleteMessage(m.id)} className="font-semibold text-slate-300 hover:text-red-500">削除</button>}
                         </div>
                       </div>
                     </div>

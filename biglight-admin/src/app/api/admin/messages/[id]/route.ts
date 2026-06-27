@@ -30,6 +30,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (conv.unreadByAdmin) await prisma.conversation.update({ where: { id: conv.id }, data: { unreadByAdmin: false } });
 
   const messages = await prisma.message.findMany({ where: { conversationId: conv.id }, orderBy: { createdAt: "asc" } });
+  // tên người gửi (Staff/Admin) để biết ai đang phụ trách
+  const ids = [...new Set(messages.map((m) => m.senderId).filter((x): x is string => !!x))];
+  const users = ids.length ? await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } }) : [];
+  const nameById = new Map(users.map((u) => [u.id, u.name]));
+
   const c = conv.candidate;
   return NextResponse.json({
     status: conv.status,
@@ -43,7 +48,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       image: c.user?.image ?? null,
       jobs: c.applications.map((a) => a.job.title),
     },
-    messages: messages.map(shapeMessage),
+    messages: messages.map((m) => ({ ...shapeMessage(m), senderName: m.senderId ? nameById.get(m.senderId) ?? null : null })),
   });
 }
 
@@ -82,7 +87,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     data: { lastMessage: text, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
   });
 
-  return NextResponse.json({ message: shapeMessage(msg) });
+  return NextResponse.json({ message: { ...shapeMessage(msg), senderName: g.user.name } });
+}
+
+// DELETE — xoá toàn bộ hội thoại (kèm tin nhắn). Chỉ cấp có quyền messages.delete (Admin).
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const g = await guard("messages.delete");
+  if (!g.ok) return g.res;
+  await prisma.conversation.delete({ where: { id: params.id } });
+  return NextResponse.json({ ok: true });
 }
 
 // PATCH { status } — đổi trạng thái hội thoại.
