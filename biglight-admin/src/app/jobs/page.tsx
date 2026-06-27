@@ -36,6 +36,7 @@ export default async function JobsPage() {
       isUrgent: j.isUrgent,
       open: j.status === "OPEN" && j.recruitCount > j.hiredCount,
       createdAt: j.createdAt.toISOString(),
+      updatedAt: j.updatedAt.toISOString(),
       tags: j.tags,
       img: j.imageUrl || industryImage(j.industry),
     };
