@@ -22,27 +22,38 @@ export async function POST(req: Request) {
     );
   }
 
-  // Only pre-registered users may log in (admin creates accounts).
-  const user = await prisma.user.findUnique({ where: { email: payload.email } });
-  if (!user || user.status !== "ACTIVE") {
-    return NextResponse.json(
-      { error: "このメールアドレスのアカウントがありません。管理者にお問い合わせください。" },
-      { status: 403 }
-    );
+  let user = await prisma.user.findUnique({ where: { email: payload.email } });
+
+  // Ứng viên (CANDIDATE) không được đăng nhập khu admin.
+  if (user && user.role === "CANDIDATE") {
+    return NextResponse.json({ error: "BIGLIGHT社内アカウントのみログインできます。" }, { status: 403 });
+  }
+  // Tài khoản bị khoá.
+  if (user && user.status !== "ACTIVE") {
+    return NextResponse.json({ error: "このアカウントはロックされています。管理者にお問い合わせください。" }, { status: 403 });
   }
 
-  // An toàn: tài khoản ứng viên (CANDIDATE) không được đăng nhập khu admin.
-  if (user.role === "CANDIDATE") {
-    return NextResponse.json(
-      { error: "BIGLIGHT社内アカウントのみログインできます。" },
-      { status: 403 }
-    );
+  if (!user) {
+    // Tự tạo tài khoản cho BẤT KỲ nhân viên @biglight.jp lần đầu đăng nhập.
+    // Mặc định cấp VIEW (chỉ xem) — Admin nâng quyền sau ở ユーザー管理.
+    user = await prisma.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email,
+        role: "BIGLIGHT_STAFF",
+        adminRole: "VIEW",
+        status: "ACTIVE",
+        googleId: payload.sub,
+        image: payload.picture ?? null,
+        lastLoginAt: new Date(),
+      },
+    });
+  } else {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { googleId: payload.sub, image: payload.picture ?? null, lastLoginAt: new Date() },
+    });
   }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { googleId: payload.sub, image: payload.picture ?? null, lastLoginAt: new Date() },
-  });
 
   await setSessionCookie({
     id: user.id,
