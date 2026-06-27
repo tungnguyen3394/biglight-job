@@ -90,7 +90,6 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     email: formEmail,
     address: candidate?.currentAddress ?? "",
     facebookUrl: candidate?.facebookUrl ?? "",
-    lineId: (p.lineId as string) ?? "",
     instagramUrl: (p.instagramUrl as string) ?? "",
     tiktokUrl: (p.tiktokUrl as string) ?? "",
     visa: candidate?.visaType ?? "",
