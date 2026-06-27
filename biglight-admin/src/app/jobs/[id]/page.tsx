@@ -88,7 +88,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.code}</span>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${chip}`}>{job.industry}</span>
               {job.jobTypeName && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.jobTypeName}</span>}
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${open ? "bg-bl-green text-white" : "bg-bl-gray text-white"}`}>{open ? "募集中" : "募集終了"}</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold text-white ${open ? (job.isUrgent ? "bg-bl-red" : "bg-bl-green") : "bg-bl-gray"}`}>{open ? (job.isUrgent ? "急募" : "募集中") : "募集終了"}</span>
             </div>
             <h1 className="text-2xl font-black sm:text-3xl">{job.title}</h1>
             <p className="flex items-center gap-1 text-sm text-white/90">

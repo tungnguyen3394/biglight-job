@@ -65,7 +65,9 @@ const heroBg = (fc: string) => `linear-gradient(120deg,#15171d,${fc === "amber" 
 export function JobPreview({ s, companyName, code }: { s: JobFormState; companyName: string; code?: string }) {
   const title = s.title.trim() || s.type.trim() || "（求人タイトル未入力）";
   const fc = fieldClass(s.field);
-  const jcode = code || `${CODEPREF[s.field] || "JOB"}-001`;
+  const jcode = s.code?.trim() || code || `${CODEPREF[s.field] || "JOB"}-001`;
+  const recruitLabel = s.recruitStatus === "URGENT" ? "急募" : s.recruitStatus === "CLOSED" ? "終了" : "募集中";
+  const recruitColor = s.recruitStatus === "URGENT" ? "#D02E26" : s.recruitStatus === "CLOSED" ? "#6B7280" : "#16A34A";
 
   const pills: React.ReactNode[] = [];
   if (s.type.trim()) pills.push(<span key="t" className="pv-pill">{s.type}</span>);
@@ -97,7 +99,7 @@ export function JobPreview({ s, companyName, code }: { s: JobFormState; companyN
         <div className="pv-scroll">
           <div className="pv-hero" style={{ background: heroBg(fc) }}>
             <div className="glow" />
-            <div className="info"><span className="pv-jcode">{jcode}</span><span className={`pv-pill ${fc}`}>{s.field}</span></div>
+            <div className="info"><span className="pv-jcode">{jcode}</span><span className="pv-jcode" style={{ background: recruitColor, color: "#fff" }}>{recruitLabel}</span><span className={`pv-pill ${fc}`}>{s.field}</span></div>
           </div>
           <div className="pv-cont">
             <div className="pv-tags">{pills.length ? pills : empty("タグ未設定")}</div>

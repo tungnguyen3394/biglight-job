@@ -49,6 +49,24 @@ function uniq(list: (string | null)[]) {
   return Array.from(new Set(list.filter((x): x is string => !!x))).sort();
 }
 
+// Các cột có thể hiển thị / xuất CSV / in.
+type ColKey = "name" | "kana" | "nationality" | "phone" | "email" | "visaType" | "japaneseLevel" | "address" | "apps" | "status" | "createdAt";
+const COLUMNS: { key: ColKey; label: string; value: (r: CandidateRow) => string }[] = [
+  { key: "name", label: "氏名", value: (r) => r.name || "" },
+  { key: "kana", label: "フリガナ", value: (r) => r.kana || "" },
+  { key: "nationality", label: "国籍", value: (r) => r.nationality || "" },
+  { key: "phone", label: "電話番号", value: (r) => r.phone || "" },
+  { key: "email", label: "メール", value: (r) => r.email || "" },
+  { key: "visaType", label: "在留資格", value: (r) => r.visaType || "" },
+  { key: "japaneseLevel", label: "日本語", value: (r) => r.japaneseLevel || "" },
+  { key: "address", label: "現在の住所", value: (r) => r.address || "" },
+  { key: "apps", label: "応募数", value: (r) => String(r.apps) },
+  { key: "status", label: "ステータス", value: (r) => r.status },
+  { key: "createdAt", label: "登録日", value: (r) => r.createdAt.slice(0, 10) },
+];
+const DEFAULT_COLS: ColKey[] = ["name", "nationality", "phone", "email", "visaType", "japaneseLevel", "createdAt", "status"];
+const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
 export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [q, setQ] = useState("");
   const [fNat, setFNat] = useState("");
@@ -57,6 +75,9 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [sort, setSort] = useState<"new" | "old" | "name" | "active">("new");
   const [quick, setQuick] = useState<Quick>("");
   const [page, setPage] = useState(0);
+  const [cols, setCols] = useState<Set<ColKey>>(() => new Set(DEFAULT_COLS));
+  const visCols = COLUMNS.filter((c) => cols.has(c.key));
+  const toggleCol = (k: ColKey) => setCols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
 
   const nats = useMemo(() => uniq(rows.map((r) => r.nationality)), [rows]);
   const visas = useMemo(() => uniq(rows.map((r) => r.visaType)), [rows]);
@@ -110,6 +131,47 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     incomplete: "プロフィール未完成",
     hasSNS: "SNS登録あり",
   };
+
+  // ----- xuất CSV (theo cột hiển thị + kết quả đã lọc) -----
+  function exportCsv() {
+    const header = visCols.map((c) => c.label);
+    const body = filtered.map((r) => visCols.map((c) => c.value(r)));
+    const csv = [header, ...body].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `応募者一覧_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  // ----- in (mở cửa sổ in với bảng đã lọc) -----
+  function printList() {
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const head = visCols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
+    const body = filtered.map((r) => `<tr>${visCols.map((c) => `<td>${escapeHtml(c.value(r))}</td>`).join("")}</tr>`).join("");
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>応募者一覧</title><style>body{font-family:'Noto Sans JP',sans-serif;padding:20px;color:#16181d}h1{font-size:18px;margin:0 0 4px}.meta{color:#6b7280;font-size:12px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f3f4f6}</style><h1>応募者一覧（${filtered.length}名）</h1><div class="meta">${new Date().toLocaleString("ja-JP")}</div><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`);
+    w.document.close(); w.focus(); w.print();
+  }
+
+  function renderCell(key: ColKey, r: CandidateRow) {
+    switch (key) {
+      case "name":
+        return <><Link href={`/admin/candidates/${r.id}`} className="font-semibold text-navy hover:underline">{r.name || "（未入力）"}</Link>{r.kana && <div className="text-xs text-slate-400">{r.kana}</div>}</>;
+      case "email":
+        return <span className="block max-w-[180px] truncate" title={r.email ?? ""}>{r.email ?? "—"}</span>;
+      case "status":
+        return <span className="badge bg-slate-100 text-slate-600">{r.status}</span>;
+      case "createdAt":
+        return <span className="whitespace-nowrap text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString("ja-JP")}</span>;
+      case "phone":
+        return <span className="whitespace-nowrap">{r.phone ?? "—"}</span>;
+      default: {
+        const v = COLUMNS.find((c) => c.key === key)?.value(r) ?? "";
+        return v || "—";
+      }
+    }
+  }
 
   return (
     <div>
@@ -176,7 +238,22 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           <option value="name">氏名：あいうえお順</option>
           <option value="active">アクティブ順（最近の利用）</option>
         </select>
-        <span className="ml-auto text-sm text-slate-500">{filtered.length} 名</span>
+        <div className="ml-auto flex items-center gap-2">
+          <details className="relative">
+            <summary className="btn btn-ghost btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden">表示項目</summary>
+            <div className="absolute right-0 z-30 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+              {COLUMNS.map((c) => (
+                <label key={c.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50">
+                  <input type="checkbox" checked={cols.has(c.key)} onChange={() => toggleCol(c.key)} className="h-3.5 w-3.5 accent-bl-red" />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </details>
+          <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
+          <button onClick={printList} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>印刷</button>
+          <span className="text-sm text-slate-500">{filtered.length} 名</span>
+        </div>
       </div>
 
       {/* table */}
@@ -185,14 +262,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           <thead>
             <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
               <th className="p-3"></th>
-              <th className="p-3">氏名</th>
-              <th className="p-3">国籍</th>
-              <th className="p-3">電話番号</th>
-              <th className="p-3">メール</th>
-              <th className="p-3">在留資格</th>
-              <th className="p-3">日本語</th>
-              <th className="p-3">登録日</th>
-              <th className="p-3">ステータス</th>
+              {visCols.map((c) => <th key={c.key} className="whitespace-nowrap p-3">{c.label}</th>)}
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -200,17 +270,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
             {view.map((r) => (
               <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
                 <td className="p-3"><Avatar name={r.name} image={r.image} /></td>
-                <td className="p-3">
-                  <Link href={`/admin/candidates/${r.id}`} className="font-semibold text-navy hover:underline">{r.name || "（未入力）"}</Link>
-                  {r.kana && <div className="text-xs text-slate-400">{r.kana}</div>}
-                </td>
-                <td className="p-3">{r.nationality ?? "—"}</td>
-                <td className="p-3 whitespace-nowrap">{r.phone ?? "—"}</td>
-                <td className="p-3 max-w-[180px] truncate" title={r.email ?? ""}>{r.email ?? "—"}</td>
-                <td className="p-3">{r.visaType ?? "—"}</td>
-                <td className="p-3">{r.japaneseLevel ?? "—"}</td>
-                <td className="p-3 whitespace-nowrap text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString("ja-JP")}</td>
-                <td className="p-3"><span className="badge bg-slate-100 text-slate-600">{r.status}</span></td>
+                {visCols.map((c) => <td key={c.key} className="p-3">{renderCell(c.key, r)}</td>)}
                 <td className="p-3">
                   <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline">
                     詳細
@@ -220,7 +280,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
               </tr>
             ))}
             {view.length === 0 && (
-              <tr><td colSpan={10} className="p-10 text-center text-slate-400">該当する応募者がいません</td></tr>
+              <tr><td colSpan={visCols.length + 2} className="p-10 text-center text-slate-400">該当する応募者がいません</td></tr>
             )}
           </tbody>
         </table>
