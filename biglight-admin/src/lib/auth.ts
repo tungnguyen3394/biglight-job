@@ -2,6 +2,7 @@
 // stored in an httpOnly cookie. Easy to read, easy to hand over, no heavy lib.
 
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import type { Role, AdminRole } from "@prisma/client";
@@ -76,15 +77,27 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 }
 
 // ---- session helpers (server components / route handlers) ----
-export async function setSessionCookie(user: SessionUser): Promise<void> {
-  const token = await createSessionToken(user);
-  cookies().set(SESSION_COOKIE, token, {
+function cookieOptions() {
+  return {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_HOURS * 3600,
-  });
+  };
+}
+
+export async function setSessionCookie(user: SessionUser): Promise<void> {
+  const token = await createSessionToken(user);
+  cookies().set(SESSION_COOKIE, token, cookieOptions());
+}
+
+// Gắn cookie phiên TRỰC TIẾP vào một NextResponse (vd redirect trong OAuth callback).
+// Cần thiết vì cookies().set() KHÔNG chắc chắn đính vào NextResponse.redirect() tự tạo
+// → nếu thiếu, phiên đăng nhập mới (mobile chưa có cookie) sẽ không được lưu.
+export async function attachSessionCookie(res: NextResponse, user: SessionUser): Promise<void> {
+  const token = await createSessionToken(user);
+  res.cookies.set(SESSION_COOKIE, token, cookieOptions());
 }
 
 export function clearSessionCookie(): void {

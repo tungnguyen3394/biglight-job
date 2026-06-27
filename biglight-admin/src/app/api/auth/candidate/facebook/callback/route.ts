@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyFacebookAccessToken } from "@/lib/facebook";
 import { loginOrCreateCandidate } from "@/lib/candidateAuth";
+import { attachSessionCookie } from "@/lib/auth";
 import { PUBLIC_BASE_URL } from "@/lib/site";
 
 const APP_ID = process.env.FACEBOOK_APP_ID;
@@ -30,9 +31,11 @@ export async function GET(req: Request) {
     if (!payload) return fail("profile");
 
     // 3) tạo/đăng nhập tài khoản ứng viên + set session
-    await loginOrCreateCandidate({ email: payload.email ?? null, name: payload.name, picture: payload.picture, facebookId: payload.id });
+    const user = await loginOrCreateCandidate({ email: payload.email ?? null, name: payload.name, picture: payload.picture, facebookId: payload.id });
 
-    return NextResponse.redirect(`${PUBLIC_BASE_URL}${dest}`);
+    const res = NextResponse.redirect(`${PUBLIC_BASE_URL}${dest}`);
+    await attachSessionCookie(res, user);
+    return res;
   } catch {
     return fail("exception");
   }

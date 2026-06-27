@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { loginOrCreateCandidate, CandidateAuthError } from "@/lib/candidateAuth";
+import { attachSessionCookie } from "@/lib/auth";
 import { PUBLIC_BASE_URL } from "@/lib/site";
 
 // GET /api/auth/candidate/google/callback?code=...&state=/... — Google redirect về đây.
@@ -24,8 +25,10 @@ export async function GET(req: Request) {
     const p = ticket.getPayload();
     if (!p?.email) return fail("profile");
 
-    await loginOrCreateCandidate({ email: p.email, name: p.name || p.email, picture: p.picture, googleId: p.sub });
-    return NextResponse.redirect(`${PUBLIC_BASE_URL}${dest}`);
+    const user = await loginOrCreateCandidate({ email: p.email, name: p.name || p.email, picture: p.picture, googleId: p.sub });
+    const res = NextResponse.redirect(`${PUBLIC_BASE_URL}${dest}`);
+    await attachSessionCookie(res, user);
+    return res;
   } catch (e) {
     if (e instanceof CandidateAuthError) return fail("admin");
     return fail("exception");
