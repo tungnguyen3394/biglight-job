@@ -5,7 +5,7 @@ import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
 import { industryImage, CONTACT_EMAIL, FB_PAGE_URL } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
-import FbChat from "@/components/candidate/FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { SaveButton } from "@/components/candidate/SaveButton";
 import { ApplyButton } from "@/components/candidate/ApplyButton";
 
@@ -248,7 +248,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
           </aside>
         </div>
       </div>
-      <FbChat />
+      <MessengerPopupButton />
     </Shell>
   );
 }

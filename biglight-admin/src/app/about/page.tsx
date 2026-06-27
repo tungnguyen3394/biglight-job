@@ -1,5 +1,5 @@
 import Shell from "@/components/candidate/Shell";
-import FbChat from "@/components/candidate/FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import SiteFooter from "@/components/candidate/SiteFooter";
 import { getSessionUser } from "@/lib/auth";
 
@@ -100,7 +100,7 @@ export default async function AboutPage() {
       </section>
 
       <SiteFooter />
-      <FbChat />
+      <MessengerPopupButton />
     </Shell>
   );
 }

@@ -25,6 +25,7 @@ services:
         # Compose tự lấy giá trị này từ file .env cùng thư mục
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         NEXT_PUBLIC_FACEBOOK_APP_ID: ${NEXT_PUBLIC_FACEBOOK_APP_ID:-}
+        NEXT_PUBLIC_FACEBOOK_PAGE_USERNAME: ${NEXT_PUBLIC_FACEBOOK_PAGE_USERNAME:-}
     container_name: biglight_job_app
     restart: unless-stopped
     env_file:

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Shell from "./Shell";
-import FbChat from "./FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import HeroArt from "./HeroArt";
 import MultiSelect from "./MultiSelect";
 import SiteFooter from "./SiteFooter";
@@ -244,7 +244,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
         </Shell>
       </div>
 
-      <FbChat />
+      <MessengerPopupButton />
     </>
   );
 }

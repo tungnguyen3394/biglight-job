@@ -5,7 +5,7 @@ import { APP_STATUS_LABEL } from "@/lib/constants";
 import { salaryRange } from "@/lib/site";
 import { isProfileComplete } from "@/lib/candidateProfile";
 import Shell from "@/components/candidate/Shell";
-import FbChat from "@/components/candidate/FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
 import CandidateDashboard, { type AppView, type SavedJob } from "@/components/candidate/CandidateDashboard";
 import { type ProfileInit } from "@/components/candidate/CandidateProfileForm";
@@ -52,7 +52,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     return (
       <Shell active="mypage" loggedIn={false}>
         <CandidateLogin applyTitle={searchParams.t} fbError={searchParams.fberror || searchParams.gerror ? "1" : undefined} redirect={searchParams.redirect ?? "/mypage"} />
-        <FbChat />
+        <MessengerPopupButton />
       </Shell>
     );
   }
@@ -144,7 +144,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
         complete={complete}
         needProfile={searchParams.need === "1"}
       />
-      <FbChat />
+      <MessengerPopupButton />
     </Shell>
   );
 }

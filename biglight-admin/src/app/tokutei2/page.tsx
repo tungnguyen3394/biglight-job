@@ -1,5 +1,5 @@
 import Shell from "@/components/candidate/Shell";
-import FbChat from "@/components/candidate/FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import SiteFooter from "@/components/candidate/SiteFooter";
 import { getSessionUser } from "@/lib/auth";
 
@@ -107,7 +107,7 @@ export default async function Tokutei2Page() {
         </div>
       </div>
       <SiteFooter />
-      <FbChat />
+      <MessengerPopupButton />
     </Shell>
   );
 }

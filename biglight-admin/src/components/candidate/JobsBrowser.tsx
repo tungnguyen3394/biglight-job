@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Shell from "./Shell";
-import FbChat from "./FbChat";
+import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import { PREFECTURES } from "@/lib/prefectures";
@@ -202,7 +202,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
         )}
       </div>
 
-      <FbChat />
+      <MessengerPopupButton />
     </>
   );
 }
