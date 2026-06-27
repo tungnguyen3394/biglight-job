@@ -3,12 +3,15 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { denyByLevel } from "@/lib/api";
 
 // POST /api/jobs/[id]/duplicate — tạo bản sao求人 (DRAFT) từ求人 hiện có.
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!can(session.role, "create", "job")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const denied = denyByLevel(session, "jobs.create");
+  if (denied) return denied;
 
   const job = await prisma.job.findUnique({ where: { id: params.id } });
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });

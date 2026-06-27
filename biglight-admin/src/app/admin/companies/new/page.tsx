@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
-import { can } from "@/lib/permissions";
+import { uiCan } from "@/lib/adminAccess";
 import { Forbidden } from "@/components/admin/Forbidden";
 import { CompanyNewForm } from "@/components/admin/CompanyNewForm";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const user = await getSessionUser();
-  if (!user || !can(user.role, "create", "company")) return <Forbidden />;
+  if (!user || !uiCan(user, "create", "company", "companies.create")) return <Forbidden />;
   return (
     <div>
       <Link href="/admin" className="mb-3 inline-block text-sm font-semibold text-slate-500 hover:text-navy">← ダッシュボード</Link>

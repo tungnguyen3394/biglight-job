@@ -13,6 +13,7 @@ import {
   canSeeInternalMemo,
   JOB_INTERNAL_FIELDS,
 } from "./permissions";
+import { effectiveAdminLevel, adminCan, type Permission } from "./adminAccess";
 
 export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -40,6 +41,15 @@ export async function requireUser(): Promise<
 
 export function requireCan(user: SessionUser, action: Action, resource: Resource) {
   return can(user.role, action, resource);
+}
+
+// Chặn theo CẤP NỘI BỘ (ADMIN/STAFF/VIEW). Với CTV/COMPANY (level = null) KHÔNG
+// chặn ở đây — quyền của họ do can()/scope quản. Trả forbidden() nếu nhân viên
+// nội bộ thiếu quyền (vd: VIEW gọi API sửa, STAFF gọi API công ty/người dùng).
+export function denyByLevel(user: SessionUser, perm: Permission): NextResponse | null {
+  const level = effectiveAdminLevel(user);
+  if (level == null) return null;
+  return adminCan(level, perm) ? null : forbidden("この操作を行う権限がありません。");
 }
 
 // ---------------------------------------------------------------------------

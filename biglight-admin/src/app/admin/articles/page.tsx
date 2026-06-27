@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isBiglight } from "@/lib/api";
+import { effectiveAdminLevel, adminCan } from "@/lib/adminAccess";
 import { Forbidden } from "@/components/admin/Forbidden";
 import { Badge } from "@/components/ui/Badge";
 
@@ -12,6 +13,8 @@ const STATUS = { DRAFT: { jp: "下書き", tone: "amber" }, PUBLISHED: { jp: "�
 export default async function Page() {
   const user = await getSessionUser();
   if (!user || !isBiglight(user.role)) return <Forbidden />;
+  const level = effectiveAdminLevel(user);
+  const canWrite = adminCan(level, "articles.create");
 
   const articles = await prisma.article.findMany({ orderBy: { updatedAt: "desc" }, take: 200 });
 
@@ -22,10 +25,12 @@ export default async function Page() {
           <h1 className="text-[22px] font-black text-ink">記事管理</h1>
           <p className="text-sm text-slate-500">SEO最適化されたコンテンツ（CMS）</p>
         </div>
-        <Link href="/admin/articles/new" className="btn btn-navy gap-1.5">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-          記事を作成
-        </Link>
+        {canWrite && (
+          <Link href="/admin/articles/new" className="btn btn-navy gap-1.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+            記事を作成
+          </Link>
+        )}
       </div>
 
       {articles.length === 0 ? (
@@ -56,7 +61,7 @@ export default async function Page() {
                     <td className={`p-3 font-bold ${tone}`}>{ar.seoScore}</td>
                     <td className="p-3"><Badge tone={st.tone as never}>{st.jp}</Badge></td>
                     <td className="p-3 whitespace-nowrap text-xs text-slate-400">{new Date(ar.updatedAt).toLocaleDateString("ja-JP")}</td>
-                    <td className="p-3"><Link href={`/admin/articles/${ar.id}`} className="text-xs font-semibold text-brand-blue hover:underline">編集</Link></td>
+                    <td className="p-3"><Link href={`/admin/articles/${ar.id}`} className="text-xs font-semibold text-brand-blue hover:underline">{canWrite ? "編集" : "表示"}</Link></td>
                   </tr>
                 );
               })}

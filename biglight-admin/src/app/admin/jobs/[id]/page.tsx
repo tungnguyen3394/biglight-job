@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { jobScopeWhere, isBiglight } from "@/lib/api";
-import { can, canSeeInternalMemo } from "@/lib/permissions";
+import { canSeeInternalMemo } from "@/lib/permissions";
+import { uiCan } from "@/lib/adminAccess";
 import { JobForm } from "@/components/jobs/JobForm";
 import { jobToForm } from "@/lib/jobFormModel";
 
@@ -32,8 +33,8 @@ export default async function EditJobPage({ params }: { params: { id: string } }
         initialForm={initialForm}
         code={job.code}
       />
-      {!can(user.role, "update", "job") && (
-        <p className="mt-3 text-xs text-slate-400">※ 閲覧のみ（編集権限がありません）</p>
+      {!uiCan(user, "update", "job", "jobs.update") && (
+        <p className="mt-3 text-xs text-slate-400">※ 閲覧のみ（編集権限がありません）。保存はできません。</p>
       )}
     </div>
   );

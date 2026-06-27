@@ -4,7 +4,7 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
-import type { Role } from "@prisma/client";
+import type { Role, AdminRole } from "@prisma/client";
 import type { SessionUser } from "./permissions";
 
 export const SESSION_COOKIE = "bl_session";
@@ -47,6 +47,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     name: user.name,
     email: user.email,
     role: user.role,
+    adminRole: user.adminRole ?? null,
     companyId: user.companyId,
     ctvId: user.ctvId,
   })
@@ -65,6 +66,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       name: String(payload.name ?? ""),
       email: String(payload.email ?? ""),
       role: payload.role as Role,
+      adminRole: (payload.adminRole as AdminRole) ?? null,
       companyId: (payload.companyId as string) ?? null,
       ctvId: (payload.ctvId as string) ?? null,
     };

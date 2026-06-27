@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { denyByLevel } from "@/lib/api";
 
 function toDate(s: unknown): Date | null {
   if (!s || typeof s !== "string") return null;
@@ -17,6 +18,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!can(session.role, "update", "candidate")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const deniedUpd = denyByLevel(session, "applicants.update");
+  if (deniedUpd) return deniedUpd;
 
   const b = await req.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
@@ -55,6 +58,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!can(session.role, "delete", "candidate")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const deniedDel = denyByLevel(session, "applicants.delete");
+  if (deniedDel) return deniedDel;
 
   const apps = await prisma.application.findMany({ where: { candidateId: params.id }, select: { id: true } });
   const appIds = apps.map((a) => a.id);

@@ -26,6 +26,14 @@ enum AccountStatus {
   SUSPENDED
 }
 
+// 3 cấp quyền cho TÀI KHOẢN NỘI BỘ (admin/staff/view). Chỉ áp dụng cho nhân
+// viên BIGLIGHT — không dùng cho CANDIDATE/COMPANY/CTV (các cổng riêng).
+enum AdminRole {
+  ADMIN
+  STAFF
+  VIEW
+}
+
 enum ResidenceType {
   TOKUTEI_1 // 特定技能1号
   TOKUTEI_2 // 特定技能2号
@@ -107,6 +115,7 @@ model User {
   facebookId   String?       @unique // Facebook user id
   image        String? // Google/Facebook avatar URL
   role         Role          @default(BIGLIGHT_STAFF)
+  adminRole    AdminRole? // 3 cấp nội bộ (ADMIN/STAFF/VIEW); null với CANDIDATE/COMPANY/CTV
   status       AccountStatus @default(ACTIVE)
   companyId    String? // link if role = COMPANY
   ctvId        String? // link if role = CTV

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { NAV_GROUPS } from "@/lib/constants";
+import { adminCan, type AdminLevel } from "@/lib/adminAccess";
 
 // SVG line icon cho từng mục menu (không dùng emoji)
 const ICONS: Record<string, React.ReactNode> = {
@@ -20,7 +21,7 @@ const ICONS: Record<string, React.ReactNode> = {
   "/admin/settings": <><circle cx="12" cy="12" r="3" /><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4z" /></>,
 };
 
-export function Sidebar({ role }: { role: Role }) {
+export function Sidebar({ role, level }: { role: Role; level: AdminLevel | null }) {
   const pathname = usePathname();
 
   return (
@@ -33,7 +34,9 @@ export function Sidebar({ role }: { role: Role }) {
 
       <nav className="flex flex-col gap-4 overflow-y-auto">
         {NAV_GROUPS.map((group, gi) => {
-          const items = group.items.filter((n) => n.roles.includes(role));
+          const items = group.items.filter(
+            (n) => n.roles.includes(role) && (!n.perm || level == null || adminCan(level, n.perm))
+          );
           if (items.length === 0) return null;
           return (
             <div key={gi}>

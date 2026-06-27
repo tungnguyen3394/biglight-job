@@ -1,4 +1,5 @@
 import type { Role } from "@prisma/client";
+import type { Permission } from "@/lib/adminAccess";
 
 export const ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: "スーパー管理者",
@@ -79,12 +80,15 @@ export const PAYMENT_TIMING_LABEL: Record<string, string> = {
   AFTER_3M: "3ヶ月後",
 };
 
-// Sidebar menu. `roles` = which roles may see the item.
+// Sidebar menu. `roles` = which portal-roles may see the item.
+// `perm` (tùy chọn) = quyền nội bộ bắt buộc; với nhân viên nội bộ (ADMIN/STAFF/VIEW)
+// mục chỉ hiện khi adminCan(level, perm). Bỏ qua với CTV/COMPANY (level null).
 export interface NavItem {
   href: string;
   label: string;
   jp: string;
   roles: Role[];
+  perm?: Permission;
 }
 
 const ALL: Role[] = ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY", "CANDIDATE"];
@@ -106,17 +110,17 @@ export const NAV_GROUPS: NavGroup[] = [
     { href: "/admin/pipeline", label: "Pipeline", jp: "応募進捗", roles: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF", "CTV", "COMPANY"] },
   ] },
   { title: "Business", items: [
-    { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: STAFF },
+    { href: "/admin/companies", label: "Companies", jp: "企業管理", roles: STAFF, perm: "companies.read" },
   ] },
   { title: "Content", items: [
-    { href: "/admin/articles", label: "Articles", jp: "記事管理", roles: STAFF },
+    { href: "/admin/articles", label: "Articles", jp: "記事管理", roles: STAFF, perm: "articles.read" },
   ] },
   { title: "Communication", items: [
-    { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF },
+    { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF, perm: "messages.read" },
   ] },
   { title: "System", items: [
-    { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: ["SUPER_ADMIN"] },
-    { href: "/admin/settings", label: "Settings", jp: "設定", roles: STAFF },
+    { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: STAFF, perm: "users.read" },
+    { href: "/admin/settings", label: "Settings", jp: "設定", roles: STAFF, perm: "settings.view" },
   ] },
 ];
 

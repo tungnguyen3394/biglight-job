@@ -6,6 +6,7 @@ import {
   json,
   jobScopeWhere,
   sanitizeJobs,
+  denyByLevel,
 } from "@/lib/api";
 import { can, canSeeCommission } from "@/lib/permissions";
 
@@ -75,6 +76,8 @@ export async function POST(req: Request) {
   const user = auth.user;
 
   if (!can(user.role, "create", "job")) return forbidden();
+  const denied = denyByLevel(user, "jobs.create");
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   if (!body.companyId || !body.title || !body.industry || !body.location) {

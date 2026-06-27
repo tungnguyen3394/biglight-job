@@ -1,10 +1,31 @@
-import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { canManageUsers } from "@/lib/permissions";
-import { Stub } from "@/components/admin/Stub";
+import { prisma } from "@/lib/prisma";
+import { effectiveAdminLevel } from "@/lib/adminAccess";
+import { Forbidden } from "@/components/admin/Forbidden";
+import { UsersManager, type UserRow } from "@/components/admin/UsersManager";
+
+export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const user = (await getSessionUser())!;
-  if (!canManageUsers(user.role)) redirect("/admin");
-  return <Stub jp="ユーザー管理" en="User Management" note="ユーザー作成・ロール変更・ロック・パスワードリセット（Super Admin のみ）" />;
+  const user = await getSessionUser();
+  if (!user || effectiveAdminLevel(user) !== "ADMIN") return <Forbidden />;
+
+  const users = await prisma.user.findMany({
+    where: { role: { in: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] } },
+    orderBy: [{ createdAt: "asc" }],
+    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
+  });
+
+  const rows: UserRow[] = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    adminRole: u.adminRole,
+    status: u.status,
+    lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
+    image: u.image,
+  }));
+
+  return <UsersManager initial={rows} meId={user.id} />;
 }

@@ -3,7 +3,7 @@
 // Backend (API routes) MUST call these helpers. Never rely on the UI alone.
 // ----------------------------------------------------------------------------
 
-import type { Role } from "@prisma/client";
+import type { Role, AdminRole } from "@prisma/client";
 
 export type Resource =
   | "job"
@@ -23,6 +23,7 @@ export interface SessionUser {
   name: string;
   email: string;
   role: Role;
+  adminRole?: AdminRole | null; // 3 cấp nội bộ; null với CANDIDATE/COMPANY/CTV
   companyId: string | null;
   ctvId: string | null;
 }

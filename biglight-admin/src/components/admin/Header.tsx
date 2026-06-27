@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { ROLE_LABEL } from "@/lib/constants";
+import { ADMIN_LEVEL_LABEL, ADMIN_LEVEL_TONE, type AdminLevel } from "@/lib/adminAccess";
 import { Badge } from "@/components/ui/Badge";
 
-export function Header({ name, role }: { name: string; role: string }) {
+export function Header({ name, role, level }: { name: string; role: string; level: AdminLevel | null }) {
   const router = useRouter();
 
   async function logout() {
@@ -18,7 +19,11 @@ export function Header({ name, role }: { name: string; role: string }) {
       <div className="ml-auto flex items-center gap-3">
         <div className="text-right">
           <div className="text-sm font-bold leading-tight">{name}</div>
-          <Badge tone="navy">{ROLE_LABEL[role] ?? role}</Badge>
+          {level ? (
+            <Badge tone={ADMIN_LEVEL_TONE[level]}>{ADMIN_LEVEL_LABEL[level]}</Badge>
+          ) : (
+            <Badge tone="navy">{ROLE_LABEL[role] ?? role}</Badge>
+          )}
         </div>
         <button onClick={logout} className="btn btn-ghost btn-sm text-xs">
           ログアウト

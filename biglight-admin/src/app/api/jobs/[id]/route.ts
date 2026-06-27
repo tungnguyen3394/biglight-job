@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireUser, forbidden, json, sanitizeJob, jobScopeWhere } from "@/lib/api";
+import { requireUser, forbidden, json, sanitizeJob, jobScopeWhere, denyByLevel } from "@/lib/api";
 import { can, canSeeCommission } from "@/lib/permissions";
 
 async function loadScopedJob(userId: string, role: string, companyId: string | null, ctvId: string | null, id: string) {
@@ -37,6 +37,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   if ("res" in auth) return auth.res;
   const user = auth.user;
   if (!can(user.role, "update", "job")) return forbidden();
+  const deniedUpd = denyByLevel(user, "jobs.update");
+  if (deniedUpd) return deniedUpd;
 
   // must be within scope (e.g. company can only touch own jobs)
   const existing = await loadScopedJob(user.id, user.role, user.companyId, user.ctvId, params.id);
@@ -83,6 +85,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if ("res" in auth) return auth.res;
   const user = auth.user;
   if (!can(user.role, "delete", "job")) return forbidden("削除権限がありません");
+  const deniedDel = denyByLevel(user, "jobs.delete");
+  if (deniedDel) return deniedDel;
 
   await prisma.job.delete({ where: { id: params.id } });
   return json({ ok: true });
