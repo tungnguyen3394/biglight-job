@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CONSENT_OPEN_EVENT, hasCookieConsent, setCookieConsent } from "@/lib/cookieConsent";
+import { CONSENT_OPEN_EVENT, CONSENT_GRANTED_EVENT, hasCookieConsent, setCookieConsent } from "@/lib/cookieConsent";
 
 export default function CookiePolicyConsent() {
   const [visible, setVisible] = useState(false);
@@ -23,6 +23,8 @@ export default function CookiePolicyConsent() {
     if (!checked) return;
     setCookieConsent();
     setVisible(false);
+    // báo cho nút đang chờ (vd「30秒で無料登録」) để mở tiếp modal đăng nhập.
+    window.dispatchEvent(new Event(CONSENT_GRANTED_EVENT));
   }
 
   return (

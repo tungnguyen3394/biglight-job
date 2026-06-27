@@ -9,6 +9,7 @@ import HeroArt from "./HeroArt";
 import MultiSelect from "./MultiSelect";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import { useLoginModal } from "./useLoginModal";
 import { PREFECTURES } from "@/lib/prefectures";
 import { STANDARD_TAGS } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
@@ -132,6 +133,7 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
 
 export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds = [], featured = [] }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[]; featured?: PublicJob[] }) {
   const router = useRouter();
+  const { onRegister, modal } = useLoginModal();
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
   const [area, setArea] = useState("");
@@ -184,7 +186,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
     <>
       {/* ===================== DESKTOP ===================== */}
       <div className="hidden bg-white text-ink lg:block">
-        <SiteHeader active="jobs" loggedIn={loggedIn} />
+        <SiteHeader active="jobs" loggedIn={loggedIn} onRegister={onRegister} />
 
         {/* Hero */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF6F2] via-[#FFE7DF] to-[#FFD9CC]">
@@ -225,9 +227,11 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
         <SiteFooter />
       </div>
 
+      {modal}
+
       {/* ===================== MOBILE ===================== */}
       <div className="lg:hidden">
-        <Shell active="jobs" searchValue={q} onSearchChange={setQ}>
+        <Shell active="jobs" searchValue={q} onSearchChange={setQ} loggedIn={loggedIn}>
           <div className="bg-gradient-to-br from-[#FFF6F2] to-[#FFD9CC] px-4 pb-3 pt-4">
             <h1 className="text-xl font-black leading-snug text-ink">特定技能の求人を、<span className="text-bl-red">サクッと</span>見つけよう 🎌</h1>
             <div className="mt-3"><FiveSteps /></div>

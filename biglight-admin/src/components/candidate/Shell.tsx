@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
 import SiteHeader, { type NavActive } from "./SiteHeader";
+import { useLoginModal } from "./useLoginModal";
 
 type Active = NavActive;
 
@@ -40,6 +41,7 @@ export default function Shell({
   const router = useRouter();
   const controlled = typeof onSearchChange === "function";
   const [local, setLocal] = useState("");
+  const { onRegister, modal } = useLoginModal();
   const value = controlled ? searchValue ?? "" : local;
 
   function onSubmit(e: React.FormEvent) {
@@ -50,7 +52,7 @@ export default function Shell({
   return (
     <div className="min-h-screen bg-bl-bg text-ink">
       {/* Desktop — header trên cùng dùng chung (SiteHeader) */}
-      <SiteHeader active={active} loggedIn={loggedIn} />
+      <SiteHeader active={active} loggedIn={loggedIn} onRegister={onRegister} />
 
       {/* Mobile — header tìm kiếm + thông báo (giữ nguyên) */}
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-bl-line bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden">
@@ -70,15 +72,30 @@ export default function Shell({
 
       {/* Bottom nav — chỉ mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-4 border-t border-bl-line bg-white lg:hidden">
-        {NAV.map((n) => (
-          <Link key={n.key} href={n.href}>
-            <span className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold ${active === n.key ? "text-bl-red" : "text-bl-gray2"}`}>
-              <Icon>{n.icon}</Icon>
-              {n.label}
-            </span>
-          </Link>
-        ))}
+        {NAV.map((n) => {
+          // Chưa đăng nhập: tab マイ → CTA「無料登録」mở modal (không đi /mypage).
+          if (n.key === "mypage" && !loggedIn) {
+            return (
+              <button key={n.key} type="button" onClick={onRegister} className="w-full">
+                <span className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold text-bl-red">
+                  <Icon><circle cx="9" cy="8" r="4" /><path d="M3 21c0-3.5 2.7-5.5 6-5.5" /><path d="M17 8v6M14 11h6" /></Icon>
+                  無料登録
+                </span>
+              </button>
+            );
+          }
+          return (
+            <Link key={n.key} href={n.href}>
+              <span className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold ${active === n.key ? "text-bl-red" : "text-bl-gray2"}`}>
+                <Icon>{n.icon}</Icon>
+                {n.label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
+
+      {modal}
     </div>
   );
 }

@@ -3,6 +3,8 @@
 export const CONSENT_COOKIE = "biglight_cookie_policy_agreed";
 // Event để các nút login yêu cầu mở popup khi user chưa đồng ý.
 export const CONSENT_OPEN_EVENT = "biglight:open-cookie-consent";
+// Event phát khi user vừa bấm「同意して続ける」(để mở tiếp modal đăng nhập).
+export const CONSENT_GRANTED_EVENT = "biglight:cookie-consent-granted";
 
 export function hasCookieConsent(): boolean {
   if (typeof document === "undefined") return false;

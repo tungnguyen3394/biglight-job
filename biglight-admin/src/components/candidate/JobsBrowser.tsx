@@ -7,6 +7,7 @@ import Shell from "./Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
+import { useLoginModal } from "./useLoginModal";
 import { PREFECTURES } from "@/lib/prefectures";
 import { RESIDENCE_LABEL } from "@/lib/constants";
 
@@ -69,6 +70,7 @@ function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; on
 
 export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items: BrowseJob[]; loggedIn?: boolean; savedIds?: string[] }) {
   const router = useRouter();
+  const { onRegister, modal } = useLoginModal();
   const [f, setF] = useState<Filters>(EMPTY);
   const [sort, setSort] = useState("new");
   const [drawer, setDrawer] = useState(false);
@@ -151,9 +153,11 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
 
   return (
     <>
+      {modal}
+
       {/* DESKTOP */}
       <div className="hidden min-h-screen bg-bl-bg text-ink lg:block">
-        <SiteHeader active="jobs" loggedIn={loggedIn} />
+        <SiteHeader active="jobs" loggedIn={loggedIn} onRegister={onRegister} />
         <div className="mx-auto max-w-6xl px-6 py-8">
           <h1 className="mb-1 text-2xl font-black">特定技能 求人一覧</h1>
           <p className="mb-5 text-sm text-bl-gray">条件でしぼり込んで、あなたに合う仕事を見つけましょう。</p>
