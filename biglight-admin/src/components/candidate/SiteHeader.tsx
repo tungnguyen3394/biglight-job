@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
-import { FB_PAGE_URL } from "@/lib/site";
 
 export type NavActive = "jobs" | "about" | "info" | "tokutei2" | "mypage";
 
@@ -51,13 +50,10 @@ export default function SiteHeader({ active, loggedIn }: { active: NavActive; lo
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LangSwitch />
-          {!loggedIn && (
-            <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 rounded-lg bg-bl-fb px-3 py-2 text-sm font-bold text-white hover:bg-[#0C63D4]">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
-              登録
-            </a>
-          )}
-          <Link href="/mypage" className={`rounded-lg px-4 py-2 text-sm font-black text-white shadow-md ${active === "mypage" ? "bg-bl-redd" : "bg-bl-red hover:bg-bl-redd"}`}>マイページ</Link>
+          <Link href="/mypage" className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-black text-white shadow-md ${active === "mypage" ? "bg-bl-redd" : "bg-bl-red hover:bg-bl-redd"}`}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></svg>
+            マイページ
+          </Link>
         </div>
       </div>
     </header>

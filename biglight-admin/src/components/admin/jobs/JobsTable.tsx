@@ -48,6 +48,7 @@ export function JobsTable({
             <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>夜勤</th>
             <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>シフト</th>
             <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>公開</th>
+            <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>おすすめ</th>
             <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>担当者</th>
             {seeCommission && <th className={`${TH} sticky top-0 z-20 bg-slate-50`}>紹介報酬</th>}
             <SortTH label="更新日" k="updatedAt" extra="sticky top-0 z-20 bg-slate-50" />
@@ -76,6 +77,13 @@ export function JobsTable({
                 <JobStatusBadge status={j.publicStatus} />
                 <div className="mt-0.5 text-[10px] text-slate-400">{JOB_OP_STATUS_LABEL[j.opStatus] ?? j.opStatus}</div>
               </td>
+              <td className={TD}>
+                {j.isFeatured ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.7L12 17.3 5.8 20.8l1.6-6.7L2.2 8.9l6.9-.6z" /></svg>おすすめ</span>
+                ) : j.isRecommended ? (
+                  <span className="rounded-full bg-bl-bluesoft px-2 py-0.5 text-xs font-bold text-bl-blue">推奨</span>
+                ) : <span className="text-slate-300">—</span>}
+              </td>
               <td className={`${TD} text-xs text-slate-600`}>{j.staff ?? "—"}</td>
               {seeCommission && <td className={`${TD} font-semibold text-navy`}>{j.commission != null ? "¥" + j.commission.toLocaleString("ja-JP") : "—"}</td>}
               <td className={`${TD} text-xs text-slate-400`}>{new Date(j.updatedAt).toLocaleDateString("ja-JP")}</td>
@@ -90,7 +98,7 @@ export function JobsTable({
             </tr>
           ))}
           {rows.length === 0 && (
-            <tr><td colSpan={seeCommission ? 15 : 14} className="px-4 py-12 text-center text-slate-400">該当する求人がありません</td></tr>
+            <tr><td colSpan={seeCommission ? 16 : 15} className="px-4 py-12 text-center text-slate-400">該当する求人がありません</td></tr>
           )}
         </tbody>
       </table>

@@ -244,6 +244,13 @@ model Job {
   // tags
   tags String[] @default([])
 
+  // hiển thị / đề xuất ở user site
+  isFeatured     Boolean @default(false) // おすすめ求人
+  isRecommended  Boolean @default(false) // 推奨
+  imageUrl       String? // 求人画像
+  seoTitle       String? // SEO用タイトル
+  seoDescription String? // SEO用説明
+
   // toàn bộ nội dung form tạo求人 (giữ 100% cấu trúc HTML: アピール/活躍/資格/近隣/住居詳細…) — public-safe
   formData Json @default("{}")
 

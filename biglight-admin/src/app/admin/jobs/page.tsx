@@ -44,6 +44,8 @@ export default async function JobsPage() {
     commission: seeCommission && "jobCommissions" in j && Array.isArray(j.jobCommissions)
       ? (j.jobCommissions as { amount: number }[]).reduce((s, c) => s + c.amount, 0) || null
       : null,
+    isFeatured: j.isFeatured,
+    isRecommended: j.isRecommended,
     updatedAt: j.updatedAt.toISOString(),
   }));
 

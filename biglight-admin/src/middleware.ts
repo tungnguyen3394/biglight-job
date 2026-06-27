@@ -40,8 +40,11 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Bảo vệ API (trừ các endpoint auth): 401 JSON
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !valid) {
+  // API công khai cho user site (không cần đăng nhập)
+  const isPublicApi = pathname.startsWith("/api/jobs/public") || pathname.startsWith("/api/jobs/featured");
+
+  // Bảo vệ API (trừ auth + public): 401 JSON
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !isPublicApi && !valid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

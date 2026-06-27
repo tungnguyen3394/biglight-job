@@ -60,8 +60,13 @@ export type JobFormState = {
   nearby: string[];
   // ⑧ タグ
   tags: string[];
-  // 公開
+  // 公開 / 表示
   publicStatus: string;
+  isFeatured: boolean;
+  isRecommended: boolean;
+  imageUrl: string;
+  seoTitle: string;
+  seoDescription: string;
   // 社内メモ (admin only — KHÔNG vào formData/preview)
   internalMemo: string;
   companyHistory: string;
@@ -79,6 +84,7 @@ export function makeDefaultForm(companyId = ""): JobFormState {
     houseType: "アパート寮", room: "個室", roommates: "", roomDesc: "", rent: "", utility: "", internet: "", otherCost: "",
     nearby: [], tags: [],
     publicStatus: "DRAFT",
+    isFeatured: false, isRecommended: false, imageUrl: "", seoTitle: "", seoDescription: "",
     internalMemo: "", companyHistory: "", riskNotes: "",
   };
 }
@@ -134,6 +140,11 @@ export function formToPayload(s: JobFormState, mode: "create" | "edit") {
     wifi: s.internet || null,
     tags: s.tags,
     publicStatus: s.publicStatus,
+    isFeatured: s.isFeatured,
+    isRecommended: s.isRecommended,
+    imageUrl: s.imageUrl || null,
+    seoTitle: s.seoTitle || null,
+    seoDescription: s.seoDescription || null,
     internalMemo: s.internalMemo || null,
     companyHistory: s.companyHistory || null,
     riskNotes: s.riskNotes || null,
@@ -156,6 +167,11 @@ export function jobToForm(job: Record<string, unknown>): JobFormState {
     ...d,
     companyId: (job.companyId as string) ?? "",
     publicStatus: (job.publicStatus as string) ?? "DRAFT",
+    isFeatured: !!job.isFeatured,
+    isRecommended: !!job.isRecommended,
+    imageUrl: (job.imageUrl as string) ?? "",
+    seoTitle: (job.seoTitle as string) ?? "",
+    seoDescription: (job.seoDescription as string) ?? "",
     internalMemo: (job.internalMemo as string) ?? "",
     companyHistory: (job.companyHistory as string) ?? "",
     riskNotes: (job.riskNotes as string) ?? "",

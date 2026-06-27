@@ -16,7 +16,8 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     orderBy: { createdAt: "desc" },
   });
 
-  const data: PublicJob[] = jobs.map((j) => ({
+  type J = (typeof jobs)[number];
+  const toPublic = (j: J): PublicJob => ({
     id: j.id,
     title: j.title,
     industry: j.industry,
@@ -32,10 +33,16 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     japaneseLevel: j.japaneseLevel,
     residence: j.residenceType,
     dormitory: j.dormitoryAvailable,
+    nightShift: j.nightShift,
     recruitCount: j.recruitCount,
     tags: j.tags,
-    img: industryImage(j.industry),
-  }));
+    img: j.imageUrl || industryImage(j.industry),
+  });
+
+  const data: PublicJob[] = jobs.map(toPublic);
+  // おすすめ: isFeatured/isRecommended → fallback 最新
+  const picked = jobs.filter((j) => j.isFeatured || j.isRecommended);
+  const featured: PublicJob[] = (picked.length ? picked : jobs).slice(0, 8).map(toPublic);
 
   const session = await getSessionUser();
   let savedIds: string[] = [];
@@ -43,5 +50,5 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
     savedIds = cand?.savedJobIds ?? [];
   }
-  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
+  return <CandidateHome jobs={data} featured={featured} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
 }

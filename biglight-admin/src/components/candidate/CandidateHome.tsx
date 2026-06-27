@@ -16,8 +16,67 @@ import { RESIDENCE_LABEL } from "@/lib/constants";
 export type PublicJob = {
   id: string; title: string; industry: string; jobType: string | null;
   location: string; city: string | null; salaryMain: string | null; monthlyExample: string | null; japaneseLevel: string | null;
-  residence: string; dormitory: boolean; recruitCount: number; tags: string[]; img: string;
+  residence: string; dormitory: boolean; nightShift: boolean; recruitCount: number; tags: string[]; img: string;
 };
+
+// SVG line icon nhỏ (không dùng emoji)
+function Ico({ d, size = 14 }: { d: React.ReactNode; size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block">{d}</svg>;
+}
+const I_PIN = <><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>;
+const I_YEN = <><path d="M12 4l5 7M12 4 7 11M12 11v9M8 13h8M8 16.5h8" /></>;
+const I_STAR = <path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.7L12 17.3 5.8 20.8l1.6-6.7L2.2 8.9l6.9-.6z" />;
+const I_MOON = <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />;
+
+function FeaturedCard({ job, loggedIn }: { job: PublicJob; loggedIn?: boolean }) {
+  const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
+  const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
+  void loggedIn;
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
+      <Link href={`/jobs/${job.id}`} className="relative block h-32 overflow-hidden">
+        <img src={job.img} alt="" className="h-full w-full object-cover" />
+        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-bl-red px-2 py-0.5 text-[11px] font-black text-white shadow"><span className="text-amber-300"><Ico d={I_STAR} size={11} /></span>おすすめ</span>
+      </Link>
+      <div className="flex flex-1 flex-col p-4">
+        <div className="mb-1.5 flex flex-wrap gap-1.5">
+          <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
+          <span className="rounded-full bg-bl-redsoft px-2 py-0.5 text-[11px] font-bold text-bl-red">{RESIDENCE_LABEL[job.residence] ?? "特定技能"}</span>
+        </div>
+        <Link href={`/jobs/${job.id}`} className="line-clamp-2 text-[15px] font-bold leading-snug hover:text-bl-red">{job.title}</Link>
+        {job.salaryMain && <div className="mt-1.5 flex items-center gap-1 text-sm font-black text-bl-red"><Ico d={I_YEN} />{job.salaryMain}</div>}
+        <div className="mt-1 flex items-center gap-1 text-xs text-bl-gray"><Ico d={I_PIN} />{job.location}{job.city ? ` ${job.city}` : ""}{job.jobType ? `・${job.jobType}` : ""}</div>
+        <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold">
+          <span className={`rounded-full px-2 py-0.5 ${job.dormitory ? "bg-bl-greensoft text-bl-green" : "bg-bl-bg text-bl-gray2"}`}>{job.dormitory ? "寮あり" : "寮なし"}</span>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${job.nightShift ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-bg text-bl-gray2"}`}><Ico d={I_MOON} size={11} />{job.nightShift ? "夜勤あり" : "夜勤なし"}</span>
+          {job.japaneseLevel && <span className="rounded-full bg-bl-bluesoft px-2 py-0.5 text-bl-blue">日本語 {job.japaneseLevel}</span>}
+          <span className="rounded-full bg-bl-bg px-2 py-0.5 text-bl-gray">募集 {job.recruitCount}名</span>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <Link href={`/jobs/${job.id}`} className="flex-1 rounded-xl border border-bl-line py-2 text-center text-xs font-bold text-bl-gray hover:border-bl-red hover:text-bl-red">詳細を見る</Link>
+          <Link href={applyHref} className="flex-1 rounded-xl bg-bl-red py-2 text-center text-xs font-bold text-white hover:bg-bl-redd">応募する</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeaturedSection({ featured, loggedIn }: { featured: PublicJob[]; loggedIn?: boolean }) {
+  if (featured.length === 0) return null;
+  return (
+    <section className="bg-white py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-5 flex items-center gap-2">
+          <span className="text-bl-red"><Ico d={I_STAR} size={20} /></span>
+          <h2 className="text-xl font-black sm:text-2xl">おすすめ求人</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {featured.map((j) => <FeaturedCard key={j.id} job={j} loggedIn={loggedIn} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const STEPS: [string, string, string][] = [
   ["1", "無料登録", "Facebookで30秒"],
@@ -71,7 +130,7 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
   );
 }
 
-export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds = [] }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[] }) {
+export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds = [], featured = [] }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[]; featured?: PublicJob[] }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [field, setField] = useState("");
@@ -146,6 +205,9 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
           </div>
         </section>
 
+        {/* おすすめ求人 */}
+        <FeaturedSection featured={featured} loggedIn={loggedIn} />
+
         {/* Jobs */}
         <section id="jobs" className="bg-bl-bg py-12">
           <div className="mx-auto max-w-6xl px-6">
@@ -171,6 +233,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
             <div className="mt-3"><FiveSteps /></div>
             <div className="mt-3"><SearchBox {...searchProps} /></div>
           </div>
+          <FeaturedSection featured={featured} loggedIn={loggedIn} />
           <div className="px-4 py-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-black"><span className="text-bl-red">{list.length}</span>件の求人</h2>

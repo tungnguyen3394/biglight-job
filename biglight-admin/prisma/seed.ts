@@ -223,6 +223,17 @@ async function main() {
       dailyFlow: "朝礼→客室清掃→ベッドメイク→点検→退勤", appealPoints: "残業ほぼなしで生活リズムが整う／女性専用寮あり／きれい好きな方歓迎。",
       tags: ["寮あり", "女性活躍", "残業少なめ", "個室寮"],
     },
+    {
+      code: "AUTO-010", title: "自動車整備スタッフ（未経験から技術習得）", industry: "自動車整備", jobTypeName: "自動車整備",
+      location: "埼玉県", city: "さいたま市", recruitCount: 4, recruitMale: 4, recruitFemale: 0, residenceType: "TOKUTEI_1" as const,
+      payType: "月給", baseSalary: 200000, expectedMonthly: 245000, expectedTakeHome: 200000, salaryMin: 200000, salaryMax: 280000,
+      workHours: "9:00〜18:00（休憩60分）", overtimeHours: "月平均15時間（全額支給）", holidays: "週休2日／年間休日110日",
+      bonus: "賞与年2回", japaneseLevel: "N4", dormitoryAvailable: true, dormitoryFee: 20000, utilitiesCost: "実費", wifi: "無料",
+      commuteMethod: "自転車・車通勤可", stationDistance: "最寄駅から徒歩15分",
+      description: "自動車の点検・整備・部品交換を担当します。先輩整備士の指導のもと、未経験から確かな技術を身につけられます。",
+      dailyFlow: "朝礼→点検→整備・部品交換→記録→退勤", appealPoints: "手に職がつく／資格取得支援あり／長く働ける環境。",
+      tags: ["寮あり", "未経験OK", "資格取得支援"],
+    },
   ];
   for (const j of SAMPLE_JOBS) {
     await prisma.job.upsert({
@@ -231,6 +242,9 @@ async function main() {
       create: { ...j, companyId: company.id, status: "OPEN", publicStatus: "PUBLIC", biglightStaffId: superAdmin.id },
     });
   }
+  // おすすめ / 推奨 (hiện ở section おすすめ求人)
+  await prisma.job.updateMany({ where: { code: { in: ["FBM-003", "CARE-004", "CLN-009", "MFG-006"] } }, data: { isFeatured: true } });
+  await prisma.job.updateMany({ where: { code: { in: ["CON-005", "AUTO-010"] } }, data: { isRecommended: true } });
 
   // ---- candidate + application ----
   const cand = await prisma.candidate.upsert({

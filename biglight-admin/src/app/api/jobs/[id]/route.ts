@@ -57,7 +57,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     "alternatingShift", "hasOvertime", "startDate", "dormitoryAvailable",
     "dormitoryFee", "utilitiesCost", "wifi", "commuteMethod", "stationDistance",
     "bicycleLease", "pickupService", "publicMemo", "appealPoints", "applyNotes",
-    "tags", "payType", "formData",
+    "tags", "payType", "formData", "isFeatured", "isRecommended", "imageUrl", "seoTitle", "seoDescription",
   ];
   for (const k of basic) if (k in body) data[k] = body[k];
 

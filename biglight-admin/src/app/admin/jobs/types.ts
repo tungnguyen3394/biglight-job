@@ -21,6 +21,8 @@ export type JobRow = {
   industry: string;
   staff: string | null;
   commission: number | null;
+  isFeatured: boolean;
+  isRecommended: boolean;
   updatedAt: string; // ISO
 };
 
