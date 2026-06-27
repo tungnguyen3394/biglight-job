@@ -84,6 +84,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
 
   const profile: ProfileInit = {
     name: candidate?.name ?? session.name,
+    kana: candidate?.kana ?? "",
     birth: ymd(candidate?.birthdate),
     gender: candidate?.gender ?? "ANY",
     nat: candidate?.nationality ?? "",

@@ -12,7 +12,7 @@ import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
 import MultiUpload from "./MultiUpload";
 
 export type ProfileInit = {
-  name: string; birth: string; gender: string; nat: string; phone: string; email: string;
+  name: string; kana: string; birth: string; gender: string; nat: string; phone: string; email: string;
   address: string; facebookUrl: string; instagramUrl: string; tiktokUrl: string;
   visa: string; expiry: string; arrival: string; jp: string;
   sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
@@ -326,6 +326,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
       <fieldset disabled={!editing} className="m-0 min-w-0 space-y-4 border-0 p-0">
         <Card n={1} title="基本情報">
           <Field label="お名前（ローマ字）" req><input value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="NGUYEN VAN A" className={inputCls} /></Field>
+          <Field label="フリガナ" opt><input value={f.kana} onChange={(e) => set("kana", e.target.value)} placeholder="グエン ヴァン アー" className={inputCls} /></Field>
           <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="性別" req><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
           <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NAT.map((n) => <option key={n}>{n}</option>)}</select></Field>

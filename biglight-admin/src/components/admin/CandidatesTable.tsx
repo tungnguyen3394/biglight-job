@@ -49,35 +49,59 @@ function uniq(list: (string | null)[]) {
   return Array.from(new Set(list.filter((x): x is string => !!x))).sort();
 }
 
-// Các cột có thể hiển thị / xuất CSV / in.
+// Các cột có thể hiển thị / xuất CSV / in. w = độ rộng cố định (px).
 type ColKey = "name" | "kana" | "nationality" | "phone" | "email" | "visaType" | "japaneseLevel" | "address" | "apps" | "status" | "createdAt";
-const COLUMNS: { key: ColKey; label: string; value: (r: CandidateRow) => string }[] = [
-  { key: "name", label: "氏名", value: (r) => r.name || "" },
-  { key: "kana", label: "フリガナ", value: (r) => r.kana || "" },
-  { key: "nationality", label: "国籍", value: (r) => r.nationality || "" },
-  { key: "phone", label: "電話番号", value: (r) => r.phone || "" },
-  { key: "email", label: "メール", value: (r) => r.email || "" },
-  { key: "visaType", label: "在留資格", value: (r) => r.visaType || "" },
-  { key: "japaneseLevel", label: "日本語", value: (r) => r.japaneseLevel || "" },
-  { key: "address", label: "現在の住所", value: (r) => r.address || "" },
-  { key: "apps", label: "応募数", value: (r) => String(r.apps) },
-  { key: "status", label: "ステータス", value: (r) => r.status },
-  { key: "createdAt", label: "登録日", value: (r) => r.createdAt.slice(0, 10) },
+const COLUMNS: { key: ColKey; label: string; w: number; value: (r: CandidateRow) => string }[] = [
+  { key: "name", label: "氏名", w: 190, value: (r) => r.name || "" },
+  { key: "kana", label: "フリガナ", w: 140, value: (r) => r.kana || "" },
+  { key: "nationality", label: "国籍", w: 110, value: (r) => r.nationality || "" },
+  { key: "phone", label: "電話番号", w: 135, value: (r) => r.phone || "" },
+  { key: "email", label: "メール", w: 210, value: (r) => r.email || "" },
+  { key: "visaType", label: "在留資格", w: 160, value: (r) => r.visaType || "" },
+  { key: "japaneseLevel", label: "日本語", w: 84, value: (r) => r.japaneseLevel || "" },
+  { key: "address", label: "現在の住所", w: 120, value: (r) => r.address || "" },
+  { key: "apps", label: "応募数", w: 76, value: (r) => String(r.apps) },
+  { key: "status", label: "ステータス", w: 96, value: (r) => r.status },
+  { key: "createdAt", label: "登録日", w: 110, value: (r) => r.createdAt.slice(0, 10) },
 ];
 const DEFAULT_COLS: ColKey[] = ["name", "nationality", "phone", "email", "visaType", "japaneseLevel", "createdAt", "status"];
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Sắp xếp nâng cao (đa trường, ưu tiên theo thứ tự).
+type SortField = "createdAt" | "lastActive" | "name" | "nationality" | "visaType" | "japaneseLevel" | "apps" | "status";
+type SortItem = { key: SortField; dir: "asc" | "desc" };
+const SORT_FIELDS: { key: SortField; label: string; cmp: (a: CandidateRow, b: CandidateRow) => number }[] = [
+  { key: "createdAt", label: "登録日", cmp: (a, b) => a.createdAt.localeCompare(b.createdAt) },
+  { key: "lastActive", label: "最終利用", cmp: (a, b) => a.lastActive.localeCompare(b.lastActive) },
+  { key: "name", label: "氏名（カナ）", cmp: (a, b) => (a.kana || a.name).localeCompare(b.kana || b.name, "ja") },
+  { key: "nationality", label: "国籍", cmp: (a, b) => (a.nationality || "").localeCompare(b.nationality || "", "ja") },
+  { key: "visaType", label: "在留資格", cmp: (a, b) => (a.visaType || "").localeCompare(b.visaType || "", "ja") },
+  { key: "japaneseLevel", label: "日本語", cmp: (a, b) => (a.japaneseLevel || "").localeCompare(b.japaneseLevel || "") },
+  { key: "apps", label: "応募数", cmp: (a, b) => a.apps - b.apps },
+  { key: "status", label: "ステータス", cmp: (a, b) => a.status.localeCompare(b.status, "ja") },
+];
+const SORT_LABEL = (k: SortField) => SORT_FIELDS.find((f) => f.key === k)?.label ?? k;
 
 export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [q, setQ] = useState("");
   const [fNat, setFNat] = useState("");
   const [fVisa, setFVisa] = useState("");
   const [fJp, setFJp] = useState("");
-  const [sort, setSort] = useState<"new" | "old" | "name" | "active">("new");
+  const [sortList, setSortList] = useState<SortItem[]>([{ key: "createdAt", dir: "desc" }]);
   const [quick, setQuick] = useState<Quick>("");
   const [page, setPage] = useState(0);
   const [cols, setCols] = useState<Set<ColKey>>(() => new Set(DEFAULT_COLS));
   const visCols = COLUMNS.filter((c) => cols.has(c.key));
   const toggleCol = (k: ColKey) => setCols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
+  const clearCols = () => setCols(new Set(["name"]));
+
+  // ----- sắp xếp nâng cao -----
+  const addSort = (k: SortField) => setSortList((p) => (p.some((s) => s.key === k) ? p : [...p, { key: k, dir: "asc" }]));
+  const removeSort = (k: SortField) => setSortList((p) => p.filter((s) => s.key !== k));
+  const toggleDir = (k: SortField) => setSortList((p) => p.map((s) => (s.key === k ? { ...s, dir: s.dir === "asc" ? "desc" : "asc" } : s)));
+  const moveSort = (i: number, d: -1 | 1) => setSortList((p) => { const n = [...p]; const j = i + d; if (j < 0 || j >= n.length) return p; [n[i], n[j]] = [n[j], n[i]]; return n; });
+  const availableSort = SORT_FIELDS.filter((f) => !sortList.some((s) => s.key === f.key));
 
   const nats = useMemo(() => uniq(rows.map((r) => r.nationality)), [rows]);
   const visas = useMemo(() => uniq(rows.map((r) => r.visaType)), [rows]);
@@ -113,14 +137,13 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
       }
       return true;
     });
+    const cmps = sortList.map((s) => ({ cmp: SORT_FIELDS.find((f) => f.key === s.key)!.cmp, dir: s.dir }));
     out = [...out].sort((a, b) => {
-      if (sort === "name") return (a.kana || a.name).localeCompare(b.kana || b.name, "ja");
-      if (sort === "active") return b.lastActive.localeCompare(a.lastActive);
-      const da = a.createdAt, db = b.createdAt;
-      return sort === "new" ? db.localeCompare(da) : da.localeCompare(db);
+      for (const { cmp, dir } of cmps) { let r = cmp(a, b); if (dir === "desc") r = -r; if (r !== 0) return r; }
+      return 0;
     });
     return out;
-  }, [rows, q, fNat, fVisa, fJp, sort, quick]);
+  }, [rows, q, fNat, fVisa, fJp, sortList, quick]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const cur = Math.min(page, pages - 1);
@@ -157,21 +180,27 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   function renderCell(key: ColKey, r: CandidateRow) {
     switch (key) {
       case "name":
-        return <><Link href={`/admin/candidates/${r.id}`} className="font-semibold text-navy hover:underline">{r.name || "（未入力）"}</Link>{r.kana && <div className="text-xs text-slate-400">{r.kana}</div>}</>;
+        return (
+          <div className="min-w-0">
+            <Link href={`/admin/candidates/${r.id}`} className="block truncate font-semibold text-navy hover:underline" title={r.name}>{r.name || "（未入力）"}</Link>
+            <div className="truncate text-xs text-slate-400" title={r.kana ?? ""}>{r.kana || "—"}</div>
+          </div>
+        );
       case "email":
-        return <span className="block max-w-[180px] truncate" title={r.email ?? ""}>{r.email ?? "—"}</span>;
+        return <span className="block truncate" title={r.email ?? ""}>{r.email ?? "—"}</span>;
       case "status":
         return <span className="badge bg-slate-100 text-slate-600">{r.status}</span>;
       case "createdAt":
-        return <span className="whitespace-nowrap text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString("ja-JP")}</span>;
-      case "phone":
-        return <span className="whitespace-nowrap">{r.phone ?? "—"}</span>;
+        return <span className="block truncate text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString("ja-JP")}</span>;
       default: {
         const v = COLUMNS.find((c) => c.key === key)?.value(r) ?? "";
-        return v || "—";
+        return <span className="block truncate" title={v}>{v || "—"}</span>;
       }
     }
   }
+
+  const activeFilters = [fNat, fVisa, fJp].filter(Boolean).length;
+  const tableWidth = 48 + visCols.reduce((s, c) => s + c.w, 0) + 84;
 
   return (
     <div>
@@ -185,7 +214,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
         <InsightCard
           icon={<><path d="M3 12h4l2 6 4-14 2 8h6" /></>}
           label="アクティブユーザー" value={insight.active} sub="直近14日"
-          actionLabel="アクティブ順に並べる" active={sort === "active"} onAction={() => { setSort("active"); }}
+          actionLabel="アクティブ順に並べる" active={sortList.length === 1 && sortList[0].key === "lastActive"} onAction={() => setSortList([{ key: "lastActive", dir: "desc" }])}
         >
           <div className="mt-2 flex -space-x-2">
             {insight.topActive.map((r) => (
@@ -223,25 +252,58 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
           <input className="input pl-9" placeholder="氏名・電話・メールで検索" value={q} onChange={(e) => { setQ(e.target.value); reset(); }} />
         </div>
-        <select className="input w-auto" value={fNat} onChange={(e) => { setFNat(e.target.value); reset(); }}>
-          <option value="">国籍：すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}
-        </select>
-        <select className="input w-auto" value={fVisa} onChange={(e) => { setFVisa(e.target.value); reset(); }}>
-          <option value="">在留資格：すべて</option>{visas.map((v) => <option key={v}>{v}</option>)}
-        </select>
-        <select className="input w-auto" value={fJp} onChange={(e) => { setFJp(e.target.value); reset(); }}>
-          <option value="">日本語：すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}
-        </select>
-        <select className="input w-auto" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
-          <option value="new">登録日：新しい順</option>
-          <option value="old">登録日：古い順</option>
-          <option value="name">氏名：あいうえお順</option>
-          <option value="active">アクティブ順（最近の利用）</option>
-        </select>
+
+        {/* 絞り込み (gom các bộ lọc) */}
+        <details className="relative">
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
+            絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
+          </summary>
+          <div className="absolute left-0 z-30 mt-1 w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+            <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className="input w-full" value={fNat} onChange={(e) => { setFNat(e.target.value); reset(); }}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">在留資格</div><select className="input w-full" value={fVisa} onChange={(e) => { setFVisa(e.target.value); reset(); }}><option value="">すべて</option>{visas.map((v) => <option key={v}>{v}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">日本語</div><select className="input w-full" value={fJp} onChange={(e) => { setFJp(e.target.value); reset(); }}><option value="">すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}</select></div>
+            {activeFilters > 0 && <button onClick={() => { setFNat(""); setFVisa(""); setFJp(""); reset(); }} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
+          </div>
+        </details>
+
+        {/* 並び替え nâng cao (đa trường) */}
+        <details className="relative">
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" /></svg>
+            並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-200 px-1.5 text-[10px] font-bold text-slate-600">{sortList.length}</span>}
+          </summary>
+          <div className="absolute left-0 z-30 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+            {sortList.length === 0 && <p className="mb-2 text-xs text-slate-400">並び替え項目がありません。</p>}
+            {sortList.map((s, i) => (
+              <div key={s.key} className="mb-1.5 flex items-center gap-1 rounded-lg bg-slate-50 px-2 py-1.5">
+                <span className="w-4 text-center text-xs font-bold text-slate-400">{i + 1}</span>
+                <span className="flex-1 truncate text-sm font-semibold text-ink">{SORT_LABEL(s.key)}</span>
+                <button onClick={() => toggleDir(s.key)} className={`rounded px-2 py-0.5 text-[11px] font-bold ${s.dir === "asc" ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-600"}`}>{s.dir === "asc" ? "昇順" : "降順"}</button>
+                <button onClick={() => moveSort(i, -1)} disabled={i === 0} className="px-0.5 text-slate-300 hover:text-bl-red disabled:opacity-30" aria-label="上へ"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="m6 15 6-6 6 6" /></svg></button>
+                <button onClick={() => moveSort(i, 1)} disabled={i === sortList.length - 1} className="px-0.5 text-slate-300 hover:text-bl-red disabled:opacity-30" aria-label="下へ"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="m6 9 6 6 6-6" /></svg></button>
+                <button onClick={() => removeSort(s.key)} className="px-0.5 text-slate-300 hover:text-red-500" aria-label="削除">✕</button>
+              </div>
+            ))}
+            {availableSort.length > 0 && (
+              <select value="" onChange={(e) => { const v = e.target.value; if (v) addSort(v as SortField); e.currentTarget.value = ""; }} className="input mt-1 w-full text-sm">
+                <option value="">＋ 並び替え項目を追加</option>
+                {availableSort.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
+              </select>
+            )}
+            {sortList.length > 0 && <button onClick={() => setSortList([])} className="mt-2 text-xs font-semibold text-bl-red hover:underline">並び替えをクリア</button>}
+          </div>
+        </details>
+
         <div className="ml-auto flex items-center gap-2">
+          {/* 表示項目 */}
           <details className="relative">
             <summary className="btn btn-ghost btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden">表示項目</summary>
-            <div className="absolute right-0 z-30 mt-1 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="mb-1 flex gap-3 border-b border-slate-100 px-1 pb-1.5">
+                <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+                <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
+              </div>
               {COLUMNS.map((c) => (
                 <label key={c.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50">
                   <input type="checkbox" checked={cols.has(c.key)} onChange={() => toggleCol(c.key)} className="h-3.5 w-3.5 accent-bl-red" />
@@ -256,25 +318,30 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
         </div>
       </div>
 
-      {/* table */}
+      {/* table — table-fixed: cột rộng cố định, nội dung dài rút gọn “…”, mỗi dòng đều nhau */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full table-fixed text-sm" style={{ minWidth: tableWidth }}>
+          <colgroup>
+            <col style={{ width: 48 }} />
+            {visCols.map((c) => <col key={c.key} style={{ width: c.w }} />)}
+            <col style={{ width: 84 }} />
+          </colgroup>
           <thead>
             <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
-              <th className="p-3"></th>
-              {visCols.map((c) => <th key={c.key} className="whitespace-nowrap p-3">{c.label}</th>)}
-              <th className="p-3"></th>
+              <th className="px-3 py-2.5"></th>
+              {visCols.map((c) => <th key={c.key} className="truncate px-3 py-2.5">{c.label}</th>)}
+              <th className="px-3 py-2.5 text-right">操作</th>
             </tr>
           </thead>
           <tbody>
             {view.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
-                <td className="p-3"><Avatar name={r.name} image={r.image} /></td>
-                {visCols.map((c) => <td key={c.key} className="p-3">{renderCell(c.key, r)}</td>)}
-                <td className="p-3">
-                  <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline">
+              <tr key={r.id} className="h-[52px] border-b border-slate-50 align-middle hover:bg-slate-50">
+                <td className="px-3 py-2"><Avatar name={r.name} image={r.image} /></td>
+                {visCols.map((c) => <td key={c.key} className="px-3 py-2">{renderCell(c.key, r)}</td>)}
+                <td className="px-3 py-2 text-right">
+                  <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-blue hover:underline">
                     詳細
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                   </Link>
                 </td>
               </tr>

@@ -46,6 +46,7 @@ export async function POST(req: Request) {
     where: { id: candidate.id },
     data: {
       name: typeof b.name === "string" && b.name.trim() ? b.name.trim() : candidate.name,
+      kana: typeof b.kana === "string" && b.kana.trim() ? b.kana.trim() : null,
       birthdate: toDate(b.birth),
       gender: b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY",
       nationality: b.nat || null,
