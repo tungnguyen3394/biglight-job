@@ -58,9 +58,10 @@ function Tracker({ stage }: { stage: number }) {
   );
 }
 
-export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean }) {
+export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string }) {
   const router = useRouter();
-  const [sec, setSec] = useState<SecKey>(needProfile || !complete ? "profile" : applied ? "apps" : "profile");
+  const validSec = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
+  const [sec, setSec] = useState<SecKey>(validSec ?? (needProfile || !complete ? "profile" : applied ? "apps" : "profile"));
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
 

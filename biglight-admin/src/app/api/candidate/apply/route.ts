@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { isProfileComplete } from "@/lib/candidateProfile";
+import { notify } from "@/lib/notify";
 
 async function getCandidate() {
   const session = await getSessionUser();
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
   const exists = await prisma.application.findFirst({ where: { candidateId: candidate.id, jobId } });
   if (!exists) {
     await prisma.application.create({ data: { candidateId: candidate.id, jobId, companyId: job.companyId, status: "NEW", applicantNote } });
+    await notify(candidate.userId, { type: "application", title: "応募を受け付けました", body: job.title, link: "/mypage?sec=apps" });
   } else if (applicantNote) {
     await prisma.application.update({ where: { id: exists.id }, data: { applicantNote } });
   }

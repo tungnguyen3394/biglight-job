@@ -5,6 +5,7 @@ import { guard } from "@/lib/guard";
 import { isAllowedAdminEmail } from "@/lib/auth";
 import { shapeMessage } from "@/lib/messageServer";
 import { translate } from "@/lib/translate";
+import { notify } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const text = typeof b.text === "string" ? b.text.trim() : "";
   if (!text) return NextResponse.json({ error: "メッセージを入力してください。" }, { status: 400 });
 
-  const conv = await prisma.conversation.findUnique({ where: { id: params.id } });
+  const conv = await prisma.conversation.findUnique({ where: { id: params.id }, include: { candidate: { select: { userId: true } } } });
   if (!conv) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const translated = await translate(text, "vi", "ja"); // ứng viên xem tiếng Việt
@@ -86,6 +87,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     where: { id: conv.id },
     data: { lastMessage: text, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
   });
+  await notify(conv.candidate.userId, { type: "message", title: "新しいメッセージが届きました", body: text.slice(0, 80), link: "/mypage?sec=messages" });
 
   return NextResponse.json({ message: { ...shapeMessage(msg), senderName: g.user.name } });
 }

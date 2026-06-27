@@ -27,7 +27,7 @@ const STAGE_OF: Record<string, number> = {
 };
 const ENDED = new Set(["REJECTED", "DECLINED", "CANCELLED"]);
 
-export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string; gerror?: string; redirect?: string; need?: string } }) {
+export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string; gerror?: string; redirect?: string; need?: string; sec?: string } }) {
   const session = await getSessionUser();
 
   // Lao động đã đăng nhập + có ?apply=<jobId> → tạo đơn ứng tuyển rồi làm sạch URL.
@@ -143,6 +143,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
         emailLocked={emailLocked}
         complete={complete}
         needProfile={searchParams.need === "1"}
+        initialSec={searchParams.sec}
       />
       <MessengerPopupButton />
     </Shell>
