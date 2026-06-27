@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const candidate = await getCandidate();
   if (!candidate) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { jobId } = await req.json().catch(() => ({}));
+  const { jobId, note } = await req.json().catch(() => ({}));
   if (!jobId) return NextResponse.json({ error: "No jobId" }, { status: 400 });
 
   // Chặn ứng tuyển khi hồ sơ chưa đủ trường bắt buộc.
@@ -25,9 +25,12 @@ export async function POST(req: Request) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
+  const applicantNote = typeof note === "string" && note.trim() ? note.trim() : null;
   const exists = await prisma.application.findFirst({ where: { candidateId: candidate.id, jobId } });
   if (!exists) {
-    await prisma.application.create({ data: { candidateId: candidate.id, jobId, companyId: job.companyId, status: "NEW" } });
+    await prisma.application.create({ data: { candidateId: candidate.id, jobId, companyId: job.companyId, status: "NEW", applicantNote } });
+  } else if (applicantNote) {
+    await prisma.application.update({ where: { id: exists.id }, data: { applicantNote } });
   }
   const saved = (candidate.savedJobIds ?? []).filter((x) => x !== jobId);
   await prisma.candidate.update({ where: { id: candidate.id }, data: { savedJobIds: saved } });

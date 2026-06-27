@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
 import FbChat from "@/components/candidate/FbChat";
 import { SaveButton } from "@/components/candidate/SaveButton";
+import { ApplyButton } from "@/components/candidate/ApplyButton";
 
 const LINE_URL = "https://line.me/R/ti/p/@biglight";
 const FLOW = ["応募", "書類選考", "面接（オンライン可）", "内定", "ビザ申請", "入社"];
@@ -41,7 +42,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-export default async function JobDetail({ params }: { params: { id: string } }) {
+export default async function JobDetail({ params, searchParams }: { params: { id: string }; searchParams: { apply?: string } }) {
   const job = await prisma.job.findFirst({
     where: { id: params.id, publicStatus: "PUBLIC" },
   });
@@ -58,7 +59,6 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   const nearby = arr(fd.nearby);
 
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
-  const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
 
   const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`【お問い合わせ】${job.code} ${job.title}`)}`;
   const session = await getSessionUser();
@@ -225,7 +225,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
                 {job.japaneseLevel && <div className="flex justify-between"><dt className="text-bl-gray">日本語</dt><dd className="font-semibold">{job.japaneseLevel}</dd></div>}
               </dl>
 
-              <Link href={applyHref} className="mt-5 block rounded-xl bg-bl-red py-3.5 text-center font-bold text-white shadow-lg hover:bg-bl-redd">この求人に応募する</Link>
+              <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
               <p className="mt-1.5 text-center text-xs text-bl-gray2">無料・Facebook/Googleで登録</p>
 
               <div className="mt-3 grid grid-cols-2 gap-2">

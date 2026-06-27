@@ -10,6 +10,8 @@ const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state") || "/mypage";
+  const dest = state.startsWith("/") ? state : "/mypage";
   const fail = (e: string) => NextResponse.redirect(`${PUBLIC_BASE_URL}/mypage?fberror=${e}`);
 
   if (!code || !APP_ID || !APP_SECRET) return fail("config");
@@ -30,7 +32,7 @@ export async function GET(req: Request) {
     // 3) tạo/đăng nhập tài khoản ứng viên + set session
     await loginOrCreateCandidate({ email: payload.email ?? null, name: payload.name, picture: payload.picture, facebookId: payload.id });
 
-    return NextResponse.redirect(`${PUBLIC_BASE_URL}/mypage`);
+    return NextResponse.redirect(`${PUBLIC_BASE_URL}${dest}`);
   } catch {
     return fail("exception");
   }

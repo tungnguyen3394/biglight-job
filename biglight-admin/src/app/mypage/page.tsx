@@ -27,7 +27,7 @@ const STAGE_OF: Record<string, number> = {
 };
 const ENDED = new Set(["REJECTED", "DECLINED", "CANCELLED"]);
 
-export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string; need?: string } }) {
+export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string; gerror?: string; redirect?: string; need?: string } }) {
   const session = await getSessionUser();
 
   // Lao động đã đăng nhập + có ?apply=<jobId> → tạo đơn ứng tuyển rồi làm sạch URL.
@@ -51,7 +51,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
   if (!session || session.role !== "CANDIDATE") {
     return (
       <Shell active="mypage" loggedIn={false}>
-        <CandidateLogin applyTitle={searchParams.t} fbError={searchParams.fberror ? "Facebookログインに失敗しました。もう一度お試しください。" : undefined} />
+        <CandidateLogin applyTitle={searchParams.t} fbError={searchParams.fberror || searchParams.gerror ? "1" : undefined} redirect={searchParams.redirect ?? "/mypage"} />
         <FbChat />
       </Shell>
     );
@@ -88,6 +88,9 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     nat: candidate?.nationality ?? "",
     phone: candidate?.phone ?? "",
     email: formEmail,
+    address: candidate?.currentAddress ?? "",
+    facebookUrl: candidate?.facebookUrl ?? "",
+    lineId: (p.lineId as string) ?? "",
     visa: candidate?.visaType ?? "",
     sswField: (p.sswField as string) ?? candidate?.currentTokuteiField ?? "",
     sswCategory: (p.sswCategory as string) ?? "",
@@ -98,6 +101,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     jp: candidate?.japaneseLevel ?? "",
     fields: candidate?.desiredIndustry ? candidate.desiredIndustry.split(",").filter(Boolean) : [],
     areas: candidate?.desiredLocation ? candidate.desiredLocation.split(",").filter(Boolean) : [],
+    desiredJobType: (p.desiredJobType as string) ?? "",
     sal: candidate?.desiredSalary ? Math.round(candidate.desiredSalary / 10000) : 0,
     dorm: (p.dorm as string) ?? "",
     start: (p.start as string) ?? "",

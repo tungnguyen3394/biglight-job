@@ -348,6 +348,7 @@ model Application {
   biglightStaffId String?
   status      ApplicationStatus @default(NEW)
 
+  applicantNote     String? @db.Text // 応募メモ (do ứng viên ghi khi 応募)
   nextAction        String?
   nextActionDate    DateTime?
   interviewDate     DateTime?

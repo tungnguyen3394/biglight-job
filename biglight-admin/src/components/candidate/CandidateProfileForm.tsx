@@ -13,9 +13,10 @@ import MultiUpload from "./MultiUpload";
 
 export type ProfileInit = {
   name: string; birth: string; gender: string; nat: string; phone: string; email: string;
+  address: string; facebookUrl: string; lineId: string;
   visa: string; expiry: string; arrival: string; jp: string;
   sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
-  fields: string[]; areas: string[]; sal: number;
+  fields: string[]; areas: string[]; desiredJobType: string; sal: number;
   dorm: string; start: string; nightshift: string; shiftwork: string;
   reasons: string[]; reasonOther: string; priorities: string[];
 };
@@ -115,6 +116,9 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
           <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} readOnly={emailLocked} placeholder="example@email.com" className={`${inputCls} ${emailLocked ? "bg-bl-bg text-bl-gray2" : ""}`} />
           <p className="mt-1 text-xs text-bl-gray2">{emailLocked ? "ログインアカウントのメールアドレスです（変更不可）。" : "Facebookログインのため、ご連絡用のメールアドレスをご入力ください。"}</p>
         </Field>
+        <Field label="現在の住所" opt><input value={f.address} onChange={(e) => set("address", e.target.value)} placeholder="例）愛知県名古屋市…" className={inputCls} /></Field>
+        <Field label="Facebook URL" opt><input value={f.facebookUrl} onChange={(e) => set("facebookUrl", e.target.value)} placeholder="https://facebook.com/…" className={inputCls} /></Field>
+        <Field label="LINE ID" opt><input value={f.lineId} onChange={(e) => set("lineId", e.target.value)} placeholder="LINE ID" className={inputCls} /></Field>
       </Card>
 
       <Card n={2} title="在留資格（ビザ）">
@@ -151,6 +155,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
         <Field label={`希望月給（手取り）：${f.sal || 16}万円`} opt><input type="range" min={16} max={40} value={f.sal || 16} onChange={(e) => set("sal", Number(e.target.value))} className="w-full accent-bl-red" /></Field>
         <Field label="希望する特定技能分野"><Many options={SKILL_FIELDS} value={f.fields} onChange={(v) => set("fields", v)} /></Field>
         <Field label="希望勤務地"><Many options={PREF_OPTIONS} value={f.areas} onChange={(v) => set("areas", v)} scroll /></Field>
+        <Field label="希望職種" opt><input value={f.desiredJobType} onChange={(e) => set("desiredJobType", e.target.value)} placeholder="例）溶接 / 介護 / 惣菜製造 など" className={inputCls} /></Field>
         <Field label="寮の希望" opt><One options={DORM_OPTIONS} value={f.dorm} onChange={(v) => set("dorm", v)} /></Field>
         <Field label="いつから働けますか" opt><One options={START_OPTIONS} value={f.start} onChange={(v) => set("start", v)} /></Field>
         <Field label="夜勤できますか" opt><One options={NIGHTSHIFT_OPTIONS} value={f.nightshift} onChange={(v) => set("nightshift", v)} /></Field>
