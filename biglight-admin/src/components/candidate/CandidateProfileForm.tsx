@@ -37,6 +37,11 @@ const TOTAL_WEIGHT = PROFILE_KEYS.reduce((a, k) => a + WEIGHT[k], 0);
 
 const inputCls = "w-full rounded-xl border border-bl-line px-3 py-2.5 text-sm outline-none focus:border-bl-red disabled:bg-bl-bg disabled:text-bl-gray2";
 
+// Mở lịch native khi chạm vào ô ngày (icon lịch không phải lúc nào cũng tự mở trên mobile).
+function openPicker(e: React.MouseEvent<HTMLInputElement>) {
+  try { (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.(); } catch { /* ignore */ }
+}
+
 // ---------------------------------------------------------------------------
 // SNS アカウント — Facebook / Instagram / TikTok
 // ---------------------------------------------------------------------------
@@ -314,7 +319,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
       <fieldset disabled={!editing} className="m-0 min-w-0 space-y-4 border-0 p-0">
         <Card n={1} title="基本情報">
           <Field label="お名前（ローマ字）" req><input value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="NGUYEN VAN A" className={inputCls} /></Field>
-          <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} className={inputCls} /></Field>
+          <Field label="生年月日" req><input type="date" value={f.birth} onChange={(e) => set("birth", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="性別" req><One options={["男性", "女性"]} value={genderJP} onChange={(v) => set("gender", v === "男性" ? "MALE" : v === "女性" ? "FEMALE" : "ANY")} /></Field>
           <Field label="国籍" req><select value={f.nat} onChange={(e) => set("nat", e.target.value)} className={inputCls}><option value="">選択してください</option>{NATIONALITIES.map((n) => <option key={n}>{n}</option>)}</select></Field>
           <Field label="電話番号" req><input type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)} placeholder="090-1234-5678" className={inputCls} /></Field>
@@ -363,8 +368,8 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked }: { 
             <p className="mb-2 text-xs text-bl-gray2">溶接など、ものづくりの作業をする方は、ご自身が作った製品の写真を添付してください（複数可）。担当者があなたの技術をより正確に伝えられます。</p>
             <MultiUpload slot="workphotos" initFiles={initDocs.workphotos ?? []} accept="image/*" addLabel="＋ 製品の写真を追加（複数可）" preview />
           </Field>
-          <Field label="在留期限" opt><input type="date" value={f.expiry} onChange={(e) => set("expiry", e.target.value)} className={inputCls} /></Field>
-          <Field label="来日年月日" opt><input type="date" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} className={inputCls} /></Field>
+          <Field label="在留期限" opt><input type="date" value={f.expiry} onChange={(e) => set("expiry", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
+          <Field label="来日年月日" opt><input type="date" value={f.arrival} onChange={(e) => set("arrival", e.target.value)} onClick={openPicker} className={inputCls} /></Field>
           <Field label="日本語レベル"><One options={JP_LEVELS} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
         </Card>
 

@@ -68,11 +68,41 @@ function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; on
   );
 }
 
+// List/Table view — hàng gọn ngang (cùng dữ liệu/chức năng với Card).
+function Row({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; onToggleSave: () => void }) {
+  const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-bl-line bg-white p-2.5 shadow-sm transition hover:border-bl-red">
+      <Link href={`/jobs/${job.id}`} className="relative block h-16 w-20 shrink-0 overflow-hidden rounded-lg">
+        <img src={job.img} alt="" className="h-full w-full object-cover" />
+        {!job.open && <span className="absolute inset-x-0 bottom-0 bg-bl-gray/90 text-center text-[9px] font-bold text-white">募集終了</span>}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link href={`/jobs/${job.id}`} className="line-clamp-1 text-sm font-bold leading-snug hover:text-bl-red">{job.title}</Link>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-bl-gray">
+          {job.salaryMain && <span className="font-black text-bl-red">{job.salaryMain}</span>}
+          <span className="inline-flex items-center gap-0.5"><Ico d={I_PIN} size={12} />{job.prefecture}{job.city ? ` ${job.city}` : ""}</span>
+          <span>{job.industry}</span>
+          <span>募集{job.recruitCount}名</span>
+          {job.dormitory && <span className="font-semibold text-bl-green">寮あり</span>}
+          {job.japaneseLevel && <span>日本語{job.japaneseLevel}</span>}
+        </div>
+      </div>
+      <button onClick={onToggleSave} className="shrink-0 text-lg leading-none" aria-label="お気に入り"><span className={saved ? "text-bl-red" : "text-bl-gray2"}>{saved ? "♥" : "♡"}</span></button>
+      <div className="hidden shrink-0 flex-col gap-1 sm:flex">
+        <Link href={`/jobs/${job.id}`} className="rounded-lg border border-bl-line px-3 py-1 text-center text-xs font-bold text-bl-gray hover:border-bl-red hover:text-bl-red">詳細</Link>
+        <Link href={applyHref} className="rounded-lg bg-bl-red px-3 py-1 text-center text-xs font-bold text-white hover:bg-bl-redd">応募</Link>
+      </div>
+    </div>
+  );
+}
+
 export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items: BrowseJob[]; loggedIn?: boolean; savedIds?: string[] }) {
   const router = useRouter();
   const { onRegister, modal } = useLoginModal();
   const [f, setF] = useState<Filters>(EMPTY);
   const [sort, setSort] = useState("new");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [drawer, setDrawer] = useState(false);
   const [savedSet, setSavedSet] = useState<Set<string>>(() => new Set(savedIds));
   const set = (k: keyof Filters, v: string) => setF((p) => ({ ...p, [k]: v, ...(k === "pref" ? { city: "" } : {}) }));
@@ -120,8 +150,8 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
   const activeCount = Object.values(f).filter((v) => v !== "").length;
 
   const Filters = (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
-      <div><label className="mb-1 block text-xs font-bold text-bl-gray">キーワード</label><input className={sel} value={f.q} onChange={(e) => set("q", e.target.value)} placeholder="職種・タグなど" /></div>
+    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-1 lg:gap-3">
+      <div className="col-span-2 lg:col-span-1"><label className="mb-1 block text-xs font-bold text-bl-gray">キーワード</label><input className={sel} value={f.q} onChange={(e) => set("q", e.target.value)} placeholder="職種・タグなど" /></div>
       <div><label className="mb-1 block text-xs font-bold text-bl-gray">都道府県</label><select className={sel} value={f.pref} onChange={(e) => set("pref", e.target.value)}><option value="">すべて</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}</select></div>
       <div><label className="mb-1 block text-xs font-bold text-bl-gray">市区町村</label><select className={sel} value={f.city} onChange={(e) => set("city", e.target.value)}><option value="">すべて</option>{cities.map((c) => <option key={c}>{c}</option>)}</select></div>
       <div><label className="mb-1 block text-xs font-bold text-bl-gray">業種</label><select className={sel} value={f.industry} onChange={(e) => set("industry", e.target.value)}><option value="">すべて</option>{industries.map((i) => <option key={i}>{i}</option>)}</select></div>
@@ -147,9 +177,18 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
     </div>
   );
 
-  const Grid = list.length === 0
-    ? <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>
+  const empty = <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>;
+  const Grid = list.length === 0 ? empty
     : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} />)}</div>;
+  const ListView = list.length === 0 ? empty
+    : <div className="space-y-2.5">{list.map((j) => <Row key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} />)}</div>;
+  const Body = view === "grid" ? Grid : ListView;
+  const ViewToggle = (
+    <div className="flex overflow-hidden rounded-lg border border-bl-line">
+      <button onClick={() => setView("grid")} className={`flex h-9 w-9 items-center justify-center ${view === "grid" ? "bg-bl-red text-white" : "bg-white text-bl-gray hover:bg-bl-bg"}`} aria-label="カード表示"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></svg></button>
+      <button onClick={() => setView("list")} className={`flex h-9 w-9 items-center justify-center border-l border-bl-line ${view === "list" ? "bg-bl-red text-white" : "bg-white text-bl-gray hover:bg-bl-bg"}`} aria-label="リスト表示"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg></button>
+    </div>
+  );
 
   return (
     <>
@@ -167,8 +206,8 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
               {Filters}
             </aside>
             <div>
-              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black"><span className="text-bl-red">{list.length}</span>件</h2>{SortBar}</div>
-              {Grid}
+              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black"><span className="text-bl-red">{list.length}</span>件</h2><div className="flex items-center gap-2">{ViewToggle}{SortBar}</div></div>
+              {Body}
             </div>
           </div>
         </div>
@@ -179,15 +218,15 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
       <div className="lg:hidden">
         <Shell active="jobs" searchValue={f.q} onSearchChange={(v) => set("q", v)} loggedIn={loggedIn}>
           <div className="px-4 py-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <button onClick={() => setDrawer(true)} className="flex items-center gap-1.5 rounded-xl border border-bl-line bg-white px-3 py-2 text-sm font-bold">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
                 絞り込み{activeCount > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeCount}</span>}
               </button>
-              {SortBar}
+              <div className="flex items-center gap-2">{ViewToggle}{SortBar}</div>
             </div>
             <div className="mb-3 text-sm font-black"><span className="text-bl-red">{list.length}</span>件の求人</div>
-            <div className="grid gap-4 sm:grid-cols-2">{list.length === 0 ? <p className="rounded-2xl border border-dashed border-bl-line bg-white p-10 text-center text-bl-gray2">求人が見つかりませんでした。</p> : list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} />)}</div>
+            {Body}
           </div>
         </Shell>
 

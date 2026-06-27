@@ -52,7 +52,9 @@ export default function CookiePolicyConsent() {
 
         <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-xl bg-bl-bg p-3">
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-bl-red" />
-          <span className="text-[13px] font-semibold text-ink">プライバシーポリシーに同意します</span>
+          <span className="text-[13px] font-semibold text-ink">
+            <a href="/privacy-policy" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-bl-red underline">プライバシーポリシー</a>に同意します
+          </span>
         </label>
 
         <button

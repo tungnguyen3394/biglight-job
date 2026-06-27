@@ -41,14 +41,14 @@ export default function MessengerPopupButton() {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-[80] flex flex-col items-end gap-3 sm:bottom-5">
+    <div className="pointer-events-none fixed bottom-36 right-4 z-[80] flex flex-col items-end gap-3 sm:bottom-5">
       {/* Popup */}
       <div
         role="dialog"
         aria-label="BIGLIGHT 担当チーム"
         aria-hidden={!open}
         className={`w-[360px] max-w-[calc(100vw-2rem)] origin-bottom-right overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 transition-all duration-200 ${
-          open ? "scale-100 opacity-100" : "pointer-events-none scale-90 opacity-0"
+          open ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-90 opacity-0"
         }`}
       >
         {/* Header: logo BIGLIGHT JOB */}
@@ -94,7 +94,7 @@ export default function MessengerPopupButton() {
         onClick={toggle}
         aria-label="Messengerで相談"
         aria-expanded={open}
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#00B2FF] to-[#0866FF] shadow-lg transition hover:scale-105"
+        className="pointer-events-auto relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#00B2FF] to-[#0866FF] shadow-lg transition hover:scale-105"
       >
         {ready && <span className="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-bl-red" />}
         <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.4 5.5 3.7 7.2V22l3.4-1.9c.9.25 1.9.39 2.9.39 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm1 12.4l-2.5-2.7-4.9 2.7 5.4-5.7 2.6 2.7 4.8-2.7-5.4 5.7z" /></svg>
