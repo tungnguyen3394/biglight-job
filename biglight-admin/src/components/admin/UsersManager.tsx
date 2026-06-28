@@ -17,6 +17,12 @@ export interface UserRow {
 
 const LEVELS: AdminRole[] = ["ADMIN", "STAFF", "VIEW"];
 
+type AuditEntry = { id: string; actorName: string; action: string; targetName: string | null; detail: string | null; createdAt: string };
+const ACTION_LABEL: Record<string, string> = {
+  "user.create": "作成", "user.rename": "氏名変更", "user.role": "ロール変更",
+  "user.lock": "ロック", "user.unlock": "ロック解除", "user.resetpw": "パスワード再発行", "user.delete": "削除",
+};
+
 // Suy ra cấp hiển thị (giống server): adminRole ưu tiên, fallback theo role gốc.
 function levelOf(u: UserRow): AdminRole {
   if (u.adminRole) return u.adminRole;
@@ -79,6 +85,14 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
   const [err, setErr] = useState("");
   const [notice, setNotice] = useState("");
   const [showLegend, setShowLegend] = useState(true);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logs, setLogs] = useState<AuditEntry[] | null>(null);
+  async function loadLogs() {
+    setLogsOpen((v) => !v);
+    if (logs === null) {
+      try { const r = await fetch("/api/admin/audit"); const j = await r.json(); setLogs(r.ok ? (j.logs || []) : []); } catch { setLogs([]); }
+    }
+  }
 
   const [showCreate, setShowCreate] = useState(false);
   const [cName, setCName] = useState("");
@@ -381,6 +395,39 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
           </div>
         </div>
       )}
+
+      {/* 操作ログ (audit log) */}
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+        <button onClick={loadLogs} className="flex w-full items-center justify-between px-4 py-3 text-left">
+          <span className="flex items-center gap-2 text-sm font-bold text-ink">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><path d="M12 8v4l3 3" /><circle cx="12" cy="12" r="9" /></svg>
+            操作ログ（最近100件）
+          </span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`text-slate-400 transition ${logsOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        {logsOpen && (
+          <div className="max-h-80 overflow-y-auto border-t border-slate-100">
+            {logs === null ? (
+              <div className="p-6 text-center text-sm text-slate-400">読み込み中…</div>
+            ) : logs.length === 0 ? (
+              <div className="p-6 text-center text-sm text-slate-400">ログがありません。</div>
+            ) : (
+              <table className="w-full text-sm">
+                <tbody>
+                  {logs.map((l) => (
+                    <tr key={l.id} className="border-t border-slate-50">
+                      <td className="whitespace-nowrap px-4 py-2 text-xs text-slate-400">{new Date(l.createdAt).toLocaleString("ja-JP")}</td>
+                      <td className="px-4 py-2 font-semibold text-ink">{l.actorName}</td>
+                      <td className="px-4 py-2"><span className="badge bg-slate-100 text-slate-600">{ACTION_LABEL[l.action] ?? l.action}</span></td>
+                      <td className="px-4 py-2 text-slate-600">{l.targetName ?? ""}{l.detail ? ` ・ ${l.detail}` : ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

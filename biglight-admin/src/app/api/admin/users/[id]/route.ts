@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guard } from "@/lib/guard";
+import { logAudit } from "@/lib/audit";
 import type { AdminRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data,
     select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
   });
+  const actor = { actorId: g.user.id, actorName: g.user.name, targetType: "user", targetId: target.id, targetName: user.name };
+  if (data.name) await logAudit({ ...actor, action: "user.rename", detail: `${target.name} → ${data.name}` });
+  if (data.adminRole) await logAudit({ ...actor, action: "user.role", detail: `→ ${data.adminRole}` });
+  if (data.status) await logAudit({ ...actor, action: data.status === "SUSPENDED" ? "user.lock" : "user.unlock" });
   return NextResponse.json({ user });
 }
 
@@ -91,5 +96,6 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   }
 
   await prisma.user.delete({ where: { id: target.id } });
+  await logAudit({ actorId: g.user.id, actorName: g.user.name, action: "user.delete", targetType: "user", targetId: target.id, targetName: target.name, detail: target.email });
   return NextResponse.json({ ok: true });
 }

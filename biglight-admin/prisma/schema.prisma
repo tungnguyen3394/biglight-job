@@ -570,6 +570,21 @@ model Article {
   @@map("articles")
 }
 
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String
+  action     String // "user.create" | "user.rename" | "user.role" | "user.lock" | "user.unlock" | "user.resetpw" | "user.delete"
+  targetType String? // "user"
+  targetId   String?
+  targetName String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
 model StatusHistory {
   id            String   @id @default(cuid())
   applicationId String

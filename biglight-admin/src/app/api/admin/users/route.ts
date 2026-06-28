@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guard } from "@/lib/guard";
+import { logAudit } from "@/lib/audit";
 import { isAllowedAdminEmail } from "@/lib/auth";
 import type { AdminRole } from "@prisma/client";
 
@@ -46,5 +47,6 @@ export async function POST(req: Request) {
     data: { name, email, role: "BIGLIGHT_STAFF", adminRole: level, status: "ACTIVE" },
     select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
   });
+  await logAudit({ actorId: g.user.id, actorName: g.user.name, action: "user.create", targetType: "user", targetId: user.id, targetName: user.name, detail: `${user.email}（${level}）` });
   return NextResponse.json({ user });
 }
