@@ -45,8 +45,6 @@ export function JobsMobileCards({
 
           <div className="mt-3 flex flex-wrap gap-1.5">
             <BoolBadge on={j.dormitory} label="寮" />
-            <BoolBadge on={j.nightShift} label="夜勤" />
-            <BoolBadge on={j.shiftWork} label="シフト" />
           </div>
 
           <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">

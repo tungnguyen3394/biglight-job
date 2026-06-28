@@ -35,8 +35,6 @@ const COLUMNS: { key: string; label: string; sortKey?: SortKey; render: (j: JobR
   { key: "dormFee", label: "寮費", render: (j) => (j.dormitoryFee != null ? `${yen(j.dormitoryFee)}/月` : "—") },
   { key: "utilities", label: "水道光熱", render: (j) => <span className="line-clamp-1 max-w-[140px]">{txt(j.utilitiesCost)}</span> },
   { key: "wifi", label: "ネット", render: (j) => txt(j.wifi) },
-  { key: "nightShift", label: "夜勤", render: (j) => <BoolBadge on={j.nightShift} label="夜勤" /> },
-  { key: "shiftWork", label: "シフト", render: (j) => <BoolBadge on={j.shiftWork} label="シフト" /> },
   { key: "workHours", label: "勤務時間", render: (j) => <span className="line-clamp-1 max-w-[180px]">{txt(j.workHours)}</span> },
   { key: "overtime", label: "残業", render: (j) => <span className="line-clamp-1 max-w-[140px]">{txt(j.overtimeHours)}</span> },
   { key: "holidays", label: "休日", render: (j) => <span className="line-clamp-1 max-w-[160px]">{txt(j.holidays)}</span> },
@@ -52,7 +50,7 @@ const COLUMNS: { key: string; label: string; sortKey?: SortKey; render: (j: JobR
   { key: "updated", label: "更新日", sortKey: "updatedAt", render: (j) => <span className="text-xs text-slate-400">{new Date(j.updatedAt).toLocaleDateString("ja-JP")}</span> },
 ];
 const ALL_KEYS = COLUMNS.map((c) => c.key);
-const DEFAULT_VISIBLE = ["company", "jobType", "location", "recruit", "status", "monthly", "jp", "dorm", "nightShift", "shiftWork", "public", "staff", "updated"];
+const DEFAULT_VISIBLE = ["company", "jobType", "location", "recruit", "status", "monthly", "jp", "dorm", "public", "staff", "updated"];
 
 export function JobsTable({
   rows, sort, onSort, canEdit, canDelete, onDelete, onDuplicate, busyId,

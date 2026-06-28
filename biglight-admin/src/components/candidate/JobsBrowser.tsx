@@ -20,8 +20,8 @@ export type BrowseJob = {
   open: boolean; createdAt: string; updatedAt: string; tags: string[]; img: string;
 };
 
-type Filters = { q: string; pref: string; industry: string; tag: string; salaryMin: string; jp: string; dorm: string; night: string };
-const EMPTY: Filters = { q: "", pref: "", industry: "", tag: "", salaryMin: "", jp: "", dorm: "", night: "" };
+type Filters = { q: string; pref: string; industry: string; tag: string; salaryMin: string; jp: string; dorm: string };
+const EMPTY: Filters = { q: "", pref: "", industry: "", tag: "", salaryMin: "", jp: "", dorm: "" };
 
 const SORTS: { v: string; label: string }[] = [
   { v: "new", label: "新着順" },
@@ -42,7 +42,6 @@ const COLUMNS: { key: string; label: string; w: number }[] = [
   { key: "salary", label: "給与", w: 140 },
   { key: "jp", label: "日本語", w: 80 },
   { key: "dorm", label: "寮", w: 72 },
-  { key: "night", label: "夜勤", w: 72 },
   { key: "recruit", label: "募集人数", w: 84 },
   { key: "published", label: "公開日", w: 100 },
   { key: "detail", label: "詳細", w: 64 },
@@ -56,7 +55,6 @@ function Ico({ d, size = 14 }: { d: React.ReactNode; size?: number }) {
 }
 const I_PIN = <><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>;
 const I_YEN = <><path d="M12 4l5 7M12 4 7 11M12 11v9M8 13h8M8 16.5h8" /></>;
-const I_MOON = <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />;
 const sel = "w-full rounded-xl border border-bl-line bg-white px-3 py-2.5 text-sm font-semibold text-ink outline-none focus:border-bl-red";
 const fmtDate = (iso: string) => iso.slice(0, 10);
 
@@ -69,7 +67,6 @@ function cellText(j: BrowseJob, key: string): string {
     case "salary": return j.salaryMain ?? "";
     case "jp": return j.japaneseLevel ?? "";
     case "dorm": return j.dormitory ? "寮あり" : "寮なし";
-    case "night": return j.nightShift ? "夜勤あり" : "夜勤なし";
     case "recruit": return `${j.recruitCount}名`;
     case "published": return fmtDate(j.createdAt);
     default: return "";
@@ -101,7 +98,6 @@ function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: bo
         <div className="mt-1 flex items-center gap-1 text-xs text-bl-gray"><Ico d={I_PIN} />{job.prefecture}{job.city ? ` ${job.city}` : ""}{job.jobType ? `・${job.jobType}` : ""}</div>
         <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold">
           <span className={`rounded-full px-2 py-0.5 ${job.dormitory ? "bg-bl-greensoft text-bl-green" : "bg-bl-bg text-bl-gray2"}`}>{job.dormitory ? "寮あり" : "寮なし"}</span>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${job.nightShift ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-bg text-bl-gray2"}`}><Ico d={I_MOON} size={11} />{job.nightShift ? "夜勤あり" : "夜勤なし"}</span>
           {job.japaneseLevel && <span className="rounded-full bg-bl-bluesoft px-2 py-0.5 text-bl-blue">日本語 {job.japaneseLevel}</span>}
           <span className="rounded-full bg-bl-bg px-2 py-0.5 text-bl-gray">募集 {job.recruitCount}名</span>
         </div>
@@ -171,8 +167,6 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
       if (f.salaryMin && j.salaryValue < Number(f.salaryMin)) return false;
       if (f.dorm === "1" && !j.dormitory) return false;
       if (f.dorm === "0" && j.dormitory) return false;
-      if (f.night === "1" && !j.nightShift) return false;
-      if (f.night === "0" && j.nightShift) return false;
       if (f.jp && j.japaneseLevel !== f.jp) return false;
       if (kw) { const hay = `${j.title} ${j.prefecture} ${j.city ?? ""} ${j.jobType ?? ""} ${j.industry} ${j.tags.join(" ")}`.toLowerCase(); if (!hay.includes(kw)) return false; }
       return true;
@@ -282,7 +276,6 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
               <div><label className="mb-1 block text-xs font-bold text-bl-gray">給与（下限）</label><select className={sel} value={f.salaryMin} onChange={(e) => set("salaryMin", e.target.value)}><option value="">指定なし</option><option value="200000">月20万円〜</option><option value="250000">月25万円〜</option><option value="300000">月30万円〜</option></select></div>
               <div><label className="mb-1 block text-xs font-bold text-bl-gray">日本語レベル</label><select className={sel} value={f.jp} onChange={(e) => set("jp", e.target.value)}><option value="">すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}</select></div>
               <div><label className="mb-1 block text-xs font-bold text-bl-gray">寮</label><select className={sel} value={f.dorm} onChange={(e) => set("dorm", e.target.value)}><option value="">すべて</option><option value="1">寮あり</option><option value="0">寮なし</option></select></div>
-              <div><label className="mb-1 block text-xs font-bold text-bl-gray">夜勤</label><select className={sel} value={f.night} onChange={(e) => set("night", e.target.value)}><option value="">すべて</option><option value="1">夜勤あり</option><option value="0">夜勤なし</option></select></div>
             </div>
             <div className="mt-3 flex gap-2">
               <button onClick={() => setF(EMPTY)} className="flex-1 rounded-xl border border-bl-line py-2.5 text-sm font-bold text-bl-gray">条件クリア</button>
