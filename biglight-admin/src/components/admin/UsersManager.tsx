@@ -13,6 +13,8 @@ export interface UserRow {
   status: AccountStatus;
   lastLoginAt: string | null;
   image: string | null;
+  canSendMail: boolean;
+  gasUrl: string | null;
 }
 
 const LEVELS: AdminRole[] = ["ADMIN", "STAFF", "VIEW"];
@@ -21,6 +23,7 @@ type AuditEntry = { id: string; actorName: string; action: string; targetName: s
 const ACTION_LABEL: Record<string, string> = {
   "user.create": "作成", "user.rename": "氏名変更", "user.role": "ロール変更",
   "user.lock": "ロック", "user.unlock": "ロック解除", "user.resetpw": "パスワード再発行", "user.delete": "削除",
+  "user.mailon": "メール送信 許可", "user.mailoff": "メール送信 取消",
 };
 
 // Suy ra cấp hiển thị (giống server): adminRole ưu tiên, fallback theo role gốc.
@@ -168,6 +171,15 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
     } catch (e) { setErr((e as Error).message); }
   }
 
+  async function setMail(u: UserRow, next: boolean) {
+    setBusy(u.id);
+    try {
+      const { user } = await api(`/api/admin/users/${u.id}`, "PATCH", { canSendMail: next });
+      setUsers((p) => p.map((x) => (x.id === u.id ? user : x)));
+      setNotice(`${user.name} のメール送信を${next ? "許可" : "取消"}しました。`);
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(null); }
+  }
+
   async function toggleLock(u: UserRow) {
     const next = u.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     setBusy(u.id);
@@ -290,6 +302,7 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                 <th className="px-4 py-2.5 font-semibold">ロール</th>
                 <th className="px-4 py-2.5 font-semibold">状態</th>
                 <th className="px-4 py-2.5 font-semibold">最終ログイン</th>
+                <th className="px-4 py-2.5 font-semibold">メール送信</th>
                 <th className="px-4 py-2.5 text-right font-semibold">操作</th>
               </tr>
             </thead>
@@ -339,6 +352,14 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                     </td>
                     <td className="px-4 py-3 text-slate-500">{fmtDate(u.lastLoginAt)}</td>
                     <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => setMail(u, !u.canSendMail)} disabled={rowBusy} title={u.canSendMail ? "メール送信：許可（クリックで取消）" : "メール送信：不可（クリックで許可）"} className={`relative h-5 w-9 shrink-0 rounded-full transition ${u.canSendMail ? "bg-bl-red" : "bg-slate-300"}`}>
+                          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${u.canSendMail ? "left-[18px]" : "left-0.5"}`} />
+                        </button>
+                        <span className={`text-[10px] font-bold ${u.gasUrl ? "text-emerald-600" : "text-slate-300"}`} title={u.gasUrl ? "GAS設定済み" : "GAS未設定"}>{u.gasUrl ? "GAS✓" : "GAS−"}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <IconBtn onClick={() => resetPw(u)} disabled={rowBusy} title="パスワードリセット"><IconKey /></IconBtn>
                         <IconBtn
@@ -358,7 +379,7 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-400">該当するユーザーがありません。</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400">該当するユーザーがありません。</td></tr>
               )}
             </tbody>
           </table>

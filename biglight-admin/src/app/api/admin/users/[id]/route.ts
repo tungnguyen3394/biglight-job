@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const b = await req.json().catch(() => ({}));
-  const data: { name?: string; adminRole?: AdminRole; status?: "ACTIVE" | "SUSPENDED" } = {};
+  const data: { name?: string; adminRole?: AdminRole; status?: "ACTIVE" | "SUSPENDED"; canSendMail?: boolean } = {};
   const isSelf = g.user.id === target.id;
   const curLevel = levelOf(target);
 
@@ -66,15 +66,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.status = b.status;
   }
 
+  // メール送信 권한 (Admin cấp cho nhân viên)
+  if (typeof b.canSendMail === "boolean") data.canSendMail = b.canSendMail;
+
   const user = await prisma.user.update({
     where: { id: target.id },
     data,
-    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
+    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true, canSendMail: true, gasUrl: true },
   });
   const actor = { actorId: g.user.id, actorName: g.user.name, targetType: "user", targetId: target.id, targetName: user.name };
   if (data.name) await logAudit({ ...actor, action: "user.rename", detail: `${target.name} → ${data.name}` });
   if (data.adminRole) await logAudit({ ...actor, action: "user.role", detail: `→ ${data.adminRole}` });
   if (data.status) await logAudit({ ...actor, action: data.status === "SUSPENDED" ? "user.lock" : "user.unlock" });
+  if (typeof data.canSendMail === "boolean") await logAudit({ ...actor, action: data.canSendMail ? "user.mailon" : "user.mailoff" });
   return NextResponse.json({ user });
 }
 

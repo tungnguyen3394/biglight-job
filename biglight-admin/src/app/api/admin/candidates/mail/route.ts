@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guard } from "@/lib/guard";
+import { MAIL_GAS_SECRET } from "@/lib/mailGas";
 
 export const dynamic = "force-dynamic";
 
@@ -16,18 +17,20 @@ export async function POST(req: Request) {
   const body = String(b.body ?? "").trim();
   if (!ids.length || !subject || !body) return NextResponse.json({ error: "宛先・件名・本文を入力してください。" }, { status: 422 });
 
+  // GAS riêng của nhân viên đang đăng nhập (gửi từ Gmail của họ) + kiểm tra quyền.
+  const me = await prisma.user.findUnique({ where: { id: g.user.id }, select: { gasUrl: true, canSendMail: true } });
+  if (!me?.canSendMail) return NextResponse.json({ error: "メール送信が許可されていません（Adminにユーザー管理での許可を依頼してください）。" }, { status: 403 });
+  if (!me.gasUrl) return NextResponse.json({ error: "メール設定でご自身のGAS URLを登録してください。" }, { status: 422 });
+
   const cands = await prisma.candidate.findMany({ where: { id: { in: ids } }, include: { user: { select: { email: true } } } });
   const emails = [...new Set(cands.map((c) => c.email || c.user?.email).filter((e): e is string => !!e))];
   if (!emails.length) return NextResponse.json({ error: "メールアドレスのある応募者がいません。" }, { status: 422 });
 
-  const url = process.env.GAS_MAIL_URL;
-  if (!url) return NextResponse.json({ error: "メール送信が未設定です（管理者に GAS_MAIL_URL の設定を依頼してください）。" }, { status: 500 });
-
   try {
-    const res = await fetch(url, {
+    const res = await fetch(me.gasUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: process.env.GAS_MAIL_SECRET ?? "", to: emails, subject, body, replyTo: g.user.email, fromName: `${g.user.name}（BIGLIGHT JOB）` }),
+      body: JSON.stringify({ secret: MAIL_GAS_SECRET, to: emails, subject, body, replyTo: g.user.email, name: `${g.user.name}（BIGLIGHT JOB）` }),
       cache: "no-store",
     });
     const txt = await res.text();

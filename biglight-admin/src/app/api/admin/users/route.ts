@@ -19,7 +19,7 @@ export async function GET() {
   const users = await prisma.user.findMany({
     where: { role: { in: INTERNAL_ROLES as unknown as ("SUPER_ADMIN" | "MANAGER" | "BIGLIGHT_STAFF")[] } },
     orderBy: [{ createdAt: "asc" }],
-    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
+    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true, canSendMail: true, gasUrl: true },
   });
   return NextResponse.json({ users });
 }
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
   const user = await prisma.user.create({
     data: { name, email, role: "BIGLIGHT_STAFF", adminRole: level, status: "ACTIVE" },
-    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
+    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true, canSendMail: true, gasUrl: true },
   });
   await logAudit({ actorId: g.user.id, actorName: g.user.name, action: "user.create", targetType: "user", targetId: user.id, targetName: user.name, detail: `${user.email}（${level}）` });
   return NextResponse.json({ user });

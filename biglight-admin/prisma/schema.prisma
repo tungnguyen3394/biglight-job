@@ -120,6 +120,9 @@ model User {
   companyId    String? // link if role = COMPANY
   ctvId        String? // link if role = CTV
   lastLoginAt  DateTime?
+  // メール送信 (giống CRM): mỗi nhân viên gửi từ Gmail của mình qua GAS riêng; Admin cấp quyền.
+  gasUrl       String? // Google Apps Script deploy URL của nhân viên
+  canSendMail  Boolean       @default(false) // Admin cho phép gửi mail
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 

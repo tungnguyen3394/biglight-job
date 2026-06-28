@@ -117,6 +117,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ] },
   { title: "Communication", items: [
     { href: "/admin/messages", label: "Messages", jp: "メッセージ", roles: STAFF, perm: "messages.read" },
+    { href: "/admin/mail-settings", label: "Mail Settings", jp: "メール設定", roles: STAFF, perm: "dashboard.view" },
   ] },
   { title: "System", items: [
     { href: "/admin/users", label: "Users", jp: "ユーザー管理", roles: STAFF, perm: "users.read" },

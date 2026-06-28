@@ -13,7 +13,7 @@ export default async function Page() {
   const users = await prisma.user.findMany({
     where: { role: { in: ["SUPER_ADMIN", "MANAGER", "BIGLIGHT_STAFF"] } },
     orderBy: [{ createdAt: "asc" }],
-    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true },
+    select: { id: true, name: true, email: true, role: true, adminRole: true, status: true, lastLoginAt: true, image: true, canSendMail: true, gasUrl: true },
   });
 
   const rows: UserRow[] = users.map((u) => ({
@@ -25,6 +25,8 @@ export default async function Page() {
     status: u.status,
     lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
     image: u.image,
+    canSendMail: u.canSendMail,
+    gasUrl: u.gasUrl,
   }));
 
   return <UsersManager initial={rows} meId={user.id} />;
