@@ -85,11 +85,25 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
   const [cEmail, setCEmail] = useState("");
   const [cLevel, setCLevel] = useState<AdminRole>("VIEW");
 
+  const [fRole, setFRole] = useState<"" | AdminRole>("");
+  const [fStatus, setFStatus] = useState<"" | "ACTIVE" | "SUSPENDED">("");
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
-    if (!k) return users;
-    return users.filter((u) => u.name.toLowerCase().includes(k) || u.email.toLowerCase().includes(k));
-  }, [users, q]);
+    return users.filter((u) => {
+      if (k && !(u.name.toLowerCase().includes(k) || u.email.toLowerCase().includes(k))) return false;
+      if (fRole && levelOf(u) !== fRole) return false;
+      if (fStatus && u.status !== fStatus) return false;
+      return true;
+    });
+  }, [users, q, fRole, fStatus]);
+
+  function exportCsv() {
+    const head = ["氏名", "メール", "ロール", "状態", "最終ログイン"];
+    const body = filtered.map((u) => [u.name, u.email, ADMIN_LEVEL_LABEL[levelOf(u)] ?? "", u.status === "ACTIVE" ? "有効" : "ロック", u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("ja-JP") : ""]);
+    const csv = [head, ...body].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `users_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+  }
 
   const stats = useMemo(() => {
     const s = { total: users.length, ADMIN: 0, STAFF: 0, VIEW: 0, locked: 0 };
@@ -129,6 +143,15 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
       setUsers((p) => p.map((x) => (x.id === u.id ? user : x)));
       setNotice(`${user.name} のロールを ${ADMIN_LEVEL_LABEL[level]} に変更しました。`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(null); }
+  }
+
+  async function rename(u: UserRow, name: string) {
+    if (!name.trim() || name.trim() === u.name) return;
+    try {
+      const { user } = await api(`/api/admin/users/${u.id}`, "PATCH", { name });
+      setUsers((p) => p.map((x) => (x.id === u.id ? user : x)));
+      setNotice(`氏名を「${user.name}」に変更しました。`);
+    } catch (e) { setErr((e as Error).message); }
   }
 
   async function toggleLock(u: UserRow) {
@@ -231,6 +254,16 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><IconSearch /></span>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="氏名・メールで検索" className="input w-full pl-9" />
           </div>
+          <select value={fRole} onChange={(e) => setFRole(e.target.value as "" | AdminRole)} className="input w-auto text-sm">
+            <option value="">権限：すべて</option>
+            {LEVELS.map((l) => <option key={l} value={l}>{ADMIN_LEVEL_LABEL[l]}</option>)}
+          </select>
+          <select value={fStatus} onChange={(e) => setFStatus(e.target.value as "" | "ACTIVE" | "SUSPENDED")} className="input w-auto text-sm">
+            <option value="">状態：すべて</option>
+            <option value="ACTIVE">有効</option>
+            <option value="SUSPENDED">ロック</option>
+          </select>
+          <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
           <div className="ml-auto text-xs text-slate-400">{filtered.length} 件</div>
         </div>
 
@@ -260,7 +293,10 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                         <span className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold ring-2 ${LEVEL_RING[lvl]}`}>
                           {u.image ? <img src={u.image} alt="" className="h-full w-full object-cover" /> : u.name.slice(0, 1)}
                         </span>
-                        <span className="font-semibold text-ink">{u.name}{isSelf && <span className="ml-1.5 text-[10px] font-medium text-slate-400">(自分)</span>}</span>
+                        <div className="flex min-w-0 items-center">
+                          <input defaultValue={u.name} onBlur={(e) => rename(u, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} title="クリックして氏名を編集" className="w-[150px] rounded-md border border-transparent bg-transparent px-1.5 py-0.5 font-semibold text-ink outline-none hover:border-slate-200 focus:border-bl-red focus:bg-white" />
+                          {isSelf && <span className="ml-1 shrink-0 text-[10px] font-medium text-slate-400">(自分)</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-slate-500">{u.email}</td>
