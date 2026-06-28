@@ -22,34 +22,58 @@ export default async function JobsPage() {
     },
   });
 
-  const rows: JobRow[] = jobs.map((j) => ({
-    id: j.id,
-    code: j.code,
-    title: j.title,
-    jobType: j.jobTypeName,
-    company: j.company?.name ?? null,
-    location: j.location,
-    city: j.city,
-    recruitCount: j.recruitCount,
-    recruitMale: j.recruitMale,
-    recruitFemale: j.recruitFemale,
-    salaryMin: j.salaryMin,
-    salaryMax: j.salaryMax,
-    dormitory: j.dormitoryAvailable,
-    nightShift: j.nightShift,
-    shiftWork: j.shiftWork,
-    publicStatus: j.publicStatus,
-    opStatus: j.status,
-    industry: j.industry,
-    staff: j.biglightStaff?.name ?? null,
-    commission: seeCommission && "jobCommissions" in j && Array.isArray(j.jobCommissions)
-      ? (j.jobCommissions as { amount: number }[]).reduce((s, c) => s + c.amount, 0) || null
-      : null,
-    isFeatured: j.isFeatured,
-    isRecommended: j.isRecommended,
-    isUrgent: j.isUrgent,
-    updatedAt: j.updatedAt.toISOString(),
-  }));
+  const sArr = (v: unknown): string[] => (Array.isArray(v) ? v.filter(Boolean).map(String) : []);
+  const sStr = (v: unknown): string => (typeof v === "string" ? v : "");
+  const rows: JobRow[] = jobs.map((j) => {
+    const fd = (j.formData as Record<string, unknown>) || {};
+    return {
+      id: j.id,
+      code: j.code,
+      title: j.title,
+      jobType: j.jobTypeName,
+      company: j.company?.name ?? null,
+      location: j.location,
+      city: j.city,
+      recruitCount: j.recruitCount,
+      recruitMale: j.recruitMale,
+      recruitFemale: j.recruitFemale,
+      salaryMin: j.salaryMin,
+      salaryMax: j.salaryMax,
+      dormitory: j.dormitoryAvailable,
+      nightShift: j.nightShift,
+      shiftWork: j.shiftWork,
+      publicStatus: j.publicStatus,
+      opStatus: j.status,
+      industry: j.industry,
+      staff: j.biglightStaff?.name ?? null,
+      commission: seeCommission && "jobCommissions" in j && Array.isArray(j.jobCommissions)
+        ? (j.jobCommissions as { amount: number }[]).reduce((s, c) => s + c.amount, 0) || null
+        : null,
+      isFeatured: j.isFeatured,
+      isRecommended: j.isRecommended,
+      isUrgent: j.isUrgent,
+      updatedAt: j.updatedAt.toISOString(),
+      payType: j.payType,
+      baseSalary: j.baseSalary,
+      expectedMonthly: j.expectedMonthly,
+      expectedTakeHome: j.expectedTakeHome,
+      japaneseLevel: j.japaneseLevel,
+      employmentType: sStr(fd.term) || j.employmentType || null,
+      dormitoryFee: j.dormitoryFee,
+      utilitiesCost: j.utilitiesCost,
+      wifi: j.wifi,
+      workHours: j.workHours,
+      overtimeHours: j.overtimeHours,
+      holidays: j.holidays,
+      bonus: j.bonus,
+      commuteMethod: j.commuteMethod,
+      requiredQualification: j.requiredQualification,
+      tags: j.tags,
+      benefits: sArr(fd.benefits),
+      startTime: sStr(fd.start) || null,
+      houseType: sStr(fd.houseType) || null,
+    };
+  });
 
   return (
     <div>

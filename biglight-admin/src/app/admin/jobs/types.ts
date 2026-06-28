@@ -25,6 +25,26 @@ export type JobRow = {
   isRecommended: boolean;
   isUrgent: boolean;
   updatedAt: string; // ISO
+  // --- field bổ sung (đồng bộ 求人作成) ---
+  payType: string | null;
+  baseSalary: number | null;
+  expectedMonthly: number | null;
+  expectedTakeHome: number | null;
+  japaneseLevel: string | null;
+  employmentType: string | null;
+  dormitoryFee: number | null;
+  utilitiesCost: string | null;
+  wifi: string | null;
+  workHours: string | null;
+  overtimeHours: string | null;
+  holidays: string | null;
+  bonus: string | null;
+  commuteMethod: string | null;
+  requiredQualification: string | null;
+  tags: string[];
+  benefits: string[];
+  startTime: string | null;
+  houseType: string | null;
 };
 
 export type SortKey = "code" | "title" | "company" | "location" | "recruitCount" | "salary" | "updatedAt";
