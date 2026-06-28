@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
-import { industryImage, CONTACT_EMAIL } from "@/lib/site";
+import { industryImage } from "@/lib/site";
 import { buildMetadata } from "@/lib/seo";
 import { jobPostingJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { JsonLd } from "@/components/common/JsonLd";
@@ -68,9 +67,9 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const active = arr(fd.active);
   const quals = arr(fd.quals);
   const nearby = arr(fd.nearby);
+  const payNote = str(fd.payNote);
 
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
-  const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`【お問い合わせ】${job.code} ${job.title}`)}`;
   const session = await getSessionUser();
   const loggedIn = !!session;
   const open = job.status === "OPEN" && job.recruitCount > job.hiredCount;
@@ -82,9 +81,9 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const updatedAt = job.updatedAt.toLocaleDateString("ja-JP");
   const loc = `${job.location}${job.city ? ` ${job.city}` : ""}`;
 
-  const hasSalary = job.baseSalary != null || job.expectedMonthly != null || job.expectedTakeHome != null || job.salaryMin != null || job.salaryMax != null;
+  const hasSalary = job.baseSalary != null || job.expectedMonthly != null || job.expectedTakeHome != null;
   const hasHousing = job.dormitoryAvailable || !!str(fd.houseType) || job.dormitoryFee != null || !!job.utilitiesCost || !!job.wifi || !!job.commuteMethod || !!str(fd.room) || !!str(fd.roomDesc) || !!str(fd.otherCost) || typeof fd.roommates === "number";
-  const hasContent = !!job.description || !!job.dailyFlow || appeal.length > 0 || active.length > 0;
+  const hasContent = !!job.description || appeal.length > 0 || active.length > 0;
 
   const jobLd = jobPostingJsonLd({
     title: job.title,
@@ -105,10 +104,10 @@ export default async function JobDetail({ params, searchParams }: { params: { id
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>求人一覧へ戻る
         </Link>
 
-        {/* Hero tối giản — chỉ Mã đơn + Tỉnh/Thành (trái) + nút Yêu thích (phải) */}
-        <div className="relative mt-3 h-44 overflow-hidden rounded-2xl sm:h-56">
+        {/* Hero — Mã đơn + trạng thái + Tỉnh/Thành (trên trái) · Yêu thích (trên phải) · Tiêu đề (đáy ảnh) */}
+        <div className="relative mt-3 h-48 overflow-hidden rounded-2xl sm:h-60">
           <img src={job.imageUrl || industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/5 to-black/70" />
           <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">{job.code}</span>
@@ -120,14 +119,15 @@ export default async function JobDetail({ params, searchParams }: { params: { id
             </span>
           </div>
           <div className="absolute right-3 top-3"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
+          <div className="absolute inset-x-4 bottom-3.5">
+            <h1 className="line-clamp-2 text-lg font-black leading-snug text-white drop-shadow-md sm:text-2xl">{job.title}</h1>
+          </div>
         </div>
 
-        {/* Tiêu đề + nhãn (dưới ảnh) */}
-        <h1 className="mt-4 text-xl font-black leading-snug text-ink sm:text-2xl">{job.title}</h1>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {/* Nhãn phân loại (chỉ field admin nhập: 業種 / 職種) */}
+        <div className="mt-3 flex flex-wrap gap-1.5">
           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
           {job.jobTypeName && <span className="rounded-full bg-bl-bg px-2.5 py-0.5 text-[11px] font-bold text-bl-gray">{job.jobTypeName}</span>}
-          <span className="rounded-full bg-bl-redsoft px-2.5 py-0.5 text-[11px] font-bold text-bl-red">{RESIDENCE_LABEL[job.residenceType] ?? job.residenceType}</span>
         </div>
 
         <div className="mt-5 space-y-4">
@@ -147,15 +147,18 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                     {job.expectedTakeHome != null && <div><div className="text-xs text-bl-gray">手取り目安</div><div className="font-bold">{fmtYen(job.expectedTakeHome)}</div></div>}
                   </div>
                 )}
-                {(job.salaryMin != null || job.salaryMax != null) && <div className="mt-2 text-xs text-bl-gray">給与レンジ {fmtYen(job.salaryMin)}〜{fmtYen(job.salaryMax)}</div>}
+                {payNote && <p className="mt-3 whitespace-pre-wrap border-t border-bl-line pt-3 text-xs leading-relaxed text-bl-gray">{payNote}</p>}
               </div>
             ) : Empty}
           </Card>
 
-          {/* CTA ứng tuyển ngay sau lương */}
-          <div className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
+          {/* CTA ứng tuyển — trang trí hoàn chỉnh */}
+          <div className="rounded-2xl border border-bl-red/20 bg-gradient-to-br from-bl-redsoft/50 to-white p-4 shadow-sm">
             <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
-            {!loggedIn && <p className="mt-2 text-center text-xs text-bl-gray2">無料・FacebookまたはGoogleで30秒で登録</p>}
+            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-xs text-bl-gray2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              {loggedIn ? "プロフィール情報でかんたん応募" : "無料・Facebook / Google で30秒登録"}
+            </p>
           </div>
 
           {/* 2. 住居・生活 */}
@@ -180,7 +183,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
             {hasContent ? (
               <>
                 {job.description && <p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.description}</p>}
-                {job.dailyFlow && <div className="mt-4"><h3 className="mb-1 text-sm font-bold text-bl-red">一日の流れ</h3><p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.dailyFlow}</p></div>}
                 {appeal.length > 0 && (
                   <div className="mt-4">
                     <h3 className="mb-1.5 text-sm font-bold text-bl-red">仕事の魅力</h3>
@@ -214,7 +216,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
           <Card title="募集要項">
             <KV rows={[
               ["雇用期間", str(fd.term) || job.employmentType],
-              ["在留資格", RESIDENCE_LABEL[job.residenceType] ?? job.residenceType],
               ["勤務時間", job.workHours],
               ["残業", job.overtimeHours],
               ["休日・休暇", job.holidays],
@@ -233,9 +234,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
             <KV rows={[
               ["日本語レベル", job.japaneseLevel],
               ["入社できる時期", str(fd.start)],
-              ["年齢", job.ageMin || job.ageMax ? `${job.ageMin ?? ""}〜${job.ageMax ?? ""}歳` : null],
-              ["性別", job.genderCondition !== "ANY" ? GENDER_LABEL[job.genderCondition] : "不問"],
-              ["必要な経験", job.requiredExperience],
               ["必要な資格", quals.length > 0 ? quals.join("\n") : job.requiredQualification],
             ]} />
           </Card>
@@ -252,7 +250,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               <div className="flex justify-between"><dt className="text-bl-gray2">求人ID</dt><dd className="font-mono font-bold text-bl-gray">{job.code}</dd></div>
               <div className="flex justify-between"><dt className="text-bl-gray2">更新日</dt><dd className="font-semibold text-bl-gray">{updatedAt}</dd></div>
             </dl>
-            <a href={mailto} className="mt-3 block text-center text-xs text-bl-gray underline">メールで問い合わせる</a>
           </div>
         </div>
       </div>

@@ -28,9 +28,10 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen }: { jobId: st
 
   return (
     <>
-      <button onClick={start} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-bl-red py-3.5 text-center text-[15px] font-black text-white shadow-lg transition hover:bg-bl-redd hover:shadow-xl">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" /></svg>
+      <button onClick={start} className="group flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-bl-red to-bl-redd py-4 text-center text-base font-black text-white shadow-lg shadow-bl-red/30 transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" /></svg>
         この求人に応募する
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </button>
 
       {open && loggedIn && (
