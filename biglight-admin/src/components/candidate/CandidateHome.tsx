@@ -13,6 +13,39 @@ import { useLoginModal } from "./useLoginModal";
 import { PREFECTURES } from "@/lib/prefectures";
 import { STANDARD_TAGS } from "@/lib/site";
 import { RESIDENCE_LABEL } from "@/lib/constants";
+import type { GuideCard } from "@/lib/guide";
+
+// Teaser 特定技能ガイド ở trang chủ — ngắn gọn, click vào để đọc chi tiết.
+function GuideTeaser({ guides }: { guides: GuideCard[] }) {
+  if (guides.length === 0) return null;
+  return (
+    <section className="bg-white py-12">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-5 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-black sm:text-2xl">特定技能ガイド</h2>
+            <p className="mt-0.5 text-sm text-bl-gray">ビザ・面接・履歴書・日本での生活など、役立つ情報をチェック。</p>
+          </div>
+          <Link href="/guide" className="flex-none rounded-full border border-bl-line px-4 py-2 text-sm font-bold text-bl-gray transition hover:border-bl-red hover:text-bl-red">ガイドをもっと見る →</Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {guides.map((g) => (
+            <Link key={g.id} href={`/guide/${g.slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
+              {g.image
+                ? <div className="h-28 overflow-hidden"><img src={g.image} alt="" className="h-full w-full object-cover transition group-hover:scale-105" /></div>
+                : <div className="flex h-28 items-center justify-center bg-bl-redsoft/40 text-bl-red"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" /></svg></div>}
+              <div className="flex flex-1 flex-col p-3.5">
+                {g.category && <span className="mb-1.5 inline-block w-fit rounded-full bg-bl-bluesoft px-2 py-0.5 text-[11px] font-bold text-bl-blue">{g.category}</span>}
+                <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink group-hover:text-bl-red">{g.title}</h3>
+                {g.excerpt && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-bl-gray">{g.excerpt}</p>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export type PublicJob = {
   id: string; title: string; industry: string; jobType: string | null;
@@ -72,7 +105,7 @@ function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
   );
 }
 
-export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds = [] }: { jobs: PublicJob[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[] }) {
+export default function CandidateHome({ jobs, guides = [], initialQ = "", loggedIn, savedIds = [] }: { jobs: PublicJob[]; guides?: GuideCard[]; initialQ?: string; loggedIn?: boolean; savedIds?: string[] }) {
   const router = useRouter();
   const { onRegister, modal } = useLoginModal();
   const [q, setQ] = useState(initialQ);
@@ -162,6 +195,8 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
           </div>
         </section>
 
+        <GuideTeaser guides={guides} />
+
         <SiteFooter loggedIn={loggedIn} />
       </div>
 
@@ -182,6 +217,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
             </div>
             {Body}
           </div>
+          <GuideTeaser guides={guides} />
         </Shell>
       </div>
 

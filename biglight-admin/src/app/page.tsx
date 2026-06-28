@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { industryImage, salaryRange } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
+import { articleCard } from "@/lib/guide";
 import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateHome";
 
 export const dynamic = "force-dynamic";
@@ -41,11 +42,20 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
 
   const data: PublicJob[] = jobs.map(toPublic);
 
+  // 特定技能ガイド — vài bài mới nhất để teaser ở trang chủ
+  const guideRows = await prisma.article.findMany({
+    where: { status: "PUBLISHED" },
+    orderBy: [{ publishAt: "desc" }, { createdAt: "desc" }],
+    take: 4,
+    select: { id: true, title: true, slug: true, category: true, publishAt: true, createdAt: true, data: true },
+  });
+  const guides = guideRows.map(articleCard);
+
   const session = await getSessionUser();
   let savedIds: string[] = [];
   if (session?.role === "CANDIDATE") {
     const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
     savedIds = cand?.savedJobIds ?? [];
   }
-  return <CandidateHome jobs={data} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
+  return <CandidateHome jobs={data} guides={guides} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
 }
