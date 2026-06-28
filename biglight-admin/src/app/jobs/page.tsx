@@ -1,14 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { industryImage, salaryRange } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
+import { buildMetadata } from "@/lib/seo";
 import JobsBrowser, { type BrowseJob } from "@/components/candidate/JobsBrowser";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
+export const metadata = buildMetadata({
   title: "特定技能の求人一覧｜地域・分野・条件でしぼり込み｜BIGLIGHT JOB",
   description: "特定技能の求人を都道府県・業種・職種・給与・寮・夜勤・日本語レベルでしぼり込み。寮あり・未経験OK・ビザサポートつきの求人を探せます。",
-};
+  path: "/jobs",
+});
 
 export default async function JobsPage() {
   const jobs = await prisma.job.findMany({ where: { publicStatus: "PUBLIC" }, orderBy: { createdAt: "desc" } });

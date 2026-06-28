@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
 import { industryImage, CONTACT_EMAIL } from "@/lib/site";
+import { buildMetadata } from "@/lib/seo";
+import { jobPostingJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
+import { JsonLd } from "@/components/common/JsonLd";
 import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
@@ -15,6 +19,16 @@ export const dynamic = "force-dynamic";
 
 function fmtYen(n?: number | null) {
   return typeof n === "number" ? "¥" + n.toLocaleString("ja-JP") : "—";
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const job = await prisma.job.findFirst({ where: { id: params.id, publicStatus: "PUBLIC" }, select: { id: true, title: true, industry: true, location: true, city: true, payType: true, baseSalary: true, salaryMin: true, description: true, imageUrl: true } });
+  if (!job) return buildMetadata({ title: "求人が見つかりません｜BIGLIGHT JOB", noIndex: true });
+  const loc = `${job.location}${job.city ? " " + job.city : ""}`;
+  const pay = job.baseSalary ? `${job.payType ?? ""} ¥${job.baseSalary.toLocaleString("ja-JP")}` : job.salaryMin ? `¥${job.salaryMin.toLocaleString("ja-JP")}〜` : "";
+  const title = `${job.title}｜${loc}${pay ? "・" + pay : ""}｜BIGLIGHT JOB`;
+  const desc = (job.description || `${job.industry}の特定技能求人（${loc}）。${pay}。寮あり・ビザサポートつき。BIGLIGHT JOBで無料応募できます。`).replace(/\s+/g, " ").slice(0, 160);
+  return buildMetadata({ title, description: desc, path: `/jobs/${job.id}`, image: job.imageUrl || industryImage(job.industry) });
 }
 
 function KV({ rows }: { rows: [string, string | null][] }) {
@@ -70,8 +84,20 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   }
   const updatedAt = job.updatedAt.toLocaleDateString("ja-JP");
 
+  const jobLd = jobPostingJsonLd({
+    title: job.title,
+    description: (job.description || `${job.industry}の特定技能求人（${job.location}${job.city ? " " + job.city : ""}）。寮あり・ビザサポートつき。`).replace(/\s+/g, " ").slice(0, 4000),
+    path: `/jobs/${job.id}`,
+    datePosted: job.createdAt.toISOString(),
+    region: job.location, city: job.city,
+    payType: job.payType, baseSalary: job.baseSalary, salaryMin: job.salaryMin, salaryMax: job.salaryMax,
+    image: job.imageUrl || industryImage(job.industry),
+  });
+  const bcLd = breadcrumbJsonLd([{ name: "ホーム", path: "/" }, { name: "特定技能求人一覧", path: "/jobs" }, { name: job.title, path: `/jobs/${job.id}` }]);
+
   return (
     <Shell active="jobs" loggedIn={loggedIn}>
+      <JsonLd data={[jobLd, bcLd]} />
       <div className="mx-auto max-w-5xl px-4 py-5">
         <Link href="/jobs" className="inline-flex items-center gap-1 text-sm font-semibold text-bl-gray hover:text-ink">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>求人一覧へ戻る

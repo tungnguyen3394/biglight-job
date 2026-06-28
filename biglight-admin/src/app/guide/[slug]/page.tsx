@@ -6,6 +6,9 @@ import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { articleCard, articleBodyHtml, type GuideCard } from "@/lib/guide";
+import { buildMetadata } from "@/lib/seo";
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
+import { JsonLd } from "@/components/common/JsonLd";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +18,18 @@ function getArticle(slug: string) {
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const a = await getArticle(params.slug);
-  if (!a) return { title: "記事が見つかりません｜BIGLIGHT JOB" };
+  if (!a) return buildMetadata({ title: "記事が見つかりません｜BIGLIGHT JOB", noIndex: true });
   const d = (a.data as Record<string, unknown>) || {};
-  const desc = (typeof d.metaDescription === "string" && d.metaDescription) || (typeof d.excerpt === "string" && d.excerpt) || "";
-  return { title: `${a.title}｜特定技能ガイド｜BIGLIGHT JOB`, description: String(desc).slice(0, 160) };
+  const desc = String((typeof d.metaDescription === "string" && d.metaDescription) || (typeof d.excerpt === "string" && d.excerpt) || "");
+  const image = (typeof d.featuredImage === "string" && d.featuredImage) || (typeof d.ogImage === "string" && d.ogImage) || null;
+  return buildMetadata({
+    title: `${a.title}｜特定技能ガイド｜BIGLIGHT JOB`,
+    description: desc.slice(0, 160),
+    path: `/guide/${a.slug || a.id}`,
+    image,
+    type: "article",
+    publishedTime: (a.publishAt ?? a.createdAt).toISOString(),
+  });
 }
 
 function RelatedCard({ a }: { a: GuideCard }) {
@@ -56,8 +67,22 @@ export default async function GuideArticlePage({ params }: { params: { slug: str
     : [];
   const relatedCards = related.map(articleCard);
 
+  const dd = (a.data as Record<string, unknown>) || {};
+  const metaDesc = String((typeof dd.metaDescription === "string" && dd.metaDescription) || (typeof dd.excerpt === "string" && dd.excerpt) || "");
+  const articleLd = articleJsonLd({
+    title: a.title,
+    description: metaDesc.slice(0, 200),
+    image: image || undefined,
+    path: `/guide/${a.slug || a.id}`,
+    published: (a.publishAt ?? a.createdAt).toISOString(),
+    modified: a.updatedAt.toISOString(),
+    author: a.author || undefined,
+  });
+  const bcLd = breadcrumbJsonLd([{ name: "ホーム", path: "/" }, { name: "特定技能ガイド", path: "/guide" }, { name: a.title, path: `/guide/${a.slug || a.id}` }]);
+
   return (
     <Shell active="guide" loggedIn={loggedIn}>
+      <JsonLd data={[articleLd, bcLd]} />
       <article className="mx-auto max-w-3xl px-4 py-8">
         <Link href="/guide" className="inline-flex items-center gap-1 text-sm font-semibold text-bl-gray hover:text-bl-red">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>

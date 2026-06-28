@@ -2,11 +2,13 @@ import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import SiteFooter from "@/components/candidate/SiteFooter";
 import { getSessionUser } from "@/lib/auth";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = buildMetadata({
+  path: "/about",
   title: "私たちについて｜キャリアアドバイザー紹介・体験談｜BIGLIGHT JOB",
   description: "BIGLIGHT JOBのキャリアアドバイザーをご紹介します。母国語で寄り添い、一人ひとりに合った特定技能の求人をご提案。先輩たちの成功体験談も掲載しています。",
-};
+});
 
 const ADVISORS = [
   {

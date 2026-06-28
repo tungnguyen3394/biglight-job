@@ -2,14 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { industryImage, salaryRange } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
 import { articleCard } from "@/lib/guide";
+import { buildMetadata } from "@/lib/seo";
 import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateHome";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
+export const metadata = buildMetadata({
   title: "特定技能の求人を探す｜寮あり・ビザ支援｜BIGLIGHT JOB",
   description: "特定技能（製造・建設・介護ほか全16分野）の求人を、地域・分野・タグでかんたん検索。寮あり・未経験OK・ビザサポートつき。外国人材のお仕事探しをBIGLIGHTが無料で応援します。",
-};
+  path: "/",
+});
 
 export default async function Home({ searchParams }: { searchParams: { q?: string } }) {
   const jobs = await prisma.job.findMany({
