@@ -7,7 +7,7 @@ import {
   DORM_OPTIONS, START_OPTIONS, NIGHTSHIFT_OPTIONS, SHIFTWORK_OPTIONS,
   REASONS, PRIORITIES, WEIGHT,
 } from "@/lib/candidateFields";
-import { SSW_JOBS } from "@/lib/sswJobs";
+import { SSW_JOBS, type SswField } from "@/lib/sswJobs";
 import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
 import MultiUpload from "./MultiUpload";
 
@@ -254,13 +254,14 @@ function Many({ options, value, onChange, max, scroll }: { options: string[]; va
 
 export type FieldOptions = { nationality?: string[]; visa?: string[]; jpLevel?: string[]; industry?: string[] };
 
-export default function CandidateProfileForm({ init, initDocs, emailLocked, options }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions }) {
+export default function CandidateProfileForm({ init, initDocs, emailLocked, options, sswTree }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions; sswTree?: SswField[] }) {
   const router = useRouter();
   // Định nghĩa từ 設定 (DB); fallback về hằng số gốc nếu chưa có.
   const NAT = options?.nationality ?? NATIONALITIES;
   const VISA = options?.visa ?? VISA_TYPES;
   const JP = options?.jpLevel ?? JP_LEVELS;
   const IND = options?.industry ?? SKILL_FIELDS;
+  const SSW = sswTree && sswTree.length ? sswTree : SSW_JOBS;
   const [f, setF] = useState<ProfileInit>(init);
   const [baseline, setBaseline] = useState<ProfileInit>(init);
   const [editing, setEditing] = useState<boolean>(!init.name || !init.phone); // người mới → mở sẵn chế độ sửa
@@ -269,7 +270,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
   const [err, setErr] = useState("");
   const set = <K extends keyof ProfileInit>(k: K, v: ProfileInit[K]) => { setF((p) => ({ ...p, [k]: v })); setSaved(false); };
   const setSsw = (field: string, cat: string, task: string) => { setF((p) => ({ ...p, sswField: field, sswCategory: cat, sswTask: task })); setSaved(false); };
-  const sswCats = SSW_JOBS.find((d) => d.field === f.sswField)?.categories ?? [];
+  const sswCats = SSW.find((d) => d.field === f.sswField)?.categories ?? [];
   const sswTasks = sswCats.find((c) => c.category === f.sswCategory)?.mainTasks ?? [];
 
   const pct = useMemo(() => {
@@ -357,7 +358,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
             <div className="space-y-2">
               <select value={f.sswField} onChange={(e) => setSsw(e.target.value, "", "")} className={inputCls}>
                 <option value="">① 特定技能分野を選択</option>
-                {SSW_JOBS.map((d) => <option key={d.field}>{d.field}</option>)}
+                {SSW.map((d) => <option key={d.field}>{d.field}</option>)}
               </select>
               <select value={f.sswCategory} onChange={(e) => setSsw(f.sswField, e.target.value, "")} disabled={sswCats.length === 0} className={`${inputCls}`}>
                 <option value="">② 業務区分を選択</option>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./CandidateProfileForm";
+import type { SswField } from "@/lib/sswJobs";
 import CandidateMessages from "./CandidateMessages";
 import { type DocMap } from "./CandidateDocuments";
 
@@ -58,7 +59,7 @@ function Tracker({ stage }: { stage: number }) {
   );
 }
 
-export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions }) {
+export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
   const router = useRouter();
   const validSec = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
   const [sec, setSec] = useState<SecKey>(validSec ?? (needProfile || !complete ? "profile" : applied ? "apps" : "profile"));
@@ -171,7 +172,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
                   <p className="mt-1 font-semibold text-bl-red">{missing.join("・")}</p>
                 </div>
               )}
-              <CandidateProfileForm init={profile} initDocs={docs} emailLocked={emailLocked} options={fieldOptions} />
+              <CandidateProfileForm init={profile} initDocs={docs} emailLocked={emailLocked} options={fieldOptions} sswTree={sswTree} />
             </>
           )}
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SswTreeEditor } from "./SswTreeEditor";
 
-type Item = { id: string; value: string; enabled: boolean; sortOrder: number };
+type Item = { id: string; value: string; enabled: boolean; sortOrder: number; parentId: string | null };
 type OptSet = { id: string; key: string; label: string; hint: string; items: Item[] };
 
 export default function OptionsManager() {
@@ -69,7 +70,7 @@ export default function OptionsManager() {
       ) : (
         <div className="grid gap-5 lg:grid-cols-2">
           {sets.map((s) => (
-            <div key={s.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div key={s.id} className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${s.key === "sswField" ? "lg:col-span-2" : ""}`}>
               <div className="border-b border-slate-100 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-black text-ink">{s.label}</h2>
@@ -79,7 +80,10 @@ export default function OptionsManager() {
                 <p className="mt-0.5 text-xs text-slate-400">{s.hint}</p>
               </div>
 
-              <div className="max-h-[360px] overflow-y-auto p-2">
+              {s.key === "sswField" ? (
+                <SswTreeEditor set={s} onChanged={reload} />
+              ) : (
+              <><div className="max-h-[360px] overflow-y-auto p-2">
                 {s.items.map((item, idx) => (
                   <div key={item.id} className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-slate-50 ${item.enabled ? "" : "opacity-50"}`}>
                     <div className="flex flex-col">
@@ -111,6 +115,8 @@ export default function OptionsManager() {
                 />
                 <button onClick={() => addItem(s)} className="btn btn-navy btn-sm">追加</button>
               </div>
+              </>
+              )}
             </div>
           ))}
         </div>

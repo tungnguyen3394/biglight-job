@@ -22,7 +22,7 @@ export async function GET() {
       key: s.key,
       label: s.label,
       hint: hintByKey.get(s.key as never) ?? "",
-      items: s.items.map((i) => ({ id: i.id, value: i.value, enabled: i.enabled, sortOrder: i.sortOrder })),
+      items: s.items.map((i) => ({ id: i.id, value: i.value, enabled: i.enabled, sortOrder: i.sortOrder, parentId: i.parentId })),
     })),
   });
 }

@@ -403,8 +403,13 @@ model OptionItem {
   sortOrder Int       @default(0)
   enabled   Boolean   @default(true)
   createdAt DateTime  @default(now())
+  // Phân cấp cha-con (cho master-data 3 tầng: 業種→業務区分→従事する主な業務)
+  parentId  String?
+  parent    OptionItem?  @relation("OptionItemTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  OptionItem[] @relation("OptionItemTree")
 
   @@index([setId, sortOrder])
+  @@index([parentId])
   @@map("option_items")
 }
 
