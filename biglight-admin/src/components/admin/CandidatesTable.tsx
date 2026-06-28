@@ -145,6 +145,25 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
   const clearCols = () => setCols(new Set(["name"]));
 
+  // ----- chọn để gửi mail (GAS) -----
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [mailOpen, setMailOpen] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState("");
+  const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  async function sendMail() {
+    const ids = [...selected];
+    if (!ids.length || !subject.trim() || !body.trim() || sending) return;
+    setSending(true); setSendMsg("");
+    const r = await fetch("/api/admin/candidates/mail", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids, subject, body }) });
+    const j = await r.json().catch(() => ({}));
+    setSending(false);
+    if (r.ok) { setSendMsg(`${j.sent ?? ids.length}件に送信しました。`); setSelected(new Set()); setSubject(""); setBody(""); setTimeout(() => { setMailOpen(false); setSendMsg(""); }, 1500); }
+    else setSendMsg(j.error || "送信に失敗しました。");
+  }
+
   // ----- sắp xếp nâng cao -----
   const addSort = (k: SortField) => setSortList((p) => (p.some((s) => s.key === k) ? p : [...p, { key: k, dir: "asc" }]));
   const removeSort = (k: SortField) => setSortList((p) => p.filter((s) => s.key !== k));
@@ -194,6 +213,10 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     });
     return out;
   }, [rows, q, fNat, fVisa, fJp, sortList, quick]);
+
+  const emailRows = filtered.filter((r) => r.email);
+  const allSelected = emailRows.length > 0 && emailRows.every((r) => selected.has(r.id));
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(emailRows.map((r) => r.id)));
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const cur = Math.min(page, pages - 1);
@@ -253,7 +276,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   }
 
   const activeFilters = [fNat, fVisa, fJp].filter(Boolean).length;
-  const tableWidth = 48 + visCols.reduce((s, c) => s + c.w, 0) + 84;
+  const tableWidth = 72 + visCols.reduce((s, c) => s + c.w, 0) + 84;
 
   return (
     <div>
@@ -367,6 +390,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           </details>
           <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
           <button onClick={printList} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>印刷</button>
+          <button onClick={() => selected.size && setMailOpen(true)} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /><path d="m22 6-10 7L2 6" /></svg>メール送信{selected.size > 0 && `（${selected.size}）`}</button>
           <span className="text-sm text-slate-500">{filtered.length} 名</span>
         </div>
       </div>
@@ -375,13 +399,13 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full table-fixed text-sm" style={{ minWidth: tableWidth }}>
           <colgroup>
-            <col style={{ width: 48 }} />
+            <col style={{ width: 72 }} />
             {visCols.map((c) => <col key={c.key} style={{ width: c.w }} />)}
             <col style={{ width: 84 }} />
           </colgroup>
           <thead>
             <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
-              <th className="px-3 py-2.5"></th>
+              <th className="px-3 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleAll} title="メールありを全選択" className="h-3.5 w-3.5 accent-bl-red" /></th>
               {visCols.map((c) => <th key={c.key} className="truncate px-3 py-2.5">{c.label}</th>)}
               <th className="px-3 py-2.5 text-right">操作</th>
             </tr>
@@ -389,7 +413,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           <tbody>
             {view.map((r) => (
               <tr key={r.id} className="h-[52px] border-b border-slate-50 align-middle hover:bg-slate-50">
-                <td className="px-3 py-2"><Avatar name={r.name} image={r.image} /></td>
+                <td className="px-3 py-2"><div className="flex items-center gap-1.5"><input type="checkbox" checked={selected.has(r.id)} disabled={!r.email} onChange={() => toggleSel(r.id)} title={r.email ? "選択" : "メール未登録"} className="h-3.5 w-3.5 accent-bl-red disabled:opacity-30" /><Avatar name={r.name} image={r.image} /></div></td>
                 {visCols.map((c) => <td key={c.key} className="px-3 py-2">{renderCell(c.key, r)}</td>)}
                 <td className="px-3 py-2 text-right">
                   <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-blue hover:underline">
@@ -418,6 +442,28 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
         </div>
       )}
       </div>
+
+      {/* Modal soạn mail (gửi qua GAS) */}
+      {mailOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !sending && setMailOpen(false)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-black text-ink">メール送信（{selected.size}名）</h3>
+              <button onClick={() => setMailOpen(false)} className="text-slate-400 hover:text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+            </div>
+            <p className="mb-3 text-xs text-slate-500">選択した応募者のメールアドレス宛に送信します。返信先はあなた（{/* staff email server-side */}ログイン中のスタッフ）になります。</p>
+            <label className="mb-1 block text-xs font-bold text-slate-500">件名</label>
+            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="input mb-3 w-full" placeholder="件名を入力" />
+            <label className="mb-1 block text-xs font-bold text-slate-500">本文</label>
+            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="input w-full" placeholder="本文を入力…" />
+            {sendMsg && <p className={`mt-2 text-sm font-semibold ${sendMsg.includes("送信しました") ? "text-emerald-600" : "text-red-600"}`}>{sendMsg}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setMailOpen(false)} className="btn btn-ghost">キャンセル</button>
+              <button onClick={sendMail} disabled={sending || !subject.trim() || !body.trim()} className="btn btn-navy disabled:opacity-50">{sending ? "送信中…" : "送信する"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
