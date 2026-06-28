@@ -33,12 +33,22 @@ export default function LoginModal({ open, onClose, redirect = "/mypage" }: { op
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-xl font-black text-ink">30秒で無料登録</h2>
-            <p className="mt-1 text-xs text-bl-gray">Google または Facebook で、かんたんに始められます。</p>
+            <p className="mt-1 text-xs text-bl-gray">この求人に応募するには、無料のアカウント登録が必要です。</p>
           </div>
           <button onClick={onClose} aria-label="閉じる" className="flex h-8 w-8 items-center justify-center rounded-full text-bl-gray2 hover:bg-bl-bg hover:text-ink">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
+
+        {/* Lợi ích */}
+        <ul className="mt-4 space-y-2">
+          {["履歴書（CV）は不要", "応募の進捗をいつでも確認できる", "BIGLIGHT担当者と直接チャットできる"].map((t) => (
+            <li key={t} className="flex items-center gap-2 text-sm font-semibold text-ink">
+              <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-bl-greensoft text-bl-green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+              {t}
+            </li>
+          ))}
+        </ul>
 
         <InAppBrowserNotice className="mt-4" />
 

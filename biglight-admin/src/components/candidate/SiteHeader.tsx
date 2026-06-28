@@ -38,8 +38,8 @@ export default function SiteHeader({ active, loggedIn, onRegister }: { active: N
               マイページ
             </Link>
           ) : (
-            <button onClick={onRegister} className="flex items-center gap-1.5 rounded-lg bg-bl-red px-4 py-2 text-sm font-black text-white shadow-md transition hover:bg-bl-redd">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4" /><path d="M3 21c0-4 3-6 6-6" /><path d="M17 8v6M14 11h6" /></svg>
+            <button onClick={onRegister} className="flex h-11 items-center gap-1.5 rounded-xl bg-bl-red px-5 text-[15px] font-black text-white shadow-lg ring-1 ring-bl-red/20 transition hover:-translate-y-0.5 hover:bg-bl-redd hover:shadow-xl">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="4" /><path d="M3 21c0-4 3-6 6-6" /><path d="M17 8v6M14 11h6" /></svg>
               30秒で無料登録
             </button>
           )}

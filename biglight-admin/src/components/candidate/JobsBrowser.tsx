@@ -76,9 +76,8 @@ function cellText(j: BrowseJob, key: string): string {
   }
 }
 
-function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; onToggleSave: () => void }) {
+function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: boolean; onToggleSave: () => void; onApply: () => void }) {
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
-  const applyHref = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
       <Link href={`/jobs/${job.id}`} className="relative block h-32 overflow-hidden">
@@ -108,7 +107,7 @@ function Card({ job, saved, onToggleSave }: { job: BrowseJob; saved: boolean; on
         </div>
         <div className="mt-3 flex gap-2">
           <Link href={`/jobs/${job.id}`} className="flex-1 rounded-xl border border-bl-line py-2 text-center text-xs font-bold text-bl-gray hover:border-bl-red hover:text-bl-red">詳細を見る</Link>
-          <Link href={applyHref} className="flex-1 rounded-xl bg-bl-red py-2 text-center text-xs font-bold text-white hover:bg-bl-redd">応募する</Link>
+          <button onClick={onApply} className="flex-1 rounded-xl bg-bl-red py-2 text-center text-xs font-bold text-white hover:bg-bl-redd">応募する</button>
         </div>
       </div>
     </div>
@@ -149,6 +148,11 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
     if (!loggedIn) { router.push("/mypage"); return; }
     setSavedSet((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
     fetch("/api/candidate/saved", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
+  }
+  // Chưa đăng nhập → mở modal đăng ký (sau khi đăng ký quay lại mở form ứng tuyển).
+  function onApply(job: BrowseJob) {
+    const href = `/mypage?apply=${encodeURIComponent(job.id)}&t=${encodeURIComponent(job.title)}`;
+    if (loggedIn) router.push(href); else onRegister(href);
   }
 
   const uniq = (a: (string | null)[]) => Array.from(new Set(a.filter((x): x is string => !!x))).sort();
@@ -217,10 +221,9 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
   const empty = <p className="rounded-2xl border border-dashed border-bl-line bg-white p-12 text-center text-bl-gray2">条件に合う求人が見つかりませんでした。</p>;
 
   const cellNode = (j: BrowseJob, key: string) => {
-    const applyHref = `/mypage?apply=${encodeURIComponent(j.id)}&t=${encodeURIComponent(j.title)}`;
     if (key === "title") return <Link href={`/jobs/${j.id}`} className="block truncate font-bold text-ink hover:text-bl-red" title={j.title}>{j.title}</Link>;
     if (key === "detail") return <Link href={`/jobs/${j.id}`} className="rounded-lg border border-bl-line px-2 py-1 text-[11px] font-bold text-bl-gray hover:border-bl-red hover:text-bl-red">詳細</Link>;
-    if (key === "apply") return <Link href={applyHref} className="rounded-lg bg-bl-red px-2 py-1 text-[11px] font-bold text-white hover:bg-bl-redd">応募</Link>;
+    if (key === "apply") return <button onClick={() => onApply(j)} className="rounded-lg bg-bl-red px-2 py-1 text-[11px] font-bold text-white hover:bg-bl-redd">応募</button>;
     if (key === "salary") return <span className="font-bold text-bl-red">{cellText(j, key)}</span>;
     return <span className="block truncate" title={cellText(j, key)}>{cellText(j, key) || "—"}</span>;
   };
@@ -249,7 +252,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
   );
 
   const Grid = list.length === 0 ? empty
-    : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} />)}</div>;
+    : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} onApply={() => onApply(j)} />)}</div>;
   const Body = list.length === 0 ? empty : view === "grid" ? Grid : Table;
 
   const ViewToggle = (
@@ -357,7 +360,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
       <div className="hidden min-h-screen bg-bl-bg text-ink lg:block">
         <SiteHeader active="jobs" loggedIn={loggedIn} onRegister={onRegister} />
         <div className="mx-auto max-w-6xl px-6 py-8">{Inner}</div>
-        <SiteFooter />
+        <SiteFooter loggedIn={loggedIn} />
       </div>
 
       {/* MOBILE */}

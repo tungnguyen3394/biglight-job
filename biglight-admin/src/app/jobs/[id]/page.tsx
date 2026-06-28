@@ -2,14 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RESIDENCE_LABEL, GENDER_LABEL } from "@/lib/constants";
-import { industryImage, CONTACT_EMAIL, FB_PAGE_URL } from "@/lib/site";
+import { industryImage, CONTACT_EMAIL } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
 import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { SaveButton } from "@/components/candidate/SaveButton";
 import { ApplyButton } from "@/components/candidate/ApplyButton";
 
-const LINE_URL = "https://line.me/R/ti/p/@biglight";
 const FLOW = ["応募", "書類選考", "面接（オンライン可）", "内定", "ビザ申請", "入社"];
 
 export const dynamic = "force-dynamic";
@@ -95,6 +94,12 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
               {job.location}{job.city ? ` ${job.city}` : ""}
             </p>
+            {job.baseSalary && (
+              <p className="mt-1.5 text-xl font-black text-white drop-shadow sm:text-2xl">
+                基本給 {fmtYen(job.baseSalary)}<span className="text-sm font-bold">{job.payType ? `（${job.payType}）` : ""}</span>
+                {job.expectedMonthly ? <span className="ml-2 text-sm font-bold text-white/90">月収例 {fmtYen(job.expectedMonthly)}</span> : null}
+              </p>
+            )}
           </div>
         </div>
 
@@ -226,18 +231,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               </dl>
 
               <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
-              <p className="mt-1.5 text-center text-xs text-bl-gray2">無料・Facebook/Googleで登録</p>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <a href={LINE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#06C755] py-2.5 text-sm font-bold text-white hover:opacity-90">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.4 7.9.3.07.8.22.9.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1 .9.55 1.1-.46 5.9-3.5 8.05-5.98C21.4 14.6 22 12.9 22 11c0-4.4-4.5-8-10-8z" /></svg>
-                  LINEで相談
-                </a>
-                <a href={FB_PAGE_URL} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-bl-fb py-2.5 text-sm font-bold text-white hover:bg-[#0C63D4]">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
-                  Facebook
-                </a>
-              </div>
+              {!loggedIn && <p className="mt-2 text-center text-xs text-bl-gray2">無料・FacebookまたはGoogleで30秒で登録</p>}
 
               <dl className="mt-4 space-y-1.5 border-t border-bl-line pt-3 text-xs">
                 <div className="flex justify-between"><dt className="text-bl-gray2">求人ID</dt><dd className="font-mono font-bold text-bl-gray">{job.code}</dd></div>

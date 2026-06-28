@@ -162,7 +162,7 @@ export default function CandidateHome({ jobs, initialQ = "", loggedIn, savedIds 
           </div>
         </section>
 
-        <SiteFooter />
+        <SiteFooter loggedIn={loggedIn} />
       </div>
 
       {modal}
