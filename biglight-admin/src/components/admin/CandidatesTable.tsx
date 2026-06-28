@@ -19,6 +19,29 @@ export type CandidateRow = {
   hasSNS: boolean;
   status: string;
   apps: number;
+  online: boolean;
+  // --- field bổ sung (đồng bộ form ứng viên マイページ) ---
+  gender: string | null;
+  birthdate: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  tiktokUrl: string | null;
+  sswField: string | null;
+  sswCategory: string | null;
+  sswTask: string | null;
+  otherSkills: string | null;
+  desiredIndustry: string | null;
+  desiredLocation: string | null;
+  desiredSalary: number | null;
+  desiredJobType: string | null;
+  dorm: string | null;
+  nightShiftWish: string | null;
+  shiftWorkWish: string | null;
+  startWork: string | null;
+  arrival: string | null;
+  reasons: string | null;
+  priorities: string | null;
+  changeJobFrom: string | null;
 };
 
 const PAGE = 20;
@@ -50,16 +73,42 @@ function uniq(list: (string | null)[]) {
 }
 
 // Các cột có thể hiển thị / xuất CSV / in. w = độ rộng cố định (px).
-type ColKey = "name" | "kana" | "nationality" | "phone" | "email" | "visaType" | "japaneseLevel" | "address" | "apps" | "status" | "createdAt";
+type ColKey =
+  | "name" | "kana" | "gender" | "birthdate" | "nationality" | "phone" | "email" | "facebook" | "instagram" | "tiktok"
+  | "address" | "arrival" | "visaType" | "japaneseLevel" | "sswField" | "sswCategory" | "sswTask" | "otherSkills"
+  | "desiredIndustry" | "desiredLocation" | "desiredSalary" | "desiredJobType" | "dorm" | "nightShift" | "shiftWork"
+  | "startWork" | "changeJobFrom" | "reasons" | "priorities" | "apps" | "status" | "createdAt";
+const yen10k = (n: number | null) => (n != null ? `${Math.round(n / 10000)}万円` : "");
 const COLUMNS: { key: ColKey; label: string; w: number; value: (r: CandidateRow) => string }[] = [
   { key: "name", label: "氏名", w: 190, value: (r) => r.name || "" },
   { key: "kana", label: "フリガナ", w: 140, value: (r) => r.kana || "" },
+  { key: "gender", label: "性別", w: 70, value: (r) => r.gender || "" },
+  { key: "birthdate", label: "生年月日", w: 110, value: (r) => r.birthdate || "" },
   { key: "nationality", label: "国籍", w: 110, value: (r) => r.nationality || "" },
   { key: "phone", label: "電話番号", w: 135, value: (r) => r.phone || "" },
   { key: "email", label: "メール", w: 210, value: (r) => r.email || "" },
+  { key: "facebook", label: "Facebook", w: 180, value: (r) => r.facebookUrl || "" },
+  { key: "instagram", label: "Instagram", w: 180, value: (r) => r.instagramUrl || "" },
+  { key: "tiktok", label: "TikTok", w: 180, value: (r) => r.tiktokUrl || "" },
+  { key: "address", label: "現在の住所", w: 120, value: (r) => r.address || "" },
+  { key: "arrival", label: "来日年月日", w: 110, value: (r) => r.arrival || "" },
   { key: "visaType", label: "在留資格", w: 160, value: (r) => r.visaType || "" },
   { key: "japaneseLevel", label: "日本語", w: 84, value: (r) => r.japaneseLevel || "" },
-  { key: "address", label: "現在の住所", w: 120, value: (r) => r.address || "" },
+  { key: "sswField", label: "特定技能分野", w: 140, value: (r) => r.sswField || "" },
+  { key: "sswCategory", label: "業務区分", w: 130, value: (r) => r.sswCategory || "" },
+  { key: "sswTask", label: "従事する業務", w: 150, value: (r) => r.sswTask || "" },
+  { key: "otherSkills", label: "その他スキル", w: 160, value: (r) => r.otherSkills || "" },
+  { key: "desiredIndustry", label: "希望業種", w: 140, value: (r) => r.desiredIndustry || "" },
+  { key: "desiredLocation", label: "希望勤務地", w: 140, value: (r) => r.desiredLocation || "" },
+  { key: "desiredSalary", label: "希望給与", w: 100, value: (r) => yen10k(r.desiredSalary) },
+  { key: "desiredJobType", label: "希望職種", w: 130, value: (r) => r.desiredJobType || "" },
+  { key: "dorm", label: "寮", w: 100, value: (r) => r.dorm || "" },
+  { key: "nightShift", label: "夜勤", w: 90, value: (r) => r.nightShiftWish || "" },
+  { key: "shiftWork", label: "交替勤務", w: 90, value: (r) => r.shiftWorkWish || "" },
+  { key: "startWork", label: "入社時期", w: 110, value: (r) => r.startWork || "" },
+  { key: "changeJobFrom", label: "転職可能時期", w: 120, value: (r) => r.changeJobFrom || "" },
+  { key: "reasons", label: "転職理由", w: 200, value: (r) => r.reasons || "" },
+  { key: "priorities", label: "重視すること", w: 180, value: (r) => r.priorities || "" },
   { key: "apps", label: "応募数", w: 76, value: (r) => String(r.apps) },
   { key: "status", label: "ステータス", w: 96, value: (r) => r.status },
   { key: "createdAt", label: "登録日", w: 110, value: (r) => r.createdAt.slice(0, 10) },
@@ -139,6 +188,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     });
     const cmps = sortList.map((s) => ({ cmp: SORT_FIELDS.find((f) => f.key === s.key)!.cmp, dir: s.dir }));
     out = [...out].sort((a, b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1; // người đang online luôn lên đầu
       for (const { cmp, dir } of cmps) { let r = cmp(a, b); if (dir === "desc") r = -r; if (r !== 0) return r; }
       return 0;
     });
@@ -182,7 +232,10 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
       case "name":
         return (
           <div className="min-w-0">
-            <Link href={`/admin/candidates/${r.id}`} className="block truncate font-semibold text-navy hover:underline" title={r.name}>{r.name || "（未入力）"}</Link>
+            <div className="flex items-center gap-1.5">
+              {r.online && <span className="h-2 w-2 flex-none rounded-full bg-emerald-500" title="オンライン（最近ログイン）" />}
+              <Link href={`/admin/candidates/${r.id}`} className="block truncate font-semibold text-navy hover:underline" title={r.name}>{r.name || "（未入力）"}</Link>
+            </div>
             <div className="truncate text-xs text-slate-400" title={r.kana ?? ""}>{r.kana || "—"}</div>
           </div>
         );

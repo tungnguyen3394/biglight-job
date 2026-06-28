@@ -15,13 +15,21 @@ export default async function Page() {
     orderBy: { createdAt: "desc" },
   });
 
+  const sStr = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
+  const sArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String).filter(Boolean) : []);
+  const ymd = (d?: Date | null): string | null => (d ? new Date(d).toISOString().slice(0, 10) : null);
+  const now = Date.now();
+
   const rows: CandidateRow[] = candidates.map((c) => {
     const prefs = (c.prefs as Record<string, unknown>) || {};
-    const hasSNS = !!(c.facebookUrl || prefs.lineId || prefs.instagramUrl || prefs.tiktokUrl);
+    const hasSNS = !!(c.facebookUrl || prefs.instagramUrl || prefs.tiktokUrl);
     const lastActive = [c.user?.lastLoginAt, c.updatedAt, c.createdAt]
       .filter(Boolean)
       .map((d) => new Date(d as Date).getTime())
       .reduce((a, b) => Math.max(a, b), 0);
+    // Online ≈ đăng nhập trong 5 phút gần nhất (không có heartbeat realtime).
+    const online = c.user?.lastLoginAt ? now - new Date(c.user.lastLoginAt).getTime() < 5 * 60 * 1000 : false;
+    const reasons = sArr(prefs.reasons).join("、") || (c.changeReason ?? null);
     return {
       id: c.id,
       name: c.name,
@@ -38,6 +46,28 @@ export default async function Page() {
       hasSNS,
       status: c.status,
       apps: c._count.applications,
+      online,
+      gender: c.gender === "MALE" ? "男性" : c.gender === "FEMALE" ? "女性" : null,
+      birthdate: ymd(c.birthdate),
+      facebookUrl: c.facebookUrl,
+      instagramUrl: sStr(prefs.instagramUrl),
+      tiktokUrl: sStr(prefs.tiktokUrl),
+      sswField: c.currentTokuteiField,
+      sswCategory: sStr(prefs.sswCategory),
+      sswTask: sStr(prefs.sswTask),
+      otherSkills: sStr(prefs.otherSkills),
+      desiredIndustry: c.desiredIndustry,
+      desiredLocation: c.desiredLocation,
+      desiredSalary: c.desiredSalary,
+      desiredJobType: sStr(prefs.desiredJobType),
+      dorm: sStr(prefs.dorm),
+      nightShiftWish: sStr(prefs.nightshift),
+      shiftWorkWish: sStr(prefs.shiftwork),
+      startWork: sStr(prefs.start),
+      arrival: sStr(prefs.arrival),
+      reasons,
+      priorities: sArr(prefs.priorities).join("、") || null,
+      changeJobFrom: ymd(c.canChangeJobFrom),
     };
   });
 
