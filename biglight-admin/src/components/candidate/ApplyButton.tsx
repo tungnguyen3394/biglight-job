@@ -7,7 +7,6 @@ import { useLoginModal } from "./useLoginModal";
 export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "full" }: { jobId: string; jobTitle: string; loggedIn: boolean; autoOpen?: boolean; variant?: "full" | "pill" }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<"form" | "sending" | "done" | "need">("form");
-  const [agreed, setAgreed] = useState(false);
   // Chưa đăng nhập → mở modal đăng ký; sau khi đăng ký xong quay lại trang này với apply=1 để mở xác nhận.
   const { onRegister, modal } = useLoginModal(`/jobs/${jobId}?apply=1`);
 
@@ -66,14 +65,10 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "fu
               <>
                 <p className="text-sm text-bl-gray">この求人に応募しますか？</p>
                 <p className="mt-1 text-[15px] font-bold text-ink">「{jobTitle}」</p>
-                <p className="mt-1 text-xs text-bl-gray2">登録済みのプロフィール情報で応募します。</p>
-                <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-bl-gray">
-                  <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 flex-none accent-bl-red" />
-                  <span><a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-bl-red underline">プライバシーポリシー</a>に同意します</span>
-                </label>
+                <p className="mt-2 text-xs leading-relaxed text-bl-gray">ご応募後、担当のアドバイザーより最短でご連絡いたします。</p>
                 <div className="mt-4 flex gap-2">
                   <button onClick={() => setOpen(false)} className="flex-1 rounded-xl border border-bl-line py-3 text-sm font-bold text-bl-gray">キャンセル</button>
-                  <button onClick={submit} disabled={state === "sending" || !agreed} className="flex-1 rounded-xl bg-bl-red py-3 text-sm font-bold text-white hover:bg-bl-redd disabled:opacity-50">{state === "sending" ? "送信中…" : "応募する"}</button>
+                  <button onClick={submit} disabled={state === "sending"} className="flex-1 rounded-xl bg-bl-red py-3 text-sm font-bold text-white hover:bg-bl-redd disabled:opacity-50">{state === "sending" ? "送信中…" : "応募する"}</button>
                 </div>
               </>
             )}

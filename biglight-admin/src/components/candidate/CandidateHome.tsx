@@ -82,24 +82,26 @@ function FiveSteps() {
 }
 
 const selectCls = "w-full rounded-xl border border-bl-line bg-white px-3 py-3 text-sm font-semibold text-ink";
+const selectClsSm = "w-full rounded-xl border border-bl-line bg-white px-3 py-2.5 text-[13px] font-semibold text-ink";
 
-function SearchBox({ area, setArea, field, setField, fields, tags, setTags }: {
+function SearchBox({ area, setArea, field, setField, fields, tags, setTags, compact }: {
   area: string; setArea: (v: string) => void; field: string; setField: (v: string) => void;
-  fields: string[]; tags: string[]; setTags: (v: string[]) => void;
+  fields: string[]; tags: string[]; setTags: (v: string[]) => void; compact?: boolean;
 }) {
+  const sc = compact ? selectClsSm : selectCls;
   return (
-    <div className="rounded-2xl border border-bl-line bg-white p-4 shadow-xl">
+    <div className={`rounded-2xl border border-bl-line bg-white shadow-xl ${compact ? "p-2.5" : "p-4"}`}>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
-        <select value={area} onChange={(e) => setArea(e.target.value)} className={selectCls}>
+        <select value={area} onChange={(e) => setArea(e.target.value)} className={sc}>
           <option value="">すべての地域</option>
           {PREFECTURES.map((p) => <option key={p}>{p}</option>)}
         </select>
-        <select value={field} onChange={(e) => setField(e.target.value)} className={selectCls}>
+        <select value={field} onChange={(e) => setField(e.target.value)} className={sc}>
           <option value="">特定技能分野（すべて）</option>
           {fields.map((f) => <option key={f}>{f}</option>)}
         </select>
-        <MultiSelect label="タグ" options={STANDARD_TAGS} value={tags} onChange={setTags} />
-        <a href="/jobs" className="flex items-center justify-center rounded-xl bg-bl-red px-6 py-3 text-sm font-bold text-white hover:bg-bl-redd">検索する</a>
+        <MultiSelect label="タグ" options={STANDARD_TAGS} value={tags} onChange={setTags} compact={compact} />
+        <a href="/jobs" className={`flex items-center justify-center rounded-xl bg-bl-red px-6 text-sm font-bold text-white hover:bg-bl-redd ${compact ? "py-2.5" : "py-3"}`}>検索する</a>
       </div>
     </div>
   );
@@ -205,10 +207,9 @@ export default function CandidateHome({ jobs, guides = [], initialQ = "", logged
       {/* ===================== MOBILE ===================== */}
       <div className="lg:hidden">
         <Shell active="jobs" searchValue={q} onSearchChange={setQ} loggedIn={loggedIn}>
-          <div className="bg-gradient-to-br from-[#FFF6F2] to-[#FFD9CC] px-4 pb-3 pt-4">
-            <h1 className="text-xl font-black leading-snug text-ink">特定技能の求人を、<span className="text-bl-red">サクッと</span>見つけよう 🎌</h1>
-            <div className="mt-3"><FiveSteps /></div>
-            <div className="mt-3"><SearchBox {...searchProps} /></div>
+          <div className="bg-gradient-to-br from-[#FFF6F2] to-[#FFD9CC] px-4 pb-6 pt-7">
+            <h1 className="text-[22px] font-black leading-tight text-ink">特定技能の求人を、<br /><span className="text-bl-red">サクッと</span>見つけよう。</h1>
+            <div className="mt-5"><SearchBox {...searchProps} compact /></div>
           </div>
           <div className="px-4 py-5">
             <div className="mb-4 flex items-center justify-between">
