@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
-import CookiePolicyConsent from "@/components/CookiePolicyConsent";
 import { JsonLd } from "@/components/common/JsonLd";
 import { orgJsonLd, websiteJsonLd } from "@/lib/jsonld";
 import { SITE_NAME, SITE_DESC, SITE_LOCALE, DEFAULT_OG } from "@/lib/seo";
@@ -39,7 +38,6 @@ export default function RootLayout({
       <body>
         <JsonLd data={[orgJsonLd(), websiteJsonLd()]} />
         {children}
-        <CookiePolicyConsent />
         {/* Google Translate — nạp 1 lần, các nút LangSwitch sẽ điều khiển combo này */}
         <div id="google_translate_element" />
         <Script id="gt-init" strategy="afterInteractive">{`
