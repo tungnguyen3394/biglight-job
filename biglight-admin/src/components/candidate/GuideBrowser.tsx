@@ -26,9 +26,10 @@ function CardItem({ a }: { a: GuideCard }) {
   );
 }
 
-export default function GuideBrowser({ cards }: { cards: GuideCard[] }) {
+export default function GuideBrowser({ cards, categories }: { cards: GuideCard[]; categories?: string[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
+  const cats = categories && categories.length ? categories : GUIDE_CATEGORIES;
 
   const list = useMemo(() => {
     const kw = q.trim().toLowerCase();
@@ -56,7 +57,7 @@ export default function GuideBrowser({ cards }: { cards: GuideCard[] }) {
       {/* Category filter */}
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <button onClick={() => setCat("")} className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${cat === "" ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray hover:border-bl-red"}`}>すべて</button>
-        {GUIDE_CATEGORIES.map((c) => (
+        {cats.map((c) => (
           <button key={c} onClick={() => setCat(c)} className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${cat === c ? "border-bl-red bg-bl-red text-white" : "border-bl-line bg-white text-bl-gray hover:border-bl-red"}`}>{c}</button>
         ))}
       </div>

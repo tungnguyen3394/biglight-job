@@ -5,6 +5,7 @@ import GuideBrowser from "@/components/candidate/GuideBrowser";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { articleCard } from "@/lib/guide";
+import { getAllOptions } from "@/lib/options";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +24,11 @@ export default async function GuidePage() {
     select: { id: true, title: true, slug: true, category: true, publishAt: true, createdAt: true, data: true },
   });
   const cards = articles.map(articleCard);
+  const opts = await getAllOptions();
 
   return (
     <Shell active="guide" loggedIn={loggedIn}>
-      <GuideBrowser cards={cards} />
+      <GuideBrowser cards={cards} categories={opts.guideCategory} />
       <SiteFooter />
       <MessengerPopupButton />
     </Shell>

@@ -67,7 +67,7 @@ export const nextId = (prefix = "i") => `${prefix}${++_seq}`;
 
 export function makeDefaultArticle(): ArticleState {
   return {
-    title: "", slug: "", category: CATEGORIES[0], subcategory: "", author: "BIGLIGHT編集部",
+    title: "", slug: "", category: "", subcategory: "", author: "BIGLIGHT編集部",
     publishAt: "", updatedAt: "", tags: [], status: "DRAFT", pinned: false, featured: false,
     seoTitle: "", metaDescription: "", focusKeyword: "", secondaryKeyword: "", relatedKeywords: [],
     canonical: "", robotsIndex: true, robotsFollow: true,

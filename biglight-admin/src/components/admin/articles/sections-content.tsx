@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, Field, Toggle, Seg, Chips, Meter, Icon } from "./ACMS";
-import { CATEGORIES, TWITTER_CARDS, slugify, type ArticleState } from "@/lib/articleModel";
+import { TWITTER_CARDS, slugify, type ArticleState } from "@/lib/articleModel";
+import { CategoryField } from "./CategoryField";
 import type { SeoResult } from "@/lib/seoScore";
 
 type Up = (p: Partial<ArticleState>) => void;
@@ -22,7 +23,7 @@ export function ArticleBasicInfo({ a, up }: { a: ArticleState; up: Up }) {
             <button type="button" className="a-btn" onClick={() => up({ slug: slugify(a.title) })} title="タイトルから生成"><Icon name="sparkles" /></button>
           </div>
         </Field>
-        <Field label="カテゴリ"><select className="a-sel" value={a.category} onChange={(e) => up({ category: e.target.value })}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        <Field label="カテゴリ"><CategoryField value={a.category} onChange={(v) => up({ category: v })} /></Field>
         <Field label="サブカテゴリ"><input className="a-inp" value={a.subcategory} onChange={(e) => up({ subcategory: e.target.value })} /></Field>
         <Field label="著者"><input className="a-inp" value={a.author} onChange={(e) => up({ author: e.target.value })} /></Field>
         <Field label="公開日時"><input type="datetime-local" className="a-inp" value={a.publishAt} onChange={(e) => up({ publishAt: e.target.value })} /></Field>

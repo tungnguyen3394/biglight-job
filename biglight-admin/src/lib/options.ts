@@ -2,15 +2,19 @@ import { prisma } from "./prisma";
 import { NATIONALITIES, VISA_TYPES, JP_LEVELS } from "./candidateFields";
 import { FIELDS, STD_TAGS } from "./jobFormModel";
 
-export type OptionKey = "nationality" | "visa" | "jpLevel" | "industry" | "tags";
+export type OptionKey = "nationality" | "visa" | "jpLevel" | "industry" | "tags" | "guideCategory";
 
-// 5 danh sách chính (nền tảng). label = tên hiển thị ở 設定.
+// Danh mục bài viết 特定技能ガイド (dùng chung admin + filter user). Khởi tạo = list user guide cũ.
+export const GUIDE_CATEGORY_DEFAULTS = ["特定技能", "ビザ", "求人・転職", "面接対策", "履歴書", "日本語", "日本での生活", "給料・税金", "ニュース"];
+
+// Các danh sách master-data. label = tên hiển thị ở 設定.
 export const OPTION_SETS: { key: OptionKey; label: string; hint: string; defaults: string[] }[] = [
   { key: "nationality", label: "国籍", hint: "応募者プロフィールの国籍", defaults: NATIONALITIES },
   { key: "visa", label: "在留資格", hint: "応募者の現在の在留資格", defaults: VISA_TYPES },
   { key: "jpLevel", label: "日本語レベル", hint: "応募者の日本語レベル", defaults: JP_LEVELS },
   { key: "industry", label: "業種", hint: "求人の業種・応募者の希望分野（共通）", defaults: FIELDS },
   { key: "tags", label: "タグ", hint: "求人のタグ", defaults: STD_TAGS },
+  { key: "guideCategory", label: "記事カテゴリ", hint: "特定技能ガイドの記事カテゴリ（ユーザー側の絞り込みと共通）", defaults: GUIDE_CATEGORY_DEFAULTS },
 ];
 
 const DEFAULTS = Object.fromEntries(OPTION_SETS.map((s) => [s.key, s.defaults])) as Record<OptionKey, string[]>;
