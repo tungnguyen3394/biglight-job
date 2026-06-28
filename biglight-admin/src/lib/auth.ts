@@ -101,6 +101,9 @@ export async function attachSessionCookie(res: NextResponse, user: SessionUser):
 }
 
 export function clearSessionCookie(): void {
+  // Ghi đè cookie rỗng + Max-Age 0 với CÙNG options (path/secure/sameSite) để xoá chắc chắn,
+  // kể cả trên HTTPS nơi cookies().delete() đôi khi không khớp thuộc tính → phiên còn sót.
+  cookies().set(SESSION_COOKIE, "", { ...cookieOptions(), maxAge: 0 });
   cookies().delete(SESSION_COOKIE);
 }
 

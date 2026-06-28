@@ -55,13 +55,7 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
 
           <InAppBrowserNotice className="mt-4" />
 
-          {/* Đồng ý Privacy Policy — bắt buộc trước khi đăng nhập */}
-          <label className="mt-5 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-bl-gray">
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 flex-none accent-bl-red" />
-            <span><a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-bl-blue underline">プライバシーポリシー</a>に同意します</span>
-          </label>
-
-          <div className={`mt-3 space-y-3 ${agreed ? "" : "opacity-50"}`}>
+          <div className={`mt-5 space-y-3 ${agreed ? "" : "opacity-50"}`}>
             {/* Google — nút trắng viền nhẹ */}
             <a href={googleHref} onClick={onGoogleClick} aria-disabled={!agreed} className={`flex w-full items-center justify-center gap-2.5 rounded-full border border-bl-line bg-white py-3 text-[15px] font-bold text-ink shadow-sm transition hover:border-bl-gray2 hover:shadow ${agreed ? "" : "pointer-events-none"}`}>
               <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.3 13.3 17.7 9.5 24 9.5z" /><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-17z" /><path fill="#FBBC05" d="M10.5 28.4c-.5-1.5-.8-3-.8-4.4s.3-3 .8-4.4l-7.9-6.2C1 16.6 0 20.2 0 24s1 7.4 2.6 10.6l7.9-6.2z" /><path fill="#34A853" d="M24 48c6.2 0 11.5-2 15.3-5.5l-7.1-5.5c-2 1.4-4.6 2.2-8.2 2.2-6.3 0-11.7-3.8-13.5-9.4l-7.9 6.2C6.5 42.6 14.6 48 24 48z" /></svg>
@@ -76,11 +70,13 @@ export default function CandidateLogin({ applyTitle, fbError, redirect = "/mypag
             )}
           </div>
 
-          {error && <p className="mt-3 text-sm font-semibold text-bl-red">ログインに失敗しました。もう一度お試しください。</p>}
+          {/* Đồng ý Privacy Policy — bắt buộc; đặt dưới nút (thay cho dòng note cũ) */}
+          <label className="mt-4 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-bl-gray">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 flex-none accent-bl-red" />
+            <span><a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-bl-blue underline">プライバシーポリシー</a>に同意します</span>
+          </label>
 
-          <p className="mt-3 text-center text-[11px] leading-relaxed text-bl-gray2">
-            ログインすることで、<a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-bl-blue underline">利用規約・プライバシーポリシー</a>に同意したものとみなされます。
-          </p>
+          {error && <p className="mt-3 text-sm font-semibold text-bl-red">ログインに失敗しました。もう一度お試しください。</p>}
         </div>
 
         {/* Benefits */}
