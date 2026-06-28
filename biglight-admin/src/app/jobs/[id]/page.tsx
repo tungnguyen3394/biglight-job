@@ -118,7 +118,10 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               {loc}
             </span>
           </div>
-          <div className="absolute right-3 top-3"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
+          <div className="absolute right-3 top-3 flex items-center gap-2">
+            <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} variant="pill" />
+            <SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} />
+          </div>
           <div className="absolute inset-x-4 bottom-3.5">
             <h1 className="line-clamp-2 text-lg font-black leading-snug text-white drop-shadow-md sm:text-2xl">{job.title}</h1>
           </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLoginModal } from "./useLoginModal";
 
-export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen }: { jobId: string; jobTitle: string; loggedIn: boolean; autoOpen?: boolean }) {
+export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "full" }: { jobId: string; jobTitle: string; loggedIn: boolean; autoOpen?: boolean; variant?: "full" | "pill" }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<"form" | "sending" | "done" | "need">("form");
   const [agreed, setAgreed] = useState(false);
@@ -28,11 +28,18 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen }: { jobId: st
 
   return (
     <>
-      <button onClick={start} className="group flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-bl-red to-bl-redd py-4 text-center text-base font-black text-white shadow-lg shadow-bl-red/30 transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" /></svg>
-        この求人に応募する
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-      </button>
+      {variant === "pill" ? (
+        <button onClick={start} aria-label="この求人に応募する" className="flex items-center gap-1.5 rounded-full bg-bl-red px-3.5 py-1.5 text-xs font-black text-white shadow-md transition hover:bg-bl-redd active:scale-95">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" /></svg>
+          応募
+        </button>
+      ) : (
+        <button onClick={start} className="group flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-bl-red to-bl-redd py-4 text-center text-base font-black text-white shadow-lg shadow-bl-red/30 transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" /></svg>
+          この求人に応募する
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </button>
+      )}
 
       {open && loggedIn && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4" onClick={() => setOpen(false)}>
