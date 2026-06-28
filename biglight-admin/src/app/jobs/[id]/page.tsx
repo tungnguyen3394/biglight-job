@@ -13,8 +13,6 @@ import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { SaveButton } from "@/components/candidate/SaveButton";
 import { ApplyButton } from "@/components/candidate/ApplyButton";
 
-const FLOW = ["応募", "書類選考", "面接（オンライン可）", "内定", "ビザ申請", "入社"];
-
 export const dynamic = "force-dynamic";
 
 function fmtYen(n?: number | null) {
@@ -27,17 +25,19 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const loc = `${job.location}${job.city ? " " + job.city : ""}`;
   const pay = job.baseSalary ? `${job.payType ?? ""} ¥${job.baseSalary.toLocaleString("ja-JP")}` : job.salaryMin ? `¥${job.salaryMin.toLocaleString("ja-JP")}〜` : "";
   const title = `${job.title}｜${loc}${pay ? "・" + pay : ""}｜BIGLIGHT JOB`;
-  const desc = (job.description || `${job.industry}の特定技能求人（${loc}）。${pay}。寮あり・ビザサポートつき。BIGLIGHT JOBで無料応募できます。`).replace(/\s+/g, " ").slice(0, 160);
+  const desc = (job.description || `${job.industry}の特定技能求人（${loc}）。BIGLIGHT JOBで無料応募できます。`).replace(/\s+/g, " ").slice(0, 160);
   return buildMetadata({ title, description: desc, path: `/jobs/${job.id}`, image: job.imageUrl || industryImage(job.industry) });
 }
 
+const Empty = <p className="text-sm text-bl-gray2">未更新</p>;
+
 function KV({ rows }: { rows: [string, string | null][] }) {
   const shown = rows.filter(([, v]) => v);
-  if (shown.length === 0) return null;
+  if (shown.length === 0) return Empty;
   return (
     <dl className="divide-y divide-bl-line">
       {shown.map(([k, v]) => (
-        <div key={k} className="grid grid-cols-[110px_1fr] gap-3 py-2.5 text-sm">
+        <div key={k} className="grid grid-cols-[104px_1fr] gap-3 py-2.5 text-sm">
           <dt className="font-semibold text-bl-gray">{k}</dt>
           <dd className="whitespace-pre-wrap text-ink">{v}</dd>
         </div>
@@ -56,12 +56,10 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 }
 
 export default async function JobDetail({ params, searchParams }: { params: { id: string }; searchParams: { apply?: string } }) {
-  const job = await prisma.job.findFirst({
-    where: { id: params.id, publicStatus: "PUBLIC" },
-  });
+  const job = await prisma.job.findFirst({ where: { id: params.id, publicStatus: "PUBLIC" } });
   if (!job) notFound();
 
-  // dữ liệu phong phú từ form tạo求人 (đúng cấu trúc HTML)
+  // dữ liệu admin nhập thêm (formData) — chỉ hiển thị khi có
   const fd = (job.formData as Record<string, unknown>) || {};
   const arr = (v: unknown): string[] => (Array.isArray(v) ? v.filter(Boolean).map(String) : []);
   const str = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -72,7 +70,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const nearby = arr(fd.nearby);
 
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
-
   const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`【お問い合わせ】${job.code} ${job.title}`)}`;
   const session = await getSessionUser();
   const loggedIn = !!session;
@@ -83,10 +80,15 @@ export default async function JobDetail({ params, searchParams }: { params: { id
     saved = (cand?.savedJobIds ?? []).includes(job.id);
   }
   const updatedAt = job.updatedAt.toLocaleDateString("ja-JP");
+  const loc = `${job.location}${job.city ? ` ${job.city}` : ""}`;
+
+  const hasSalary = job.baseSalary != null || job.expectedMonthly != null || job.expectedTakeHome != null || job.salaryMin != null || job.salaryMax != null;
+  const hasHousing = job.dormitoryAvailable || !!str(fd.houseType) || job.dormitoryFee != null || !!job.utilitiesCost || !!job.wifi || !!job.commuteMethod || !!str(fd.room) || !!str(fd.roomDesc) || !!str(fd.otherCost) || typeof fd.roommates === "number";
+  const hasContent = !!job.description || !!job.dailyFlow || appeal.length > 0 || active.length > 0;
 
   const jobLd = jobPostingJsonLd({
     title: job.title,
-    description: (job.description || `${job.industry}の特定技能求人（${job.location}${job.city ? " " + job.city : ""}）。寮あり・ビザサポートつき。`).replace(/\s+/g, " ").slice(0, 4000),
+    description: (job.description || `${job.industry}の特定技能求人（${loc}）`).replace(/\s+/g, " ").slice(0, 4000),
     path: `/jobs/${job.id}`,
     datePosted: job.createdAt.toISOString(),
     region: job.location, city: job.city,
@@ -98,43 +100,85 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   return (
     <Shell active="jobs" loggedIn={loggedIn}>
       <JsonLd data={[jobLd, bcLd]} />
-      <div className="mx-auto max-w-5xl px-4 py-5">
+      <div className="mx-auto max-w-3xl px-4 py-5">
         <Link href="/jobs" className="inline-flex items-center gap-1 text-sm font-semibold text-bl-gray hover:text-ink">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>求人一覧へ戻る
         </Link>
 
-        {/* Hero image (full width) */}
-        <div className="relative mt-3 h-52 overflow-hidden rounded-2xl sm:h-64">
+        {/* Hero tối giản — chỉ Mã đơn + Tỉnh/Thành (trái) + nút Yêu thích (phải) */}
+        <div className="relative mt-3 h-44 overflow-hidden rounded-2xl sm:h-56">
           <img src={job.imageUrl || industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute right-3 top-3"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
-          <div className="absolute bottom-4 left-5 right-5 text-white">
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.code}</span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${chip}`}>{job.industry}</span>
-              {job.jobTypeName && <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-bold backdrop-blur">{job.jobTypeName}</span>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+          <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">{job.code}</span>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold text-white ${open ? (job.isUrgent ? "bg-bl-red" : "bg-bl-green") : "bg-bl-gray"}`}>{open ? (job.isUrgent ? "急募" : "募集中") : "募集終了"}</span>
             </div>
-            <h1 className="text-2xl font-black sm:text-3xl">{job.title}</h1>
-            <p className="flex items-center gap-1 text-sm text-white/90">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-              {job.location}{job.city ? ` ${job.city}` : ""}
-            </p>
-            {job.baseSalary && (
-              <p className="mt-1.5 text-xl font-black text-white drop-shadow sm:text-2xl">
-                基本給 {fmtYen(job.baseSalary)}<span className="text-sm font-bold">{job.payType ? `（${job.payType}）` : ""}</span>
-                {job.expectedMonthly ? <span className="ml-2 text-sm font-bold text-white/90">月収例 {fmtYen(job.expectedMonthly)}</span> : null}
-              </p>
-            )}
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              {loc}
+            </span>
           </div>
+          <div className="absolute right-3 top-3"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
         </div>
 
-        {/* Desktop: 2 cột (nội dung trái + thẻ lương/ứng tuyển dính phải) — Mobile: 1 cột */}
-        <div className="mt-5 lg:grid lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
-          {/* MAIN */}
-          <div className="space-y-5 lg:order-1">
-            {(job.description || job.dailyFlow || appeal.length > 0 || active.length > 0) && (
-              <Card title="仕事内容">
+        {/* Tiêu đề + nhãn (dưới ảnh) */}
+        <h1 className="mt-4 text-xl font-black leading-snug text-ink sm:text-2xl">{job.title}</h1>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
+          {job.jobTypeName && <span className="rounded-full bg-bl-bg px-2.5 py-0.5 text-[11px] font-bold text-bl-gray">{job.jobTypeName}</span>}
+          <span className="rounded-full bg-bl-redsoft px-2.5 py-0.5 text-[11px] font-bold text-bl-red">{RESIDENCE_LABEL[job.residenceType] ?? job.residenceType}</span>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          {/* 1. 給与 */}
+          <Card title="給与">
+            {hasSalary ? (
+              <div className="rounded-xl bg-bl-bg p-4">
+                {job.baseSalary != null && (
+                  <>
+                    <div className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</div>
+                    <div className="text-2xl font-black text-bl-red">{fmtYen(job.baseSalary)}</div>
+                  </>
+                )}
+                {(job.expectedMonthly != null || job.expectedTakeHome != null) && (
+                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-bl-line pt-3 text-sm">
+                    {job.expectedMonthly != null && <div><div className="text-xs text-bl-gray">月収例</div><div className="font-bold">{fmtYen(job.expectedMonthly)}</div></div>}
+                    {job.expectedTakeHome != null && <div><div className="text-xs text-bl-gray">手取り目安</div><div className="font-bold">{fmtYen(job.expectedTakeHome)}</div></div>}
+                  </div>
+                )}
+                {(job.salaryMin != null || job.salaryMax != null) && <div className="mt-2 text-xs text-bl-gray">給与レンジ {fmtYen(job.salaryMin)}〜{fmtYen(job.salaryMax)}</div>}
+              </div>
+            ) : Empty}
+          </Card>
+
+          {/* CTA ứng tuyển ngay sau lương */}
+          <div className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
+            <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
+            {!loggedIn && <p className="mt-2 text-center text-xs text-bl-gray2">無料・FacebookまたはGoogleで30秒で登録</p>}
+          </div>
+
+          {/* 2. 住居・生活 */}
+          <Card title="住居・生活">
+            {hasHousing ? (
+              <KV rows={[
+                ["住居タイプ", str(fd.houseType) || (job.dormitoryAvailable ? "寮あり" : null)],
+                ["個室／相部屋", str(fd.room)],
+                ["同居人数", typeof fd.roommates === "number" ? `${fd.roommates}人` : null],
+                ["部屋の説明", str(fd.roomDesc)],
+                ["家賃", job.dormitoryFee != null ? `${fmtYen(job.dormitoryFee)} / 月` : null],
+                ["電気・水道・ガス", job.utilitiesCost],
+                ["インターネット", job.wifi],
+                ["その他実費", str(fd.otherCost)],
+                ["通勤方法", job.commuteMethod],
+              ]} />
+            ) : Empty}
+          </Card>
+
+          {/* 3. 仕事内容 */}
+          <Card title="仕事内容">
+            {hasContent ? (
+              <>
                 {job.description && <p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.description}</p>}
                 {job.dailyFlow && <div className="mt-4"><h3 className="mb-1 text-sm font-bold text-bl-red">一日の流れ</h3><p className="whitespace-pre-wrap text-sm leading-relaxed text-bl-gray">{job.dailyFlow}</p></div>}
                 {appeal.length > 0 && (
@@ -149,123 +193,67 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                     <ul className="space-y-1.5">{active.map((a, i) => <li key={i} className="flex items-start gap-2 text-sm text-bl-gray"><span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-bl-red" />{a}</li>)}</ul>
                   </div>
                 )}
-              </Card>
-            )}
+              </>
+            ) : Empty}
+          </Card>
 
-            <Card title="募集要項">
-              <KV rows={[
-                ["雇用期間", str(fd.term) || job.employmentType],
-                ["在留資格", RESIDENCE_LABEL[job.residenceType] ?? job.residenceType],
-                ["勤務時間", job.workHours],
-                ["残業", job.overtimeHours],
-                ["休日・休暇", job.holidays],
-                ["賞与・昇給", job.bonus],
-                ["通勤手段", job.commuteMethod],
-                ["募集人数", `${job.recruitCount}名（男性${job.recruitMale}・女性${job.recruitFemale}）`],
-              ]} />
-              {benefits.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="mb-1.5 text-sm font-bold text-bl-red">待遇・福利厚生</h3>
-                  <div className="flex flex-wrap gap-1.5">{benefits.map((b, i) => <span key={i} className="rounded-full bg-bl-greensoft px-2.5 py-1 text-xs font-semibold text-bl-green">{b}</span>)}</div>
-                </div>
-              )}
-            </Card>
-
-            <Card title="応募条件">
-              <KV rows={[
-                ["日本語レベル", job.japaneseLevel],
-                ["入社できる時期", str(fd.start)],
-                ["年齢", job.ageMin || job.ageMax ? `${job.ageMin ?? ""}〜${job.ageMax ?? ""}歳` : null],
-                ["性別", job.genderCondition !== "ANY" ? GENDER_LABEL[job.genderCondition] : "不問"],
-                ["必要な経験", job.requiredExperience],
-                ["必要な資格", quals.length > 0 ? quals.join("\n") : job.requiredQualification],
-              ]} />
-            </Card>
-
-            {(job.dormitoryAvailable || str(fd.houseType)) && (
-              <Card title="住居・生活">
-                <KV rows={[
-                  ["住居タイプ", str(fd.houseType) || (job.dormitoryAvailable ? "寮あり" : null)],
-                  ["個室／相部屋", str(fd.room)],
-                  ["同居人数", typeof fd.roommates === "number" ? `${fd.roommates}人` : null],
-                  ["部屋の説明", str(fd.roomDesc)],
-                  ["家賃", job.dormitoryFee ? `${fmtYen(job.dormitoryFee)} / 月` : null],
-                  ["電気・水道・ガス", job.utilitiesCost],
-                  ["インターネット", job.wifi],
-                  ["その他実費", str(fd.otherCost)],
-                  ["通勤方法", job.commuteMethod],
-                ]} />
-              </Card>
-            )}
-
-            {nearby.length > 0 && (
-              <Card title="近隣情報（徒歩15分圏内）">
-                <ul className="space-y-2">
-                  {nearby.map((n, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-bl-gray">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D02E26" strokeWidth="2" className="flex-none"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-                      {n}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            )}
-
-            <Card title="選考フロー">
-              <ol className="flex flex-wrap items-center gap-y-3">
-                {FLOW.map((step, i) => (
-                  <li key={step} className="flex items-center">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-bl-redsoft text-xs font-black text-bl-red">{i + 1}</span>
-                      <span className="text-sm font-semibold text-ink">{step}</span>
-                    </div>
-                    {i < FLOW.length - 1 && <svg width="22" height="16" viewBox="0 0 24 24" fill="none" stroke="#D7DBE0" strokeWidth="2" className="mx-1"><path d="M9 6l6 6-6 6" /></svg>}
+          {nearby.length > 0 && (
+            <Card title="近隣情報">
+              <ul className="space-y-2">
+                {nearby.map((n, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-bl-gray">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D02E26" strokeWidth="2" className="flex-none"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                    {n}
                   </li>
                 ))}
-              </ol>
-              <p className="mt-3 text-xs text-bl-gray2">面接はオンライン可。書類準備からビザ・渡航まで担当者がサポートします。</p>
+              </ul>
             </Card>
+          )}
 
-            {job.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {job.tags.map((t) => <span key={t} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-bl-gray shadow-sm">#{t}</span>)}
+          {/* 4. 募集要項 */}
+          <Card title="募集要項">
+            <KV rows={[
+              ["雇用期間", str(fd.term) || job.employmentType],
+              ["在留資格", RESIDENCE_LABEL[job.residenceType] ?? job.residenceType],
+              ["勤務時間", job.workHours],
+              ["残業", job.overtimeHours],
+              ["休日・休暇", job.holidays],
+              ["賞与・昇給", job.bonus],
+              ["募集人数", `${job.recruitCount}名（男性${job.recruitMale}・女性${job.recruitFemale}）`],
+            ]} />
+            {benefits.length > 0 && (
+              <div className="mt-4">
+                <h3 className="mb-1.5 text-sm font-bold text-bl-red">待遇・福利厚生</h3>
+                <div className="flex flex-wrap gap-1.5">{benefits.map((b, i) => <span key={i} className="rounded-full bg-bl-greensoft px-2.5 py-1 text-xs font-semibold text-bl-green">{b}</span>)}</div>
               </div>
             )}
-          </div>
+          </Card>
 
-          {/* ASIDE — thẻ lương + ứng tuyển (dính khi cuộn trên desktop) */}
-          <aside className="mt-5 lg:order-2 lg:mt-0">
-            <div className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm lg:sticky lg:top-20">
-              <div className="text-xs font-bold text-bl-gray2">{job.code}</div>
-              <h2 className="mt-0.5 text-lg font-black leading-snug">{job.title}</h2>
+          <Card title="応募条件">
+            <KV rows={[
+              ["日本語レベル", job.japaneseLevel],
+              ["入社できる時期", str(fd.start)],
+              ["年齢", job.ageMin || job.ageMax ? `${job.ageMin ?? ""}〜${job.ageMax ?? ""}歳` : null],
+              ["性別", job.genderCondition !== "ANY" ? GENDER_LABEL[job.genderCondition] : "不問"],
+              ["必要な経験", job.requiredExperience],
+              ["必要な資格", quals.length > 0 ? quals.join("\n") : job.requiredQualification],
+            ]} />
+          </Card>
 
-              <div className="mt-4 rounded-xl bg-bl-bg p-4">
-                <div className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</div>
-                <div className="text-2xl font-black text-bl-red">{fmtYen(job.baseSalary)}</div>
-                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-bl-line pt-3 text-sm">
-                  <div><div className="text-xs text-bl-gray">月収例</div><div className="font-bold">{fmtYen(job.expectedMonthly)}</div></div>
-                  <div><div className="text-xs text-bl-gray">手取り目安</div><div className="font-bold">{fmtYen(job.expectedTakeHome)}</div></div>
-                </div>
-                {(job.salaryMin || job.salaryMax) && <div className="mt-2 text-xs text-bl-gray">給与レンジ {fmtYen(job.salaryMin)}〜{fmtYen(job.salaryMax)}</div>}
-              </div>
-
-              <dl className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between"><dt className="text-bl-gray">勤務地</dt><dd className="font-semibold">{job.location}{job.city ? ` ${job.city}` : ""}</dd></div>
-                <div className="flex justify-between"><dt className="text-bl-gray">在留資格</dt><dd className="font-semibold">{RESIDENCE_LABEL[job.residenceType] ?? job.residenceType}</dd></div>
-                <div className="flex justify-between"><dt className="text-bl-gray">募集人数</dt><dd className="font-semibold">{job.recruitCount}名</dd></div>
-                {job.japaneseLevel && <div className="flex justify-between"><dt className="text-bl-gray">日本語</dt><dd className="font-semibold">{job.japaneseLevel}</dd></div>}
-              </dl>
-
-              <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
-              {!loggedIn && <p className="mt-2 text-center text-xs text-bl-gray2">無料・FacebookまたはGoogleで30秒で登録</p>}
-
-              <dl className="mt-4 space-y-1.5 border-t border-bl-line pt-3 text-xs">
-                <div className="flex justify-between"><dt className="text-bl-gray2">求人ID</dt><dd className="font-mono font-bold text-bl-gray">{job.code}</dd></div>
-                <div className="flex justify-between"><dt className="text-bl-gray2">更新日</dt><dd className="font-semibold text-bl-gray">{updatedAt}</dd></div>
-              </dl>
-              <a href={mailto} className="mt-3 block text-center text-xs text-bl-gray underline">メールで問い合わせる</a>
+          {job.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {job.tags.map((t) => <span key={t} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-bl-gray shadow-sm">#{t}</span>)}
             </div>
-          </aside>
+          )}
+
+          {/* thông tin cuối */}
+          <div className="rounded-2xl border border-bl-line bg-white p-4">
+            <dl className="space-y-1.5 text-xs">
+              <div className="flex justify-between"><dt className="text-bl-gray2">求人ID</dt><dd className="font-mono font-bold text-bl-gray">{job.code}</dd></div>
+              <div className="flex justify-between"><dt className="text-bl-gray2">更新日</dt><dd className="font-semibold text-bl-gray">{updatedAt}</dd></div>
+            </dl>
+            <a href={mailto} className="mt-3 block text-center text-xs text-bl-gray underline">メールで問い合わせる</a>
+          </div>
         </div>
       </div>
       <MessengerPopupButton />

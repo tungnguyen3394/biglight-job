@@ -301,8 +301,6 @@ export function JobForm({
             <p className="sdesc">公開ステータスと、社内だけが見るメモ</p>
             <div className="grid">
               <div className="field"><label>公開ステータス</label><select className="sel" value={s.publicStatus} onChange={(e) => set("publicStatus", e.target.value)}>{Object.entries(PUBLIC_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select><span className="hint">公開／非公開／下書きなど</span></div>
-              <div className="field"><label>おすすめ求人</label><div className="toggle">{[["1", "おすすめ"], ["0", "通常"]].map(([v, l]) => <button type="button" key={v} className={(s.isFeatured ? "1" : "0") === v ? "on" : ""} onClick={() => set("isFeatured", v === "1")}>{l}</button>)}</div><span className="hint">トップページの「おすすめ求人」に表示</span></div>
-              <div className="field"><label>推奨（Recommended）</label><div className="toggle">{[["1", "推奨"], ["0", "通常"]].map(([v, l]) => <button type="button" key={v} className={(s.isRecommended ? "1" : "0") === v ? "on" : ""} onClick={() => set("isRecommended", v === "1")}>{l}</button>)}</div></div>
               <div className="field full">
                 <label>求人画像（募集用）</label>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
