@@ -90,10 +90,23 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
 .method b{font-weight:800}
 .note{font-size:12px;color:var(--gray-2);margin-top:14px;line-height:1.7}
 
-.fbfab{position:fixed;right:20px;bottom:20px;z-index:90;display:inline-flex;align-items:center;gap:9px;background:#1877F2;color:#fff;padding:13px 18px;border-radius:30px;font-weight:800;font-size:14px;box-shadow:0 12px 30px rgba(24,119,242,.45);transition:.16s}
-.fbfab:hover{background:#0C63D4;transform:translateY(-2px)}.fbfab svg{width:22px;height:22px;flex:0 0 auto}
+.fbfab{position:fixed;right:20px;bottom:20px;z-index:90;display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,#00B2FF,#0866FF);color:#fff;padding:13px 18px;border-radius:30px;font-weight:800;font-size:14px;box-shadow:0 12px 30px rgba(8,102,255,.45);transition:.16s}
+.fbfab:hover{filter:brightness(1.05);transform:translateY(-2px)}.fbfab svg{width:22px;height:22px;flex:0 0 auto}
 @media(max-width:620px){.results{grid-template-columns:1fr}.rangewrap .num{width:104px}}
 @media(max-width:560px){.fbfab span{display:none}.fbfab{padding:15px;border-radius:50%}}
+/* PC: chữ gọn lại cho phù hợp */
+@media(min-width:768px){
+  body{font-size:14px}
+  .wrap{max-width:720px}
+  .head h1{font-size:22px}
+  .head p{font-size:13px}
+  .card{padding:18px 20px}
+  .field .fl{font-size:13.5px}
+  .field .hint{font-size:11.5px}
+  .numin,.sel{font-size:14px}
+  .rbox .v{font-size:26px}
+  .brow{font-size:13px}
+}
 /* hide Google Translate chrome */
 .goog-te-banner-frame,.skiptranslate>iframe{display:none!important}body{top:0!important}#google_translate_element{display:none}
 </style>
@@ -137,7 +150,7 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
     <div class="field">
       <div class="fl">お住まいの都道府県</div>
       <div class="hint">健康保険料率は都道府県で異なります（協会けんぽ・令和6年度）</div>
-      <select id="pref" class="numin" style="width:100%;cursor:pointer" onchange="calc()">
+      <select id="pref" class="sel" onchange="calc()">
         <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option><option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option selected>東京都</option><option>神奈川県</option><option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option><option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option><option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option><option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option><option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option><option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
       </select>
     </div>
@@ -229,7 +242,7 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
   </div>
 </div>
 
-<a href="https://www.facebook.com/biglight" target="_blank" rel="noopener" class="fbfab" aria-label="Facebookで相談"><svg viewBox="0 0 24 24" fill="#fff"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7v-3.5h3.1V9.4c0-3 1.8-4.7 4.6-4.7 1.3 0 2.7.24 2.7.24v3H15.9c-1.5 0-2 .93-2 1.9v2.2h3.4l-.54 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/></svg><span>Facebookで相談</span></a>
+<a href="https://m.me/biglight" target="_blank" rel="noopener" class="fbfab" aria-label="Messengerで相談"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.4 5.5 3.7 7.2V22l3.4-1.9c.9.25 1.9.39 2.9.39 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm1 12.4l-2.5-2.7-4.9 2.7 5.4-5.7 2.6 2.7 4.8-2.7-5.4 5.7z"/></svg><span>Messengerで相談</span></a>
 
 <script>
 const $=s=>document.querySelector(s);
