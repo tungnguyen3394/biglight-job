@@ -18,6 +18,8 @@ type Opt = {
   description?: string;
   path?: string; // "/jobs/abc"
   image?: string | null; // absolute hoặc tương đối; null → ảnh mặc định
+  imageWidth?: number; // mặc định 1200
+  imageHeight?: number; // mặc định 630
   type?: "website" | "article";
   noIndex?: boolean;
   publishedTime?: string;
@@ -43,7 +45,7 @@ export function buildMetadata(o: Opt = {}): Metadata {
       url,
       title,
       description,
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: [{ url: image, width: o.imageWidth ?? 1200, height: o.imageHeight ?? 630, alt: title }],
       ...(o.publishedTime ? { publishedTime: o.publishedTime } : {}),
     },
     twitter: { card: "summary_large_image", title, description, images: [image] },
