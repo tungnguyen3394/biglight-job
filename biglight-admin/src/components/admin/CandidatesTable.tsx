@@ -169,6 +169,20 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [sendMsg, setSendMsg] = useState("");
   const [confirming, setConfirming] = useState(false);
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+
+  // ----- nhắn tin 1 ứng viên (staff chủ động) -----
+  const [msgTo, setMsgTo] = useState<{ id: string; name: string } | null>(null);
+  const [msgText, setMsgText] = useState("");
+  const [msgBusy, setMsgBusy] = useState(false);
+  const [msgErr, setMsgErr] = useState("");
+  async function sendDirectMsg() {
+    if (!msgTo || !msgText.trim() || msgBusy) return;
+    setMsgBusy(true); setMsgErr("");
+    const r = await fetch(`/api/admin/candidates/${msgTo.id}/message`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: msgText.trim() }) });
+    setMsgBusy(false);
+    if (r.ok) { setMsgTo(null); setMsgText(""); }
+    else setMsgErr((await r.json().catch(() => ({}))).error || "送信に失敗しました。");
+  }
   async function doSend() {
     const ids = [...selected];
     if (!ids.length || !subject.trim() || !body.trim() || sending) return;
@@ -290,7 +304,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
 
   const activeFilters = [fNat, fVisa, fJp, fGender, fSsw, fInd, fLoc, fDorm, fStatus].filter(Boolean).length;
   const clearFilters = () => { setFNat(""); setFVisa(""); setFJp(""); setFGender(""); setFSsw(""); setFInd(""); setFLoc(""); setFDorm(""); setFStatus(""); reset(); };
-  const tableWidth = 72 + visCols.reduce((s, c) => s + c.w, 0) + 84;
+  const tableWidth = 72 + visCols.reduce((s, c) => s + c.w, 0) + 128;
 
   return (
     <div>
@@ -420,7 +434,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           <colgroup>
             <col style={{ width: 72 }} />
             {visCols.map((c) => <col key={c.key} style={{ width: c.w }} />)}
-            <col style={{ width: 84 }} />
+            <col style={{ width: 128 }} />
           </colgroup>
           <thead>
             <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
@@ -435,10 +449,16 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 <td className="px-3 py-2"><div className="flex items-center gap-1.5"><input type="checkbox" checked={selected.has(r.id)} disabled={!r.email} onChange={() => toggleSel(r.id)} title={r.email ? "選択" : "メール未登録"} className="h-3.5 w-3.5 accent-bl-red disabled:opacity-30" /><Avatar name={r.name} image={r.image} /></div></td>
                 {visCols.map((c) => <td key={c.key} className="px-3 py-2">{renderCell(c.key, r)}</td>)}
                 <td className="px-3 py-2 text-right">
-                  <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-blue hover:underline">
-                    詳細
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </Link>
+                  <div className="inline-flex items-center gap-1.5">
+                    <button onClick={() => { setMsgTo({ id: r.id, name: r.name || "応募者" }); setMsgText(""); setMsgErr(""); }} title="メッセージを送る" className="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-bl-red hover:border-bl-red hover:bg-bl-redsoft">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z" /></svg>
+                      <span className="hidden sm:inline">メッセージ</span>
+                    </button>
+                    <Link href={`/admin/candidates/${r.id}`} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-blue hover:underline">
+                      詳細
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -492,6 +512,25 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
               ) : (
                 <button onClick={() => setConfirming(true)} disabled={!subject.trim() || !body.trim()} className="btn btn-navy disabled:opacity-50">送信する</button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* modal nhắn tin 1 ứng viên (vào hộp thư メッセージ của ứng viên) */}
+      {msgTo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => !msgBusy && setMsgTo(null)}>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-black text-ink">メッセージを送る</h3>
+              <button onClick={() => setMsgTo(null)} className="text-slate-400 hover:text-ink"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
+            </div>
+            <p className="mb-3 text-xs text-slate-500"><b className="text-ink">{msgTo.name}</b> さんのメッセージ受信箱に送信します。応募者はマイページの「メッセージ」で確認できます（自動でベトナム語に翻訳）。</p>
+            <textarea value={msgText} onChange={(e) => setMsgText(e.target.value)} rows={6} className="input w-full" placeholder="メッセージを入力…（日本語以外でもOK）" autoFocus />
+            {msgErr && <p className="mt-2 text-sm font-semibold text-red-600">{msgErr}</p>}
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setMsgTo(null)} className="btn btn-ghost">キャンセル</button>
+              <button onClick={sendDirectMsg} disabled={msgBusy || !msgText.trim()} className="btn btn-navy disabled:opacity-50">{msgBusy ? "送信中…" : "送信する"}</button>
             </div>
           </div>
         </div>
