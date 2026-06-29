@@ -152,16 +152,24 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  async function sendMail() {
+  async function doSend() {
     const ids = [...selected];
     if (!ids.length || !subject.trim() || !body.trim() || sending) return;
     setSending(true); setSendMsg("");
-    const r = await fetch("/api/admin/candidates/mail", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids, subject, body }) });
+    // 1) Server: kiểm quyền + gom email + lấy GAS URL của chính nhân viên.
+    const r = await fetch("/api/admin/candidates/mail", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
     const j = await r.json().catch(() => ({}));
-    setSending(false);
-    if (r.ok) { setSendMsg(`${j.sent ?? ids.length}件に送信しました。`); setSelected(new Set()); setSubject(""); setBody(""); setTimeout(() => { setMailOpen(false); setSendMsg(""); }, 1500); }
-    else setSendMsg(j.error || "送信に失敗しました。");
+    if (!r.ok) { setSending(false); setConfirming(false); setSendMsg(j.error || "送信に失敗しました。"); return; }
+    // 2) Trình duyệt nhân viên → GAS (đã đăng nhập Google nên không bị 403). no-cors → response opaque.
+    try {
+      await fetch(j.gasUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ secret: j.secret, to: j.emails, subject, body, replyTo: j.replyTo, name: j.name }) });
+      setSendMsg(`${j.emails.length}件に送信しました。`);
+      setSelected(new Set()); setSubject(""); setBody(""); setConfirming(false);
+      setTimeout(() => { setMailOpen(false); setSendMsg(""); }, 1800);
+    } catch { setSendMsg("送信に失敗しました（GASに接続できません）。"); }
+    finally { setSending(false); }
   }
 
   // ----- sắp xếp nâng cao -----
@@ -453,13 +461,26 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
             </div>
             <p className="mb-3 text-xs text-slate-500">選択した応募者のメールアドレス宛に送信します。返信先はあなた（{/* staff email server-side */}ログイン中のスタッフ）になります。</p>
             <label className="mb-1 block text-xs font-bold text-slate-500">件名</label>
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} className="input mb-3 w-full" placeholder="件名を入力" />
+            <input value={subject} onChange={(e) => { setSubject(e.target.value); setConfirming(false); }} className="input mb-3 w-full" placeholder="件名を入力" />
             <label className="mb-1 block text-xs font-bold text-slate-500">本文</label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={8} className="input w-full" placeholder="本文を入力…" />
+            <textarea value={body} onChange={(e) => { setBody(e.target.value); setConfirming(false); }} rows={8} className="input w-full" placeholder="本文を入力…" />
             {sendMsg && <p className={`mt-2 text-sm font-semibold ${sendMsg.includes("送信しました") ? "text-emerald-600" : "text-red-600"}`}>{sendMsg}</p>}
+            {confirming && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ring-1 ring-amber-100">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 shrink-0"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></svg>
+                選択した{selected.size}名のメールアドレスへ送信します。送信後は取り消せません。よろしいですか？
+              </div>
+            )}
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setMailOpen(false)} className="btn btn-ghost">キャンセル</button>
-              <button onClick={sendMail} disabled={sending || !subject.trim() || !body.trim()} className="btn btn-navy disabled:opacity-50">{sending ? "送信中…" : "送信する"}</button>
+              <button onClick={() => { setMailOpen(false); setConfirming(false); }} className="btn btn-ghost">キャンセル</button>
+              {confirming ? (
+                <>
+                  <button onClick={() => setConfirming(false)} disabled={sending} className="btn btn-ghost">戻る</button>
+                  <button onClick={doSend} disabled={sending} className="btn btn-navy disabled:opacity-50">{sending ? "送信中…" : "はい、送信する"}</button>
+                </>
+              ) : (
+                <button onClick={() => setConfirming(true)} disabled={!subject.trim() || !body.trim()} className="btn btn-navy disabled:opacity-50">送信する</button>
+              )}
             </div>
           </div>
         </div>
