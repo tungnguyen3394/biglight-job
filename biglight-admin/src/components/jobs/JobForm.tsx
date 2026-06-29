@@ -212,7 +212,7 @@ export function JobForm({
             <h2><span className="num">1</span>基本情報</h2>
             <p className="sdesc">求人の業種・職種・会社・勤務地</p>
             <div className="grid">
-              <div className="field full"><label>業種（特定技能分野）<span className="req">*</span></label><select className="sel" value={s.field} onChange={(e) => set("field", e.target.value)}>{FIELD_OPTS.map((x) => <option key={x}>{x}</option>)}</select><span className="hint">特定技能の正式名称から選択。求人コードの接頭辞に使われます。</span></div>
+              <div className="field full"><label>特定技能分野<span className="req">*</span></label><select className="sel" value={s.field} onChange={(e) => set("field", e.target.value)}>{FIELD_OPTS.map((x) => <option key={x}>{x}</option>)}</select><span className="hint">特定技能の正式名称から選択。求人コードの接頭辞に使われます。</span></div>
               <div className="field"><label>職種<span className="req">*</span></label><input className="inp" value={s.type} onChange={(e) => set("type", e.target.value)} placeholder="例）半自動溶接 / 型枠大工 / 惣菜製造" /><span className="hint">具体的な仕事の呼び名</span></div>
               <div className="field"><label>掲載企業<span className="req">*</span></label><select className="sel" value={s.companyId} onChange={(e) => set("companyId", e.target.value)}><option value="">選択してください</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select><span className="hint">企業管理に登録された企業から選択（応募者には非公開）。</span></div>
               <div className="field full"><label>求人タイトル</label><input className="inp" value={s.title} onChange={(e) => set("title", e.target.value)} placeholder="例）半自動溶接スタッフ（未経験OK・寮あり）" /><span className="hint">空欄なら「職種」を見出しに使用します。</span></div>

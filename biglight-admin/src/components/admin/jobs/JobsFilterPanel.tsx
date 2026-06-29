@@ -39,7 +39,7 @@ export function JobsFilterPanel({
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <Sel label="業種" k="industry" opts={options.industries} all="すべて" />
+          <Sel label="特定技能分野" k="industry" opts={options.industries} all="すべて" />
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-500">公開ステータス</label>
             <select className="input" value={d.publicStatus} onChange={(e) => set("publicStatus", e.target.value)}>

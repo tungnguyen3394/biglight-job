@@ -75,7 +75,6 @@ function fmtDate(s: string | null): string {
 
 // --- icon nhỏ (SVG line, không emoji) ---
 const IconSearch = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>);
-const IconKey = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="3.5" /><path d="m10 13 8-8M16 3l3 3-2 2-3-3" /></svg>);
 const IconLock = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>);
 const IconUnlock = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.5-2" /></svg>);
 const IconTrash = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>);
@@ -185,14 +184,6 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
       const { user } = await api(`/api/admin/users/${u.id}`, "PATCH", { status: next });
       setUsers((p) => p.map((x) => (x.id === u.id ? user : x)));
       setNotice(`${user.name} を${next === "SUSPENDED" ? "ロック" : "ロック解除"}しました。`);
-    } catch (e) { setErr((e as Error).message); } finally { setBusy(null); }
-  }
-
-  async function resetPw(u: UserRow) {
-    setBusy(u.id);
-    try {
-      const { tempPassword } = await api(`/api/admin/users/${u.id}/reset-password`, "POST");
-      setNotice(`${u.name} の仮パスワード： ${tempPassword}（安全に共有してください）`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(null); }
   }
 
@@ -364,7 +355,6 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <IconBtn onClick={() => resetPw(u)} disabled={rowBusy} title="パスワードリセット"><IconKey /></IconBtn>
                         <IconBtn
                           onClick={() => toggleLock(u)}
                           disabled={rowBusy || isSelf || (lastAdmin && !locked)}

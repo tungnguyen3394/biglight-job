@@ -21,7 +21,7 @@ const join = (a: string[]) => (a.length ? a.join("・") : "—");
 // Cột giữa (bật/tắt qua 表示項目). code/求人タイトル/操作 luôn hiển thị.
 const COLUMNS: { key: string; label: string; sortKey?: SortKey; render: (j: JobRow) => React.ReactNode }[] = [
   { key: "company", label: "企業名", sortKey: "company", render: (j) => <span className="line-clamp-2 max-w-[180px]">{j.company ?? "—"}</span> },
-  { key: "industry", label: "業種", render: (j) => txt(j.industry) },
+  { key: "industry", label: "特定技能分野", render: (j) => txt(j.industry) },
   { key: "jobType", label: "職種", render: (j) => txt(j.jobType) },
   { key: "location", label: "勤務地", sortKey: "location", render: (j) => `${j.location}${j.city ? ` ${j.city}` : ""}` },
   { key: "recruit", label: "募集人数", sortKey: "recruitCount", render: (j) => <span><b className="text-ink">{j.recruitCount}名</b><span className="ml-1 text-xs text-slate-400">(男{j.recruitMale}/女{j.recruitFemale})</span></span> },

@@ -13,7 +13,7 @@ export const OPTION_SETS: { key: OptionKey; label: string; hint: string; default
   { key: "nationality", label: "国籍", hint: "応募者プロフィールの国籍", defaults: NATIONALITIES },
   { key: "visa", label: "在留資格", hint: "応募者の現在の在留資格", defaults: VISA_TYPES },
   { key: "jpLevel", label: "日本語レベル", hint: "応募者の日本語レベル", defaults: JP_LEVELS },
-  { key: "industry", label: "業種", hint: "求人の業種・応募者の希望分野（共通）", defaults: FIELDS },
+  { key: "industry", label: "特定技能分野", hint: "求人作成・応募者の希望分野で使う特定技能分野（共通）", defaults: FIELDS },
   { key: "tags", label: "タグ", hint: "求人のタグ", defaults: STD_TAGS },
   { key: "guideCategory", label: "記事カテゴリ", hint: "特定技能ガイドの記事カテゴリ（ユーザー側の絞り込みと共通）", defaults: GUIDE_CATEGORY_DEFAULTS },
   { key: "sswField", label: "特定技能分野（3階層）", hint: "業種 → 業務区分 → 従事する主な業務（応募者プロフィールの分野選択と共通）", defaults: SSW_JOBS.map((f) => f.field) },
