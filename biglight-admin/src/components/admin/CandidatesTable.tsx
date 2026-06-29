@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
 import { MailMergeModal } from "@/components/admin/MailMergeModal";
+import { requestDelete } from "@/lib/adminDelete";
 
 export type CandidateRow = {
   id: string;
@@ -141,7 +143,18 @@ const SORT_FIELDS: { key: SortField; label: string; cmp: (a: CandidateRow, b: Ca
 ];
 const SORT_LABEL = (k: SortField) => SORT_FIELDS.find((f) => f.key === k)?.label ?? k;
 
-export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
+export function CandidatesTable({ rows, canRowDelete = false, canBulkDelete = false }: { rows: CandidateRow[]; canRowDelete?: boolean; canBulkDelete?: boolean }) {
+  const router = useRouter();
+  const [delBusy, setDelBusy] = useState(false);
+  async function delRows(ids: string[], label: string) {
+    if (!ids.length || delBusy) return;
+    if (!window.confirm(`${label}を削除します。元に戻せません。よろしいですか？`)) return;
+    setDelBusy(true);
+    const r = await requestDelete("candidate", ids);
+    setDelBusy(false);
+    if (r.ok) router.refresh();
+    else alert(r.error);
+  }
   const [q, setQ] = useState("");
   const [fNat, setFNat] = useState("");
   const [fVisa, setFVisa] = useState("");
@@ -402,6 +415,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           </details>
           <ExportBar compact filename="応募者一覧" title="応募者一覧" getData={() => ({ headers: visCols.map((c) => c.label), rows: filtered.map((r) => visCols.map((c) => c.value(r))) })} />
           <button onClick={() => selected.size && setMailOpen(true)} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40"><MailIcon />メール送信{selected.size > 0 && `（${selected.size}）`}</button>
+          {canBulkDelete && <button onClick={() => delRows([...selected], `選択した${selected.size}名`)} disabled={selected.size === 0 || delBusy} className="btn btn-sm gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>選択削除{selected.size > 0 && `（${selected.size}）`}</button>}
           <span className="text-sm text-slate-500">{filtered.length} 名</span>
         </div>
       </div>
@@ -436,6 +450,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                       詳細
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                     </Link>
+                    {canRowDelete && <button onClick={() => delRows([r.id], `「${r.name || "応募者"}」`)} disabled={delBusy} title="削除" className="rounded-lg border border-red-200 p-1 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg></button>}
                   </div>
                 </td>
               </tr>

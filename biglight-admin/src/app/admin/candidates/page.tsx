@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { can } from "@/lib/permissions";
+import { effectiveAdminLevel, adminCan } from "@/lib/adminAccess";
 import { Forbidden } from "@/components/admin/Forbidden";
 import { CandidatesTable, type CandidateRow } from "@/components/admin/CandidatesTable";
 
@@ -79,7 +80,7 @@ export default async function Page() {
           <p className="text-sm text-slate-500">候補者の検索・絞り込み・詳細確認</p>
         </div>
       </div>
-      <CandidatesTable rows={rows} />
+      <CandidatesTable rows={rows} canRowDelete={adminCan(effectiveAdminLevel(user), "applicants.delete")} canBulkDelete={effectiveAdminLevel(user) === "ADMIN"} />
     </div>
   );
 }

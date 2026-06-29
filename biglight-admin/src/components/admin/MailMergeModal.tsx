@@ -23,6 +23,7 @@ export function MailMergeModal({ scope, ids, onClose }: { scope: MergeScope; ids
 
   const [templates, setTemplates] = useState<Template[]>([]);
   const [tplName, setTplName] = useState("");
+  const [selTpl, setSelTpl] = useState("");
   const [testEmail, setTestEmail] = useState("");
   const [testMsg, setTestMsg] = useState("");
   const [sending, setSending] = useState(false);
@@ -109,6 +110,14 @@ export function MailMergeModal({ scope, ids, onClose }: { scope: MergeScope; ids
     if (!t) return;
     setSubject(t.subject); setBody(t.body); setEmptyMode(t.emptyMode === "placeholder" ? "placeholder" : "blank");
   }
+  async function deleteTemplate() {
+    if (!selTpl) return;
+    const t = templates.find((x) => x.id === selTpl);
+    if (!window.confirm(`テンプレート「${t?.name ?? ""}」を削除しますか？`)) return;
+    const r = await fetch(`/api/admin/mail-merge/templates?id=${selTpl}`, { method: "DELETE" });
+    if (r.ok) { setTemplates((p) => p.filter((x) => x.id !== selTpl)); setSelTpl(""); }
+    else alert((await r.json().catch(() => ({}))).error || "削除に失敗しました。");
+  }
 
   const scopeLabel = scope === "company" ? "企業" : "応募者";
 
@@ -168,10 +177,11 @@ export function MailMergeModal({ scope, ids, onClose }: { scope: MergeScope; ids
             {/* template */}
             <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-2.5">
               <span className="text-xs font-bold text-slate-500">テンプレート</span>
-              <select onChange={(e) => { if (e.target.value) loadTemplate(e.target.value); }} className="input h-8 w-auto py-0 text-sm" defaultValue="">
+              <select value={selTpl} onChange={(e) => { setSelTpl(e.target.value); if (e.target.value) loadTemplate(e.target.value); }} className="input h-8 w-auto py-0 text-sm">
                 <option value="">選択して読み込み…</option>
                 {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
+              {selTpl && <button onClick={deleteTemplate} title="このテンプレートを削除" className="rounded-lg border border-red-200 px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50">削除</button>}
               <span className="mx-1 text-slate-300">|</span>
               <input value={tplName} onChange={(e) => setTplName(e.target.value)} placeholder="保存名" className="input h-8 w-32 py-0 text-sm" />
               <button onClick={saveTemplate} disabled={!tplName.trim()} className="btn btn-ghost btn-sm disabled:opacity-40">現在の内容を保存</button>

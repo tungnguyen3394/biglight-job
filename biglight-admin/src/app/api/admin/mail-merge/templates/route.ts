@@ -34,12 +34,17 @@ export async function POST(req: Request) {
   return NextResponse.json({ template: t });
 }
 
-// DELETE ?id — xoá mẫu.
+// DELETE ?id — xoá mẫu (chỉ người tạo hoặc Admin).
 export async function DELETE(req: Request) {
   const g = await guard("messages.reply");
   if (!g.ok) return g.res;
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id が必要です。" }, { status: 400 });
+  const t = await prisma.mailTemplate.findUnique({ where: { id }, select: { createdById: true } });
+  if (!t) return NextResponse.json({ ok: true }); // đã không còn
+  if (g.level !== "ADMIN" && t.createdById !== g.user.id) {
+    return NextResponse.json({ error: "自分が作成したテンプレートのみ削除できます（または管理者）。" }, { status: 403 });
+  }
   await prisma.mailTemplate.delete({ where: { id } }).catch(() => {});
   return NextResponse.json({ ok: true });
 }

@@ -2,8 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
+import { requestDelete } from "@/lib/adminDelete";
+
+const TrashIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>;
 
 export type ArticleRow = {
   id: string; title: string; slug: string | null; status: string; category: string | null;
@@ -44,7 +48,19 @@ const SORT_FIELDS: { key: SortField; label: string; cmp: (a: ArticleRow, b: Arti
   { key: "publishAt", label: "公開予定", cmp: (a, b) => jcmp(a.publishAt, b.publishAt) },
 ];
 
-export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite: boolean }) {
+export function ArticlesTable({ rows, canWrite, canRowDelete = false, canBulkDelete = false }: { rows: ArticleRow[]; canWrite: boolean; canRowDelete?: boolean; canBulkDelete?: boolean }) {
+  const router = useRouter();
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [delBusy, setDelBusy] = useState(false);
+  const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  async function delRows(ids: string[], label: string) {
+    if (!ids.length || delBusy) return;
+    if (!window.confirm(`${label}を削除します。元に戻せません。よろしいですか？`)) return;
+    setDelBusy(true);
+    const r = await requestDelete("article", ids);
+    setDelBusy(false);
+    if (r.ok) { setSel(new Set()); router.refresh(); } else alert(r.error);
+  }
   const [q, setQ] = useState("");
   const [fCat, setFCat] = useState("");
   const [fStatus, setFStatus] = useState("");
@@ -71,6 +87,8 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
   }, [rows, q, fCat, fStatus, sort]);
 
   const getData = () => ({ headers: visCols.map((c) => c.label), rows: filtered.map((r) => visCols.map((c) => c.value(r))) });
+  const allSel = filtered.length > 0 && filtered.every((r) => sel.has(r.id));
+  const toggleAll = () => setSel(allSel ? new Set() : new Set(filtered.map((r) => r.id)));
 
   return (
     <div className="card overflow-hidden p-0">
@@ -110,6 +128,7 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
         </Dropdown>
 
         <div className="ml-auto flex items-center gap-1.5">
+          {canBulkDelete && sel.size > 0 && <button onClick={() => delRows([...sel], `選択した${sel.size}件`)} disabled={delBusy} className="btn btn-sm gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"><TrashIcon />選択削除（{sel.size}）</button>}
           <ExportBar compact filename="記事一覧" title="記事一覧" getData={getData} />
           <span className="text-sm text-slate-500">{filtered.length} 件</span>
         </div>
@@ -123,6 +142,7 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-bold text-slate-500">
+                {canBulkDelete && <th className="w-10 px-3 py-2.5"><input type="checkbox" checked={allSel} onChange={toggleAll} title="全選択" /></th>}
                 {visCols.map((c) => <th key={c.key} className="px-3 py-2.5" style={{ minWidth: c.w }}>{c.label}</th>)}
                 <th className="px-3 py-2.5" />
               </tr>
@@ -130,6 +150,7 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
             <tbody className="divide-y divide-slate-50">
               {filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50">
+                  {canBulkDelete && <td className="px-3 py-2.5"><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleSel(r.id)} /></td>}
                   {visCols.map((c) => (
                     <td key={c.key} className="px-3 py-2.5 align-top">
                       {c.key === "title" ? (
@@ -144,7 +165,10 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
                     </td>
                   ))}
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
-                    <Link href={`/admin/articles/${r.id}`} className="text-xs font-semibold text-brand-blue hover:underline">{canWrite ? "編集" : "表示"}</Link>
+                    <div className="inline-flex items-center gap-1.5">
+                      <Link href={`/admin/articles/${r.id}`} className="text-xs font-semibold text-brand-blue hover:underline">{canWrite ? "編集" : "表示"}</Link>
+                      {canRowDelete && <button onClick={() => delRows([r.id], `「${r.title}」`)} disabled={delBusy} title="削除" className="rounded-lg border border-red-200 p-1 text-red-600 hover:bg-red-50 disabled:opacity-40"><TrashIcon /></button>}
+                    </div>
                   </td>
                 </tr>
               ))}

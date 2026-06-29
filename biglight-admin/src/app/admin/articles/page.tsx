@@ -40,7 +40,7 @@ export default async function Page() {
       {rows.length === 0 ? (
         <div className="card p-10 text-center text-slate-400">まだ記事がありません。「記事を作成」から SEO 記事を作成できます。</div>
       ) : (
-        <ArticlesTable rows={rows} canWrite={canWrite} />
+        <ArticlesTable rows={rows} canWrite={canWrite} canRowDelete={adminCan(level, "articles.delete")} canBulkDelete={level === "ADMIN"} />
       )}
     </div>
   );
