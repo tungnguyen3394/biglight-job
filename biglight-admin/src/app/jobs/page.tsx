@@ -51,5 +51,5 @@ export default async function JobsPage() {
     savedIds = cand?.savedJobIds ?? [];
   }
 
-  return <JobsBrowser items={items} loggedIn={!!session} savedIds={savedIds} />;
+  return <JobsBrowser items={items} loggedIn={session?.role === "CANDIDATE"} savedIds={savedIds} />;
 }

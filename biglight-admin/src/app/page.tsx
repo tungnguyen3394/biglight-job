@@ -59,5 +59,5 @@ export default async function Home({ searchParams }: { searchParams: { q?: strin
     const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
     savedIds = cand?.savedJobIds ?? [];
   }
-  return <CandidateHome jobs={data} guides={guides} initialQ={searchParams.q ?? ""} loggedIn={!!session} savedIds={savedIds} />;
+  return <CandidateHome jobs={data} guides={guides} initialQ={searchParams.q ?? ""} loggedIn={session?.role === "CANDIDATE"} savedIds={savedIds} />;
 }

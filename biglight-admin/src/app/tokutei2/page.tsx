@@ -33,7 +33,7 @@ const FAQ = [
 ];
 
 export default async function Tokutei2Page() {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   return (
     <Shell active="tokutei2" loggedIn={loggedIn}>
       <div className="mx-auto max-w-4xl px-4 py-8">

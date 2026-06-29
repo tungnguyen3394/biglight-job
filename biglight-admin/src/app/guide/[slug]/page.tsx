@@ -48,7 +48,7 @@ function RelatedCard({ a }: { a: GuideCard }) {
 }
 
 export default async function GuideArticlePage({ params }: { params: { slug: string } }) {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   const a = await getArticle(params.slug);
   if (!a) notFound();
 

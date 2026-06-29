@@ -71,7 +71,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
 
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
   const session = await getSessionUser();
-  const loggedIn = !!session;
+  const loggedIn = session?.role === "CANDIDATE";
   const open = job.status === "OPEN" && job.recruitCount > job.hiredCount;
   let saved = false;
   if (session?.role === "CANDIDATE") {

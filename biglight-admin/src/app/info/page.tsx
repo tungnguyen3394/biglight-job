@@ -26,7 +26,7 @@ const ARTICLES: { cat: Cat; title: string; excerpt: string }[] = [
 ];
 
 export default async function InfoPage() {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   return (
     <Shell active="info" loggedIn={loggedIn}>
       <div className="mx-auto max-w-5xl px-4 py-8">

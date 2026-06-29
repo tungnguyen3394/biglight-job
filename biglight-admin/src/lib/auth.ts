@@ -112,3 +112,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   if (!token) return null;
   return verifySessionToken(token);
 }
+
+// Trang public: CHỈ phiên ứng viên (role CANDIDATE) mới coi là "đã đăng nhập".
+// Admin/staff/khách → null → hiện 30秒で無料登録 thay vì マイページ.
+export async function isCandidateLoggedIn(): Promise<boolean> {
+  const u = await getSessionUser();
+  return u?.role === "CANDIDATE";
+}

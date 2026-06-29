@@ -17,7 +17,7 @@ export const metadata = buildMetadata({
 });
 
 export default async function GuidePage() {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   const articles = await prisma.article.findMany({
     where: { status: "PUBLISHED" },
     orderBy: [{ publishAt: "desc" }, { createdAt: "desc" }],

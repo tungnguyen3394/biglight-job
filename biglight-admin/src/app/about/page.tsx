@@ -38,7 +38,7 @@ const STORIES = [
 ];
 
 export default async function AboutPage() {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   return (
     <Shell active="about" loggedIn={loggedIn}>
       {/* Intro */}

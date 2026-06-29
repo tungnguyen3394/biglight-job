@@ -34,7 +34,7 @@ function UL({ items }: { items: string[] }) {
 }
 
 export default async function PrivacyPolicyPage() {
-  const loggedIn = !!(await getSessionUser());
+  const loggedIn = (await getSessionUser())?.role === "CANDIDATE";
   return (
     <Shell active={"" as NavActive} loggedIn={loggedIn}>
       <article className="mx-auto max-w-3xl px-5 py-10 sm:py-14">
