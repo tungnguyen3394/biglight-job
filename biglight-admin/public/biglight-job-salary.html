@@ -135,6 +135,14 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
     <div class="csub">スライダーまたは数字で入力できます。</div>
 
     <div class="field">
+      <div class="fl">お住まいの都道府県</div>
+      <div class="hint">健康保険料率は都道府県で異なります（協会けんぽ・令和6年度）</div>
+      <select id="pref" class="numin" style="width:100%;cursor:pointer" onchange="calc()">
+        <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option><option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option selected>東京都</option><option>神奈川県</option><option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option><option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option><option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option><option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option><option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option><option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
+      </select>
+    </div>
+
+    <div class="field">
       <div class="fl">月給（基本給＋固定手当）<span class="tag tx">課税</span></div>
       <div class="hint">基本給と毎月固定でつく手当の合計</div>
       <div class="rangewrap"><input type="range" id="r-kyu" min="100000" max="400000" step="5000" value="200000" oninput="syncR('kyu',this.value)"><div class="num"><input class="numin" id="n-kyu" value="200000" inputmode="numeric" oninput="syncN('kyu',this.value)"></div></div>
@@ -174,20 +182,9 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
     </div>
   </div>
 
-  <!-- result step1 -->
-  <div class="card">
-    <h2><span class="n">2</span>計算結果</h2>
-    <div class="csub">①税・社会保険を引いた手取り → ②生活費を引いた実際の受取額</div>
-    <div class="results">
-      <div class="rbox a"><div class="l">① 手取り月収</div><div class="v" id="res-tedori">¥0</div><div class="s">税・社会保険を引いた後</div></div>
-      <div class="rbox b"><div class="l">② 実質受取額</div><div class="v" id="res-real">¥0</div><div class="s">家賃・生活費を引いた後</div></div>
-    </div>
-    <div class="breakdown" id="breakdown"></div>
-  </div>
-
   <!-- living costs -->
   <div class="card">
-    <h2><span class="n">3</span>生活費（任意）</h2>
+    <h2><span class="n">2</span>生活費（任意）</h2>
     <div class="csub">手取りからさらに引かれる毎月の固定費</div>
     <div class="field">
       <div class="fl">家賃・寮費</div>
@@ -203,13 +200,24 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
     </div>
   </div>
 
+  <!-- result step -->
+  <div class="card">
+    <h2><span class="n">3</span>計算結果</h2>
+    <div class="csub">①税・社会保険を引いた手取り → ②生活費を引いた実際の受取額</div>
+    <div class="results">
+      <div class="rbox a"><div class="l">① 手取り月収</div><div class="v" id="res-tedori">¥0</div><div class="s">税・社会保険を引いた後</div></div>
+      <div class="rbox b"><div class="l">② 実質受取額</div><div class="v" id="res-real">¥0</div><div class="s">家賃・生活費を引いた後</div></div>
+    </div>
+    <div class="breakdown" id="breakdown"></div>
+  </div>
+
   <!-- method -->
   <div class="card">
     <div class="method">
       <h3>計算方法</h3>
       <ol>
         <li><b>総支給額</b> ＝ 月給（基本給＋固定手当）＋ 交通費 ＋ 残業代</li>
-        <li><b>社会保険料</b> ＝ 総支給額 ×（健康保険 4.9％ ＋ 厚生年金 9.15％ ＋ 雇用保険 0.6％〔＋ 介護保険 0.9％（40〜64歳）〕）</li>
+        <li><b>社会保険料</b> ＝ 総支給額 ×（健康保険〔都道府県別・協会けんぽ令和6年度の本人負担＝総額の半分〕 ＋ 厚生年金 9.15％ ＋ 雇用保険 0.6％〔＋ 介護保険 0.8％（40〜64歳）〕）</li>
         <li><b>所得税の課税対象</b> ＝（月給 ＋ 残業代）− 社会保険料　<span style="color:#6b7280">※交通費は非課税</span></li>
         <li><b>所得税（概算）</b> ＝（課税対象 − 88,000円 − 扶養人数 × 31,700円）× 5.105％</li>
         <li><b>住民税</b> ＝ 入力した金額（前年の所得で決まります）</li>
@@ -227,6 +235,8 @@ header{position:sticky;top:0;z-index:40;background:rgba(247,248,250,.92);backdro
 const $=s=>document.querySelector(s);
 const v={kyu:200000,kotsu:10000,zan:20000,jumin:10000,yachin:30000,kou:10000,net:3000};
 let fuyou=0, age40=0;
+/* 健康保険料率（総額%・協会けんぽ 令和6年度）— 本人負担はこの半分 */
+const PREF_RATE={北海道:10.21,青森県:9.49,岩手県:9.63,宮城県:10.01,秋田県:9.85,山形県:9.84,福島県:9.59,茨城県:9.66,栃木県:9.79,群馬県:9.81,埼玉県:9.78,千葉県:9.77,東京都:9.98,神奈川県:10.02,新潟県:9.35,富山県:9.62,石川県:9.94,福井県:10.07,山梨県:9.94,長野県:9.55,岐阜県:9.91,静岡県:9.85,愛知県:10.02,三重県:9.94,滋賀県:9.89,京都府:10.13,大阪府:10.34,兵庫県:10.18,奈良県:10.22,和歌山県:10.00,鳥取県:9.68,島根県:9.92,岡山県:10.02,広島県:9.95,山口県:10.20,徳島県:10.19,香川県:10.33,愛媛県:10.03,高知県:9.89,福岡県:10.35,佐賀県:10.42,長崎県:10.17,熊本県:10.30,大分県:10.25,宮崎県:9.85,鹿児島県:10.13,沖縄県:9.52};
 const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 
 /* fuyou chips */
@@ -240,8 +250,10 @@ function syncN(k,val){const num=+String(val).replace(/[^0-9]/g,'')||0;v[k]=num;$
 function calc(){
   const sokyu=v.kyu+v.kotsu+v.zan;               // 総支給額
   const shaho_base=sokyu;                         // 社会保険対象
-  const kenko=shaho_base*0.049;
-  const kaigo=age40?shaho_base*0.009:0;
+  const prefEl=$('#pref');
+  const prate=PREF_RATE[prefEl?prefEl.value:'東京都']||9.98; // 都道府県の健康保険料率（総額%）
+  const kenko=shaho_base*(prate/2/100);           // 健康保険（本人負担＝総額の半分）
+  const kaigo=age40?shaho_base*0.008:0;           // 介護保険（1.6%の半分＝0.8%）
   const nenkin=shaho_base*0.0915;
   const koyo=shaho_base*0.006;
   const shaho=kenko+kaigo+nenkin+koyo;            // 社会保険料
@@ -256,7 +268,7 @@ function calc(){
 
   const rows=[
     ['総支給額（額面）',sokyu,'plus'],
-    ['健康保険',-kenko,'minus'],
+    ['健康保険（'+(prate/2).toFixed(2)+'%）',-kenko,'minus'],
     age40?['介護保険',-kaigo,'minus']:null,
     ['厚生年金',-nenkin,'minus'],
     ['雇用保険',-koyo,'minus'],
