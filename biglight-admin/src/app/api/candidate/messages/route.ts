@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { getOrCreateConversation, shapeMessage } from "@/lib/messageServer";
 import { translate, detectLang } from "@/lib/translate";
+import { aiKeyConfigured, getAiConfig, aiReply, type ChatTurn } from "@/lib/ai";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,26 @@ export async function POST(req: Request) {
     data: { lastMessage: text, lastMessageAt: new Date(), unreadByAdmin: true, status: "WAITING" },
   });
 
-  return NextResponse.json({ message: shapeMessage(msg) });
+  // ===== AI tự trả lời (nếu: có key + AI bật toàn cục + hội thoại bật AI + không bị tạm dừng) =====
+  let aiMessage: ReturnType<typeof shapeMessage> | null = null;
+  const fresh = await prisma.conversation.findUnique({ where: { id: conv.id }, select: { aiEnabled: true, aiPausedUntil: true } });
+  const paused = fresh?.aiPausedUntil ? fresh.aiPausedUntil.getTime() > Date.now() : false;
+  if (aiKeyConfigured() && fresh?.aiEnabled && !paused) {
+    const cfg = await getAiConfig();
+    if (cfg.enabled) {
+      const hist = await prisma.message.findMany({ where: { conversationId: conv.id, recalledAt: null, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 30, select: { senderRole: true, originalText: true } });
+      const turns: ChatTurn[] = hist.map((h) => ({ role: h.senderRole === "CANDIDATE" ? "user" : "assistant", content: h.originalText }));
+      const ai = await aiReply(turns, cfg.instructions, cfg.model);
+      if (ai && ai.text) {
+        const aiJa = src === "ja" ? ai.text : await translate(ai.text, "ja", src);
+        const m = await prisma.message.create({ data: { conversationId: conv.id, senderId: null, senderRole: "AI", originalLanguage: src, originalText: ai.text, translatedText: aiJa, translatedLanguage: "ja", isRead: false } });
+        aiMessage = shapeMessage(m);
+        await prisma.conversation.update({ where: { id: conv.id }, data: { lastMessage: ai.text, lastMessageAt: new Date(), ...(ai.handoff ? { aiEnabled: false } : {}) } });
+      }
+    }
+  }
+
+  return NextResponse.json({ message: shapeMessage(msg), aiMessage });
 }
 
 // PATCH { id, action: "recall" } — ứng viên thu hồi tin của chính mình.

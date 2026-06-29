@@ -369,6 +369,7 @@ enum MessageSender {
   ADMIN
   STAFF
   SYSTEM
+  AI
 }
 
 model Conversation {
@@ -381,6 +382,8 @@ model Conversation {
   unreadByAdmin     Boolean            @default(false)
   unreadByCandidate Boolean            @default(false)
   welcomedAt        DateTime? // welcome chỉ tạo 1 lần
+  aiEnabled         Boolean            @default(true) // bật/tắt AI tự trả lời cho hội thoại này
+  aiPausedUntil     DateTime? // nhân viên trả lời → AI tạm dừng đến thời điểm này (hôm sau)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   messages          Message[]
@@ -590,6 +593,17 @@ model AuditLog {
 
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// Cấu hình AI tư vấn (singleton id="default"): bật/tắt toàn cục + câu lệnh huấn luyện + model.
+model AiConfig {
+  id           String   @id @default("default")
+  enabled      Boolean  @default(true)
+  instructions String   @default("") @db.Text // câu lệnh huấn luyện phong cách (ghép vào system prompt)
+  model        String   @default("gpt-4o-mini")
+  updatedAt    DateTime @updatedAt
+
+  @@map("ai_config")
 }
 
 // Quyền theo cấp (Staff/View) — Admin chỉnh bằng checkbox ở ユーザー管理. Admin luôn full.

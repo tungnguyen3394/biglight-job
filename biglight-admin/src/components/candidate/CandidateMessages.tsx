@@ -40,7 +40,7 @@ export default function CandidateMessages() {
     const r = await fetch("/api/candidate/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: t }) });
     const j = await r.json().catch(() => ({}));
     setSending(false);
-    if (r.ok && j.message) { setMsgs((m) => [...m, j.message]); setDraft(""); }
+    if (r.ok && j.message) { setMsgs((m) => [...m, j.message, ...(j.aiMessage ? [j.aiMessage] : [])]); setDraft(""); }
   }
   function scrollEnd() { setTimeout(() => endRef.current?.scrollIntoView({ block: "end" }), 300); }
   function toggle(id: string) { setShowOrig((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
@@ -54,10 +54,12 @@ export default function CandidateMessages() {
 
   function disp(m: Msg) {
     const mine = m.senderRole === "CANDIDATE";
-    if (mine || showOrig.has(m.id)) return m.originalText;
+    // AI đã trả lời sẵn theo ngôn ngữ ứng viên → hiện originalText.
+    if (mine || m.senderRole === "AI" || showOrig.has(m.id)) return m.originalText;
     return m.translatedText ?? m.originalText;
   }
   function senderName(m: Msg) {
+    if (m.senderRole === "AI") return "BIGLIGHT AI";
     if (m.senderRole === "SYSTEM") return "BIGLIGHT JOB";
     if (m.senderRole === "ADMIN" || m.senderRole === "STAFF") return "BIGLIGHT 担当";
     return "";

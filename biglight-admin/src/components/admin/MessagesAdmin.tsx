@@ -32,6 +32,8 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [cand, setCand] = useState<Cand | null>(null);
   const [status, setStatus] = useState<keyof typeof CONV_STATUS_LABEL>("WAITING");
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [aiPaused, setAiPaused] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -57,7 +59,7 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
     setMsgs([]); setCand(null);
     const r = await fetch(`/api/admin/messages/${id}`);
     const j = await r.json().catch(() => ({}));
-    if (r.ok) { setMsgs(j.messages || []); setCand(j.candidate); setStatus(j.status); }
+    if (r.ok) { setMsgs(j.messages || []); setCand(j.candidate); setStatus(j.status); setAiEnabled(j.aiEnabled ?? true); setAiPaused(j.aiPaused ?? false); }
     setList((p) => p.map((c) => (c.id === id ? { ...c, unread: false } : c)));
   }
   function scrollEnd() { setTimeout(() => endRef.current?.scrollIntoView({ block: "end" }), 300); }
@@ -74,6 +76,12 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
       const now = new Date().toISOString();
       setList((p) => p.map((c) => (c.id === activeId ? { ...c, lastMessage: j.message.originalText as string, lastMessageAt: now, status: "IN_PROGRESS" as const } : c)).sort(sortByLast));
     } else if (j.error) { alert(j.error); }
+  }
+  async function toggleAi() {
+    if (!activeId) return;
+    const next = !aiEnabled;
+    setAiEnabled(next); if (next) setAiPaused(false);
+    await fetch(`/api/admin/messages/${activeId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ aiEnabled: next }) });
   }
   async function changeStatus(s: keyof typeof CONV_STATUS_LABEL) {
     if (!activeId) return;
@@ -106,10 +114,12 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
 
   function disp(m: Msg) {
     if (showOrig.has(m.id)) return m.originalText;
-    if (m.senderRole === "CANDIDATE") return m.translatedText ?? m.originalText;
+    // CANDIDATE/AI: gốc theo ngôn ngữ ứng viên → admin xem bản dịch tiếng Nhật.
+    if (m.senderRole === "CANDIDATE" || m.senderRole === "AI") return m.translatedText ?? m.originalText;
     return m.originalText;
   }
   function roleName(m: Msg) {
+    if (m.senderRole === "AI") return "BIGLIGHT AI（自動）";
     if (m.senderRole === "SYSTEM") return "システム";
     if (m.senderRole === "ADMIN" || m.senderRole === "STAFF") {
       const role = m.senderRole === "ADMIN" ? "管理者" : "スタッフ";
@@ -177,6 +187,11 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
                 <button onClick={() => setActiveId(null)} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-navy md:hidden" aria-label="会話一覧"><Icon d={<path d="m15 18-6-6 6-6" />} size={18} />会話一覧</button>
                 {cand && <Avatar name={cand.name} image={cand.image} size={8} />}
                 <b className="truncate text-sm text-ink">{cand?.name ?? "…"}</b>
+                {canReply && (
+                  <button onClick={toggleAi} className={`ml-auto rounded-full px-2.5 py-1 text-xs font-bold ${aiPaused ? "bg-amber-100 text-amber-700" : aiEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`} title={aiPaused ? "スタッフ返信のため明日までAIを一時停止中（クリックで今すぐON）" : aiEnabled ? "AI自動返信：ON（クリックでOFF）" : "AI自動返信：OFF（クリックでON）"}>
+                    AI {aiPaused ? "一時停止" : aiEnabled ? "ON" : "OFF"}
+                  </button>
+                )}
                 {canReply ? (
                   <select value={status} onChange={(e) => changeStatus(e.target.value as keyof typeof CONV_STATUS_LABEL)} className={`ml-auto rounded-full border-0 px-2 py-1 text-xs font-semibold outline-none ${CONV_STATUS_TONE[status]}`}>
                     {STATUSES.map((s) => <option key={s} value={s}>{CONV_STATUS_LABEL[s]}</option>)}

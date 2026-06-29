@@ -37,8 +37,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const nameById = new Map(users.map((u) => [u.id, u.name]));
 
   const c = conv.candidate;
+  const aiPaused = conv.aiPausedUntil ? conv.aiPausedUntil.getTime() > Date.now() : false;
   return NextResponse.json({
     status: conv.status,
+    aiEnabled: conv.aiEnabled,
+    aiPaused,
     candidate: {
       id: c.id,
       name: c.name,
@@ -88,7 +91,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   });
   await prisma.conversation.update({
     where: { id: conv.id },
-    data: { lastMessage: jaText, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
+    data: { lastMessage: jaText, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS", aiPausedUntil: new Date(Date.now() + 24 * 3600 * 1000) },
   });
   await notify(conv.candidate.userId, { type: "message", title: "新しいメッセージが届きました", body: jaText.slice(0, 80), link: "/mypage?sec=messages" });
 
@@ -109,6 +112,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!g.ok) return g.res;
 
   const b = await req.json().catch(() => ({}));
+  // Bật/tắt AI cho hội thoại này (gỡ tạm dừng nếu bật lại).
+  if (typeof b.aiEnabled === "boolean") {
+    const conv = await prisma.conversation.update({ where: { id: params.id }, data: { aiEnabled: b.aiEnabled, ...(b.aiEnabled ? { aiPausedUntil: null } : {}) } });
+    return NextResponse.json({ ok: true, aiEnabled: conv.aiEnabled });
+  }
   const valid: ConversationStatus[] = ["WAITING", "IN_PROGRESS", "DONE"];
   if (!valid.includes(b.status)) return NextResponse.json({ error: "無効な状態です。" }, { status: 422 });
 

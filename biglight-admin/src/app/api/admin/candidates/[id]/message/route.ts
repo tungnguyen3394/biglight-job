@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   });
   await prisma.conversation.update({
     where: { id: conv.id },
-    data: { lastMessage: jaText, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS" },
+    data: { lastMessage: jaText, lastMessageAt: new Date(), unreadByCandidate: true, status: "IN_PROGRESS", aiPausedUntil: new Date(Date.now() + 24 * 3600 * 1000) },
   });
   await notify(cand.userId, { type: "message", title: "新しいメッセージが届きました", body: jaText.slice(0, 80), link: "/mypage?sec=messages" });
 
