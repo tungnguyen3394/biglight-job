@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DEFAULT_AI_PROMPT } from "@/lib/aiPrompt";
 
 export default function AiSettings() {
   const [enabled, setEnabled] = useState(true);
@@ -47,9 +48,12 @@ export default function AiSettings() {
         </div>
       </div>
 
-      <label className="mb-1 block text-xs font-bold text-slate-500">AIへの追加指示（話し方・スタイルの学習）</label>
-      <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={7} className="input w-full text-sm" placeholder="例）丁寧でやさしい口調で。専門用語は避ける。最後に必ず『他にご希望はありますか？』と添える。など…" />
-      <p className="mt-1 text-[11px] text-slate-400">※ 基本ルール（実データのみ使用・嘘をつかない・該当求人なしの定型文・担当者へ引き継ぎ）は固定です。ここでは口調や追加方針のみ調整します。</p>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <label className="text-xs font-bold text-slate-500">AIへの指示（話し方・ルールをここで自由に編集）</label>
+        <button type="button" onClick={() => { if (!instructions.trim() || window.confirm("現在の内容をおすすめ文で置き換えますか？")) setInstructions(DEFAULT_AI_PROMPT); }} className="text-xs font-semibold text-bl-red hover:underline">おすすめ文を挿入</button>
+      </div>
+      <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={9} className="input w-full text-sm" placeholder="ここに書いた内容がそのままAIの指示になります。「おすすめ文を挿入」から始めて、口調やルールを自由に調整してください。" />
+      <p className="mt-1 text-[11px] text-slate-400">※ AIの話し方・ルールはすべてこの欄で決まります（コード変更は不要）。空欄の場合はおすすめ文が使われます。<br />※ 安全のため「登録された求人データのみ使用・作り話をしない・担当者への引き継ぎ」だけはシステム側で固定です。</p>
 
       <div className="mt-3 flex items-center gap-3">
         <button onClick={save} disabled={busy || !loaded} className="btn btn-navy btn-sm disabled:opacity-50">{busy ? "保存中…" : "保存"}</button>

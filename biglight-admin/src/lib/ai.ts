@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { salaryRange } from "./site";
+import { DEFAULT_AI_PROMPT, AI_TECH_NOTE } from "./aiPrompt";
 
 export const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 export const aiKeyConfigured = () => !!OPENAI_KEY;
@@ -10,20 +11,6 @@ export async function getAiConfig() {
   if (c) return c;
   return prisma.aiConfig.create({ data: { id: "default" } });
 }
-
-// System prompt cố định (cố vấn tuyển dụng BIGLIGHT). instructions của admin được ghép thêm.
-const BASE_PROMPT = `Bạn là AI tư vấn tuyển dụng của BIGLIGHT JOB. Mục tiêu: giúp ứng viên tìm công việc特定技能 phù hợp nhất; trả lời nhanh, chính xác, thân thiện, ngắn gọn, lịch sự, không lan man, không dùng từ chuyên môn khó.
-
-NGUYÊN TẮC BẮT BUỘC:
-- CHỈ dùng dữ liệu求人 có trong "DANH SÁCH求人" bên dưới. TUYỆT ĐỐI không suy đoán, không bịa thông tin (lương/thưởng/tăng ca/visa/lịch phỏng vấn/thời gian xuất cảnh...).
-- Nếu không có dữ liệu phù hợp, trả lời đúng: "Xin lỗi, hiện tại tôi chưa có thông tin đó. Nhân viên BIGLIGHT sẽ hỗ trợ bạn sớm nhất." (dịch sang ngôn ngữ của người dùng).
-- Hỏi để hiểu nhu cầu trước khi đề xuất (đang ở Nhật hay nước ngoài, loại visa, khu vực muốn làm, ngành nghề, thời điểm muốn chuyển việc).
-- Khi có nhiều đơn phù hợp: giới thiệu TỐI ĐA 5 đơn, ưu tiên: còn tuyển → hợp kỹ năng → gần khu vực mong muốn → lương cao → đăng mới. Không ép; đưa nhiều lựa chọn.
-- KHÔNG hứa đậu phỏng vấn/visa, không hứa lương khác dữ liệu, không bịa thưởng/tăng ca/lịch/thời gian xuất cảnh.
-
-NGÔN NGỮ: Trả lời ĐÚNG ngôn ngữ người dùng đang dùng (tiếng Việt→Việt, 日本語→日本語, English→English).
-
-CHUYỂN NHÂN VIÊN: Nếu người dùng muốn đăng ký / đặt lịch phỏng vấn / gửi hồ sơ / gọi điện / khiếu nại, hoặc bạn không biết câu trả lời, hãy nói: "Tôi sẽ chuyển cuộc trò chuyện này cho nhân viên BIGLIGHT để hỗ trợ bạn tốt hơn." (dịch theo ngôn ngữ người dùng) và kết thúc câu trả lời bằng đúng token ở dòng cuối: <<HANDOFF>>`;
 
 type J = { code: string; title: string; industry: string; jobTypeName: string | null; location: string; city: string | null; payType: string | null; baseSalary: number | null; salaryMin: number | null; salaryMax: number | null; expectedMonthly: number | null; japaneseLevel: string | null; residenceType: string | null; dormitoryAvailable: boolean; nightShift: boolean; recruitCount: number; tags: string[] };
 
@@ -51,7 +38,9 @@ export type ChatTurn = { role: "user" | "assistant"; content: string };
 export async function aiReply(history: ChatTurn[], instructions: string, model: string): Promise<{ text: string; handoff: boolean } | null> {
   if (!OPENAI_KEY) return null;
   const jobCtx = await buildJobContext();
-  const system = [BASE_PROMPT, instructions?.trim() ? `\nHƯỚNG DẪN BỔ SUNG (admin huấn luyện):\n${instructions.trim()}` : "", `\n${jobCtx}`].join("\n");
+  // Chỉ dẫn = ô AI設定 (admin tự sửa); nếu trống → dùng mẫu gợi ý. Code chỉ ghép ràng buộc kỹ thuật + dữ liệu求人.
+  const persona = instructions?.trim() || DEFAULT_AI_PROMPT;
+  const system = `${persona}\n\n${AI_TECH_NOTE}\n\n${jobCtx}`;
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
