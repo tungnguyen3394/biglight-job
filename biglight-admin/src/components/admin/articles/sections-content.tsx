@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, Field, Toggle, Seg, Chips, Meter, Icon } from "./ACMS";
 import { TWITTER_CARDS, slugify, type ArticleState } from "@/lib/articleModel";
 import { CategoryField } from "./CategoryField";
@@ -84,9 +85,19 @@ export function ArticleSummary({ a, up }: { a: ArticleState; up: Up }) {
 }
 
 export function FeaturedImage({ a, up }: { a: ArticleState; up: Up }) {
-  function pick(e: React.ChangeEvent<HTMLInputElement>) {
+  const [busy, setBusy] = useState(false);
+  // Upload thật lên server (KHÔNG dùng blob: URL — blob chết khi xem lại → ảnh bìa hỏng).
+  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
-    if (f) up({ featuredImage: URL.createObjectURL(f) });
+    e.target.value = "";
+    if (!f) return;
+    setBusy(true);
+    const fd = new FormData(); fd.append("file", f);
+    const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    setBusy(false);
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.url) up({ featuredImage: j.url });
+    else alert(j.error || "アップロードに失敗しました");
   }
   return (
     <Card icon="image" title="アイキャッチ画像" defaultOpen={false}>
@@ -95,8 +106,8 @@ export function FeaturedImage({ a, up }: { a: ArticleState; up: Up }) {
           <div style={{ aspectRatio: "16/9", borderRadius: 10, border: "1px solid var(--border)", background: "var(--soft)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--faint)" }}>
             {a.featuredImage ? <img src={a.featuredImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="image" size={26} />}
           </div>
-          <label className="a-btn block" style={{ marginTop: 8, cursor: "pointer" }}>
-            <Icon name="plus" />アップロード<input type="file" accept="image/*" hidden onChange={pick} />
+          <label className="a-btn block" style={{ marginTop: 8, cursor: busy ? "wait" : "pointer", opacity: busy ? 0.6 : 1 }}>
+            <Icon name="plus" />{busy ? "アップロード中…" : "アップロード"}<input type="file" accept="image/*" hidden disabled={busy} onChange={pick} />
           </label>
           <div className="a-row" style={{ marginTop: 6, gap: 6 }}>
             <button type="button" className="a-btn" style={{ flex: 1 }} disabled title="近日対応">クロップ</button>

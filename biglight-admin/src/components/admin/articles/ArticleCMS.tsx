@@ -127,9 +127,8 @@ export function ArticleCMS({ jobs, initialId, initialData }: { jobs: JobOpt[]; i
         <div>
           <ArticleBasicInfo a={a} up={up} />
           <ArticleSEO a={a} up={up} seo={seo} />
-          <Card icon="globe" title="Google プレビュー" defaultOpen><GooglePreview a={a} /></Card>
-          <OpenGraph a={a} up={up} />
           <FeaturedImage a={a} up={up} />
+          <OpenGraph a={a} up={up} />
           <ArticleSummary a={a} up={up} />
           <ArticleEditor a={a} up={up} syncSignal={edSync} />
           <FAQEditor a={a} up={up} />

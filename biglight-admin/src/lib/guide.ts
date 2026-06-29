@@ -27,12 +27,14 @@ type ArticleRow = {
 export function articleCard(a: ArticleRow): GuideCard {
   const d = (a.data as Record<string, unknown>) || {};
   const str = (v: unknown) => (typeof v === "string" ? v : "");
+  // Bỏ qua blob: URL (ảnh chỉ tồn tại tạm trong trình duyệt lúc tạo → đã chết khi xem lại).
+  const pick = str(d.featuredImage) || str(d.ogImage);
   return {
     id: a.id,
     slug: a.slug || a.id,
     title: a.title,
     excerpt: str(d.excerpt) || str(d.metaDescription),
-    image: str(d.featuredImage) || str(d.ogImage),
+    image: pick.startsWith("blob:") ? "" : pick,
     category: a.category || "",
     date: (a.publishAt ?? a.createdAt).toISOString(),
   };

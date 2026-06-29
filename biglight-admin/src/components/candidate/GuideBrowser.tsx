@@ -13,7 +13,7 @@ function CardItem({ a }: { a: GuideCard }) {
     <Link href={`/guide/${a.slug}`} className="flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
       <div className="relative h-40 overflow-hidden bg-bl-bg">
         {a.image
-          ? <img src={a.image} alt="" className="h-full w-full object-cover" />
+          ? <img src={a.image} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
           : <div className="flex h-full w-full items-center justify-center text-bl-gray2"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="m3 16 5-5 4 4 3-3 6 6" /><circle cx="8.5" cy="8.5" r="1.5" /></svg></div>}
         {a.category && <span className="absolute left-2.5 top-2.5 rounded-full bg-bl-red px-2.5 py-0.5 text-[11px] font-bold text-white shadow">{a.category}</span>}
       </div>

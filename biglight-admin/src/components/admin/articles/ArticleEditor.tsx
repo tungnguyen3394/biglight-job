@@ -30,6 +30,50 @@ const EDCSS = `
 
 type Up = (p: Partial<ArticleState>) => void;
 
+// ===== Markdown → HTML (hợp AI: bảng, heading, list, quote, code, **đậm**/*nghiêng*/`code`/[link]) =====
+const mdEsc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function mdInline(s: string): string {
+  return mdEsc(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+}
+function looksLikeMarkdown(t: string): boolean {
+  return /(^|\n)\s*(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```)|\n\s*\|.*\|\s*\n\s*\|?\s*:?-{2,}|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)/.test(t);
+}
+function mdToHtml(src: string): string {
+  const lines = src.replace(/\r\n?/g, "\n").split("\n");
+  const out: string[] = [];
+  let i = 0;
+  const cells = (r: string) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^```/.test(line)) { // code block
+      const buf: string[] = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++; out.push("<pre><code>" + mdEsc(buf.join("\n")) + "</code></pre>"); continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?\s*:?-{2,}.*\|/.test(lines[i + 1])) { // table
+      const header = line; const rows: string[] = []; i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
+      const th = cells(header).map((c) => `<th>${mdInline(c)}</th>`).join("");
+      const trs = rows.map((r) => `<tr>${cells(r).map((c) => `<td>${mdInline(c)}</td>`).join("")}</tr>`).join("");
+      out.push(`<table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`); continue;
+    }
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) { const lv = Math.min(h[1].length, 6); out.push(`<h${lv}>${mdInline(h[2])}</h${lv}>`); i++; continue; }
+    if (/^>\s?/.test(line)) { const buf: string[] = []; while (i < lines.length && /^>\s?/.test(lines[i])) { buf.push(lines[i].replace(/^>\s?/, "")); i++; } out.push(`<blockquote>${mdInline(buf.join(" "))}</blockquote>`); continue; }
+    if (/^\s*\d+\.\s+/.test(line)) { const buf: string[] = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { buf.push(lines[i].replace(/^\s*\d+\.\s+/, "")); i++; } out.push("<ol>" + buf.map((x) => `<li>${mdInline(x)}</li>`).join("") + "</ol>"); continue; }
+    if (/^\s*[-*+]\s+/.test(line)) { const buf: string[] = []; while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) { buf.push(lines[i].replace(/^\s*[-*+]\s+/, "")); i++; } out.push("<ul>" + buf.map((x) => `<li>${mdInline(x)}</li>`).join("") + "</ul>"); continue; }
+    if (/^\s*$/.test(line)) { i++; continue; }
+    const buf: string[] = [];
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,6}\s|>\s?|```|\s*[-*+]\s|\s*\d+\.\s)/.test(lines[i]) && !/^\s*\|.*\|\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+    out.push(`<p>${buf.map(mdInline).join("<br>")}</p>`);
+  }
+  return out.join("");
+}
+
 export function ArticleEditor({ a, up, syncSignal = 0 }: { a: ArticleState; up: Up; syncSignal?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { if (ref.current && ref.current.innerHTML !== a.content) ref.current.innerHTML = a.content || ""; /* init + sync khi AI thay content */ // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,20 +92,15 @@ export function ArticleEditor({ a, up, syncSignal = 0 }: { a: ArticleState; up: 
     insert(`<nav class="toc"><b>目次</b><ul>${items}</ul></nav>`);
   };
 
-  // markdown paste (cơ bản)
+  // Paste Markdown (AI): tự chuyển bảng / heading / list / quote / code / inline → HTML.
   function onPaste(e: React.ClipboardEvent) {
     const t = e.clipboardData.getData("text/plain");
-    if (!t || !/(^|\n)\s*(#{1,3}\s|[-*]\s|\d+\.\s)|\*\*[^*]+\*\*/.test(t)) return;
+    const html = e.clipboardData.getData("text/html");
+    // Nếu nguồn đã là HTML giàu (copy từ web) → để trình duyệt dán bình thường.
+    if (html && /<(table|h[1-6]|ul|ol|p|img)/i.test(html)) return;
+    if (!t || !looksLikeMarkdown(t)) return;
     e.preventDefault();
-    const html = t.split(/\n{2,}/).map((blk) => {
-      const l = blk.trim();
-      if (/^###\s/.test(l)) return `<h3>${l.replace(/^###\s/, "")}</h3>`;
-      if (/^##\s/.test(l)) return `<h2>${l.replace(/^##\s/, "")}</h2>`;
-      if (/^#\s/.test(l)) return `<h1>${l.replace(/^#\s/, "")}</h1>`;
-      if (/^[-*]\s/.test(l)) return `<ul>${l.split("\n").map((x) => `<li>${x.replace(/^[-*]\s/, "")}</li>`).join("")}</ul>`;
-      return `<p>${l.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}</p>`;
-    }).join("");
-    insert(html);
+    insert(mdToHtml(t));
   }
 
   const T = ({ cmd, val, icon, label }: { cmd?: string; val?: string; icon?: string; label?: string }) => (
