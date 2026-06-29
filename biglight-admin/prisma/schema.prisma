@@ -148,6 +148,10 @@ model Company {
   contactName    String?
   phone          String?
   email          String?
+  paymentInfo    String?       @db.Text // 支払い情報
+  contractDetail String?       @db.Text // 契約内容
+  contractDate   DateTime?              // 契約日
+  notes          String?       @db.Text // 備考
   biglightStaffId String?
   status         AccountStatus @default(ACTIVE)
   createdAt      DateTime      @default(now())

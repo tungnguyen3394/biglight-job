@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export function CompanyNewForm() {
   const router = useRouter();
-  const [f, setF] = useState({ name: "", industry: "", address: "", contactName: "", phone: "", email: "" });
+  const [f, setF] = useState({ name: "", industry: "", address: "", contactName: "", phone: "", email: "", paymentInfo: "", contractDetail: "", contractDate: "", notes: "" });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -30,6 +30,10 @@ export function CompanyNewForm() {
         <div className="mb-4"><label className="label">電話番号</label><input className="input" value={f.phone} onChange={(e) => set("phone", e.target.value)} /></div>
         <div className="mb-4"><label className="label">メール</label><input type="email" className="input" value={f.email} onChange={(e) => set("email", e.target.value)} /></div>
         <div className="mb-4 sm:col-span-2"><label className="label">住所</label><input className="input" value={f.address} onChange={(e) => set("address", e.target.value)} /></div>
+        <div className="mb-4"><label className="label">契約日</label><input type="date" className="input" value={f.contractDate} onChange={(e) => set("contractDate", e.target.value)} /></div>
+        <div className="mb-4"><label className="label">支払い情報</label><input className="input" value={f.paymentInfo} onChange={(e) => set("paymentInfo", e.target.value)} placeholder="振込先・支払条件 など" /></div>
+        <div className="mb-4 sm:col-span-2"><label className="label">契約内容</label><textarea className="input min-h-[72px]" value={f.contractDetail} onChange={(e) => set("contractDetail", e.target.value)} placeholder="紹介手数料・契約形態 など" /></div>
+        <div className="mb-4 sm:col-span-2"><label className="label">備考</label><textarea className="input min-h-[72px]" value={f.notes} onChange={(e) => set("notes", e.target.value)} /></div>
       </div>
       {err && <p className="mb-3 text-sm font-semibold text-bl-red">{err}</p>}
       <div className="flex justify-end gap-2">

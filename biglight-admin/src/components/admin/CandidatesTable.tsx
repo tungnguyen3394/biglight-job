@@ -117,15 +117,24 @@ const DEFAULT_COLS: ColKey[] = ["name", "nationality", "phone", "email", "visaTy
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Sắp xếp nâng cao (đa trường, ưu tiên theo thứ tự).
-type SortField = "createdAt" | "lastActive" | "name" | "nationality" | "visaType" | "japaneseLevel" | "apps" | "status";
+type SortField = "createdAt" | "lastActive" | "name" | "gender" | "birthdate" | "nationality" | "visaType" | "japaneseLevel" | "sswField" | "desiredIndustry" | "desiredLocation" | "desiredSalary" | "arrival" | "startWork" | "apps" | "status";
 type SortItem = { key: SortField; dir: "asc" | "desc" };
+const jcmp = (x?: string | null, y?: string | null) => (x || "").localeCompare(y || "", "ja");
 const SORT_FIELDS: { key: SortField; label: string; cmp: (a: CandidateRow, b: CandidateRow) => number }[] = [
   { key: "createdAt", label: "登録日", cmp: (a, b) => a.createdAt.localeCompare(b.createdAt) },
   { key: "lastActive", label: "最終利用", cmp: (a, b) => a.lastActive.localeCompare(b.lastActive) },
   { key: "name", label: "氏名（カナ）", cmp: (a, b) => (a.kana || a.name).localeCompare(b.kana || b.name, "ja") },
-  { key: "nationality", label: "国籍", cmp: (a, b) => (a.nationality || "").localeCompare(b.nationality || "", "ja") },
-  { key: "visaType", label: "在留資格", cmp: (a, b) => (a.visaType || "").localeCompare(b.visaType || "", "ja") },
+  { key: "gender", label: "性別", cmp: (a, b) => jcmp(a.gender, b.gender) },
+  { key: "birthdate", label: "生年月日", cmp: (a, b) => jcmp(a.birthdate, b.birthdate) },
+  { key: "nationality", label: "国籍", cmp: (a, b) => jcmp(a.nationality, b.nationality) },
+  { key: "visaType", label: "在留資格", cmp: (a, b) => jcmp(a.visaType, b.visaType) },
   { key: "japaneseLevel", label: "日本語", cmp: (a, b) => (a.japaneseLevel || "").localeCompare(b.japaneseLevel || "") },
+  { key: "sswField", label: "特定技能分野", cmp: (a, b) => jcmp(a.sswField, b.sswField) },
+  { key: "desiredIndustry", label: "希望業種", cmp: (a, b) => jcmp(a.desiredIndustry, b.desiredIndustry) },
+  { key: "desiredLocation", label: "希望勤務地", cmp: (a, b) => jcmp(a.desiredLocation, b.desiredLocation) },
+  { key: "desiredSalary", label: "希望給与", cmp: (a, b) => (a.desiredSalary || 0) - (b.desiredSalary || 0) },
+  { key: "arrival", label: "来日年月日", cmp: (a, b) => jcmp(a.arrival, b.arrival) },
+  { key: "startWork", label: "入社時期", cmp: (a, b) => jcmp(a.startWork, b.startWork) },
   { key: "apps", label: "応募数", cmp: (a, b) => a.apps - b.apps },
   { key: "status", label: "ステータス", cmp: (a, b) => a.status.localeCompare(b.status, "ja") },
 ];
@@ -136,6 +145,12 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [fNat, setFNat] = useState("");
   const [fVisa, setFVisa] = useState("");
   const [fJp, setFJp] = useState("");
+  const [fGender, setFGender] = useState("");
+  const [fSsw, setFSsw] = useState("");
+  const [fInd, setFInd] = useState("");
+  const [fLoc, setFLoc] = useState("");
+  const [fDorm, setFDorm] = useState("");
+  const [fStatus, setFStatus] = useState("");
   const [sortList, setSortList] = useState<SortItem[]>([{ key: "createdAt", dir: "desc" }]);
   const [quick, setQuick] = useState<Quick>("");
   const [page, setPage] = useState(0);
@@ -182,6 +197,12 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const nats = useMemo(() => uniq(rows.map((r) => r.nationality)), [rows]);
   const visas = useMemo(() => uniq(rows.map((r) => r.visaType)), [rows]);
   const jps = useMemo(() => uniq(rows.map((r) => r.japaneseLevel)), [rows]);
+  const genders = useMemo(() => uniq(rows.map((r) => r.gender)), [rows]);
+  const ssws = useMemo(() => uniq(rows.map((r) => r.sswField)), [rows]);
+  const inds = useMemo(() => uniq(rows.map((r) => r.desiredIndustry)), [rows]);
+  const locs = useMemo(() => uniq(rows.map((r) => r.desiredLocation)), [rows]);
+  const dorms = useMemo(() => uniq(rows.map((r) => r.dorm)), [rows]);
+  const statuses = useMemo(() => uniq(rows.map((r) => r.status)), [rows]);
 
   // ----- số liệu cho dashboard mini -----
   const insight = useMemo(() => {
@@ -204,6 +225,12 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
       if (fNat && r.nationality !== fNat) return false;
       if (fVisa && r.visaType !== fVisa) return false;
       if (fJp && r.japaneseLevel !== fJp) return false;
+      if (fGender && r.gender !== fGender) return false;
+      if (fSsw && r.sswField !== fSsw) return false;
+      if (fInd && r.desiredIndustry !== fInd) return false;
+      if (fLoc && r.desiredLocation !== fLoc) return false;
+      if (fDorm && r.dorm !== fDorm) return false;
+      if (fStatus && r.status !== fStatus) return false;
       if (quick === "thisWeek" && new Date(r.createdAt).getTime() < wk) return false;
       if (quick === "incomplete" && !isIncomplete(r)) return false;
       if (quick === "hasSNS" && !r.hasSNS) return false;
@@ -220,7 +247,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
       return 0;
     });
     return out;
-  }, [rows, q, fNat, fVisa, fJp, sortList, quick]);
+  }, [rows, q, fNat, fVisa, fJp, fGender, fSsw, fInd, fLoc, fDorm, fStatus, sortList, quick]);
 
   const emailRows = filtered.filter((r) => r.email);
   const allSelected = emailRows.length > 0 && emailRows.every((r) => selected.has(r.id));
@@ -283,7 +310,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     }
   }
 
-  const activeFilters = [fNat, fVisa, fJp].filter(Boolean).length;
+  const activeFilters = [fNat, fVisa, fJp, fGender, fSsw, fInd, fLoc, fDorm, fStatus].filter(Boolean).length;
+  const clearFilters = () => { setFNat(""); setFVisa(""); setFJp(""); setFGender(""); setFSsw(""); setFInd(""); setFLoc(""); setFDorm(""); setFStatus(""); reset(); };
   const tableWidth = 72 + visCols.reduce((s, c) => s + c.w, 0) + 84;
 
   return (
@@ -343,11 +371,17 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
             絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
           </summary>
-          <div className="absolute left-0 z-30 mt-1 w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+          <div className="absolute left-0 z-30 mt-1 max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
             <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className="input w-full" value={fNat} onChange={(e) => { setFNat(e.target.value); reset(); }}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
             <div><div className="mb-1 text-xs font-bold text-slate-500">在留資格</div><select className="input w-full" value={fVisa} onChange={(e) => { setFVisa(e.target.value); reset(); }}><option value="">すべて</option>{visas.map((v) => <option key={v}>{v}</option>)}</select></div>
             <div><div className="mb-1 text-xs font-bold text-slate-500">日本語</div><select className="input w-full" value={fJp} onChange={(e) => { setFJp(e.target.value); reset(); }}><option value="">すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}</select></div>
-            {activeFilters > 0 && <button onClick={() => { setFNat(""); setFVisa(""); setFJp(""); reset(); }} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
+            <div><div className="mb-1 text-xs font-bold text-slate-500">性別</div><select className="input w-full" value={fGender} onChange={(e) => { setFGender(e.target.value); reset(); }}><option value="">すべて</option>{genders.map((g) => <option key={g}>{g}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">特定技能分野</div><select className="input w-full" value={fSsw} onChange={(e) => { setFSsw(e.target.value); reset(); }}><option value="">すべて</option>{ssws.map((s) => <option key={s}>{s}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">希望業種</div><select className="input w-full" value={fInd} onChange={(e) => { setFInd(e.target.value); reset(); }}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">希望勤務地</div><select className="input w-full" value={fLoc} onChange={(e) => { setFLoc(e.target.value); reset(); }}><option value="">すべて</option>{locs.map((l) => <option key={l}>{l}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">寮</div><select className="input w-full" value={fDorm} onChange={(e) => { setFDorm(e.target.value); reset(); }}><option value="">すべて</option>{dorms.map((d) => <option key={d}>{d}</option>)}</select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">ステータス</div><select className="input w-full" value={fStatus} onChange={(e) => { setFStatus(e.target.value); reset(); }}><option value="">すべて</option>{statuses.map((s) => <option key={s}>{s}</option>)}</select></div>
+            {activeFilters > 0 && <button onClick={clearFilters} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
           </div>
         </details>
 

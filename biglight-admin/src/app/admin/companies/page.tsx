@@ -19,6 +19,7 @@ export default async function Page() {
     orderBy: { name: "asc" },
     include: {
       jobs: { select: { id: true, code: true, title: true, status: true, publicStatus: true }, orderBy: { updatedAt: "desc" } },
+      _count: { select: { applications: true } },
     },
   });
 
@@ -29,6 +30,7 @@ export default async function Page() {
     contactName: c.contactName,
     phone: c.phone,
     email: c.email,
+    applicants: c._count.applications,
     total: c.jobs.length,
     open: c.jobs.filter((j) => j.status === "OPEN").length,
     jobs: c.jobs.map((j) => ({ id: j.id, code: j.code, title: j.title, opStatus: j.status, publicStatus: j.publicStatus })),
