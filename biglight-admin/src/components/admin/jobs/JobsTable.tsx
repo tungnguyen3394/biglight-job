@@ -55,6 +55,7 @@ const DEFAULT_VISIBLE = ["company", "jobType", "location", "recruit", "status", 
 
 export function JobsTable({
   rows, sort, onSort, canEdit, canDelete, onDelete, onDuplicate, busyId,
+  canBulkDelete = false, selected, onToggleSel, allSel = false, onToggleAll,
 }: {
   rows: JobRow[];
   sort: { key: SortKey; dir: SortDir };
@@ -64,6 +65,11 @@ export function JobsTable({
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   busyId: string | null;
+  canBulkDelete?: boolean;
+  selected?: Set<string>;
+  onToggleSel?: (id: string) => void;
+  allSel?: boolean;
+  onToggleAll?: () => void;
 }) {
   const [visible, setVisible] = useState<Set<string>>(() => new Set(DEFAULT_VISIBLE));
   const [menu, setMenu] = useState(false);
@@ -125,7 +131,7 @@ export function JobsTable({
               <HeadCell label="求人ID" sortKey="code" extra="sticky left-0 top-0 z-30 bg-slate-50 border-r border-slate-200" />
               <HeadCell label="求人タイトル" sortKey="title" extra="sticky top-0 z-20 bg-slate-50 min-w-[220px]" />
               {cols.map((c) => <HeadCell key={c.key} label={c.label} sortKey={c.sortKey} extra="sticky top-0 z-20 bg-slate-50" />)}
-              <th className={`${TH} sticky right-0 top-0 z-30 bg-slate-50 border-l border-slate-200 text-center`}>操作</th>
+              <th className={`${TH} sticky right-0 top-0 z-30 bg-slate-50 border-l border-slate-200 text-center`}>{canBulkDelete ? <span className="inline-flex items-center gap-1.5"><input type="checkbox" checked={allSel} onChange={onToggleAll} title="全選択" />操作</span> : "操作"}</th>
             </tr>
           </thead>
           <tbody>
@@ -136,6 +142,7 @@ export function JobsTable({
                 {cols.map((c) => <td key={c.key} className={TD}>{c.render(j)}</td>)}
                 <td className="sticky right-0 z-10 bg-inherit border-l border-slate-200 px-2 py-3">
                   <div className="flex items-center justify-center gap-1">
+                    {canBulkDelete && <input type="checkbox" className="mr-1" checked={selected?.has(j.id) ?? false} onChange={() => onToggleSel?.(j.id)} title="選択" />}
                     <IconBtn title="詳細" href={`/jobs/${j.id}`} newTab icon={<><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" /><circle cx="12" cy="12" r="3" /></>} />
                     {canEdit && <IconBtn title="編集" href={`/admin/jobs/${j.id}`} icon={<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>} />}
                     {canEdit && <IconBtn title="複製" onClick={() => onDuplicate(j.id)} busy={busyId === j.id} icon={<><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></>} />}

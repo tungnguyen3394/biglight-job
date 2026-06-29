@@ -1,7 +1,7 @@
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canSeeCommission } from "@/lib/permissions";
-import { uiCan } from "@/lib/adminAccess";
+import { uiCan, effectiveAdminLevel } from "@/lib/adminAccess";
 import { jobScopeWhere } from "@/lib/api";
 import { JobsManager } from "./JobsManager";
 import type { JobRow } from "./types";
@@ -88,6 +88,7 @@ export default async function JobsPage() {
         canCreate={uiCan(user, "create", "job", "jobs.create")}
         canEdit={uiCan(user, "update", "job", "jobs.update")}
         canDelete={uiCan(user, "delete", "job", "jobs.delete")}
+        canBulkDelete={effectiveAdminLevel(user) === "ADMIN"}
       />
     </div>
   );

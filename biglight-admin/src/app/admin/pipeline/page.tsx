@@ -11,5 +11,5 @@ export default async function Page() {
   if (!user || !level || !adminCan(level, "applicants.read")) return <Forbidden />;
   // Admin/Staff: sửa được; View: chỉ xem.
   const canEdit = adminCan(level, "applicants.update");
-  return <PipelineSplit canEdit={canEdit} />;
+  return <PipelineSplit canEdit={canEdit} canRowDelete={adminCan(level, "applicants.delete")} canBulkDelete={level === "ADMIN"} />;
 }

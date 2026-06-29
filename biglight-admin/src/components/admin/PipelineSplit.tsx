@@ -6,6 +6,7 @@ import { PIPELINE_STATUSES, PIPE_LABEL, PIPE_TONE, bucket, type PipeStatus } fro
 import { FilterIcon, SortIcon, ColumnsIcon, ExportBar } from "@/components/admin/toolbar";
 import { StageTracker } from "@/components/common/StageTracker";
 import { STAGE_OF, isEnded } from "@/lib/applicationFlow";
+import { requestDelete } from "@/lib/adminDelete";
 
 type Staff = { id: string; name: string; image: string | null };
 type ListItem = {
@@ -57,7 +58,7 @@ const PSORT: { key: PSortKey; label: string; val: (i: ListItem) => string }[] = 
   { key: "nationality", label: "国籍", val: (i) => i.nationality || "" },
 ];
 
-export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
+export default function PipelineSplit({ canEdit, canRowDelete = false, canBulkDelete = false }: { canEdit: boolean; canRowDelete?: boolean; canBulkDelete?: boolean }) {
   const [list, setList] = useState<ListItem[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [sel, setSel] = useState<string | null>(null);
@@ -80,6 +81,17 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const selectAllPcols = () => setPcols(new Set(PCOLUMNS.map((c) => c.key)));
   const clearPcols = () => setPcols(new Set());
   const pvis = PCOLUMNS.filter((c) => pcols.has(c.key));
+  const [bulkSel, setBulkSel] = useState<Set<string>>(new Set());
+  const [delBusy, setDelBusy] = useState(false);
+  const toggleBulk = (id: string) => setBulkSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  async function delApps(ids: string[], label: string) {
+    if (!ids.length || delBusy) return;
+    if (!window.confirm(`${label}を削除します。元に戻せません。よろしいですか？`)) return;
+    setDelBusy(true);
+    const r = await requestDelete("application", ids);
+    setDelBusy(false);
+    if (r.ok) { setBulkSel(new Set()); setSel(null); setDetail(null); loadList(); } else alert(r.error);
+  }
 
   async function loadList() {
     const r = await fetch("/api/admin/pipeline");
@@ -214,6 +226,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
               </div>
             </details>
             <ExportBar compact filename="応募進捗" title="応募進捗一覧" getData={() => ({ headers: ["氏名", ...PCOLUMNS.map((c) => c.label)], rows: filtered.map((i) => [i.name, ...PCOLUMNS.map((c) => c.value(i))]) })} />
+            {canBulkDelete && bulkSel.size > 0 && <button onClick={() => delApps([...bulkSel], `選択した${bulkSel.size}件の応募`)} disabled={delBusy} className="btn btn-ghost btn-sm gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>選択削除（{bulkSel.size}）</button>}
             <span className="ml-auto text-sm text-slate-500">{filtered.length} 件</span>
           </div>
 
@@ -222,14 +235,16 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
             {loading ? <div className="p-10 text-center text-sm text-slate-400">読み込み中…</div>
               : filtered.length === 0 ? <div className="p-12 text-center text-sm text-slate-400">該当する応募がありません。</div>
               : (
-                <table className="w-full table-fixed text-sm" style={{ minWidth: 240 + pvis.reduce((s, c) => s + c.w, 0) }}>
-                  <colgroup><col style={{ width: 200 }} />{pvis.map((c) => <col key={c.key} style={{ width: c.w }} />)}</colgroup>
+                <table className="w-full table-fixed text-sm" style={{ minWidth: 240 + (canBulkDelete ? 44 : 0) + pvis.reduce((s, c) => s + c.w, 0) }}>
+                  <colgroup>{canBulkDelete && <col style={{ width: 44 }} />}<col style={{ width: 200 }} />{pvis.map((c) => <col key={c.key} style={{ width: c.w }} />)}</colgroup>
                   <thead><tr className="border-b border-slate-100 text-left text-xs text-slate-500">
+                    {canBulkDelete && <th className="px-3 py-2.5"><input type="checkbox" checked={filtered.length > 0 && filtered.every((i) => bulkSel.has(i.id))} onChange={() => setBulkSel((s) => (filtered.every((i) => s.has(i.id)) ? new Set() : new Set(filtered.map((i) => i.id))))} title="全選択" /></th>}
                     <th className="px-3 py-2.5">氏名</th>{pvis.map((c) => <th key={c.key} className="px-3 py-2.5">{c.label}</th>)}
                   </tr></thead>
                   <tbody>
                     {filtered.map((i) => (
                       <tr key={i.id} onClick={() => select(i.id)} className={`h-[56px] cursor-pointer border-b border-slate-50 align-middle hover:bg-bl-redsoft/40 ${sel === i.id ? "bg-bl-redsoft/60" : ""}`}>
+                        {canBulkDelete && <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={bulkSel.has(i.id)} onChange={() => toggleBulk(i.id)} /></td>}
                         <td className="px-3 py-2"><div className="flex items-center gap-2"><Avatar name={i.name} image={i.image} size={8} /><div className="min-w-0 truncate font-semibold text-ink" title={i.name}>{i.name}</div></div></td>
                         {pvis.map((c) => (
                           <td key={c.key} className="px-3 py-2">
@@ -262,6 +277,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
                   <div className="truncate text-xs text-slate-400">{detail.candidate.kana || "—"} ・ {detail.candidate.nationality ?? "—"}</div>
                 </div>
                 <span className={`badge ${PIPE_TONE[bucket(detail.status)]}`}>{PIPE_LABEL[bucket(detail.status)]}</span>
+                {canRowDelete && <button onClick={() => delApps([detail.id], `「${detail.candidate.name}」の応募`)} disabled={delBusy} title="この応募を削除" className="shrink-0 rounded-lg border border-red-200 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg></button>}
                 <button onClick={() => { setSel(null); setDetail(null); }} className="ml-1 shrink-0 text-slate-400 hover:text-ink" aria-label="閉じる"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
               </div>
 
