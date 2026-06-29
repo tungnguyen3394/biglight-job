@@ -7,10 +7,12 @@ import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateH
 
 export const dynamic = "force-dynamic";
 
+// OG/SNS chỉ cho TRANG CHỦ: dùng ảnh logo BIGLIGHT Smile (nền trắng, 1200×630).
 export const metadata = buildMetadata({
-  title: "特定技能の求人を探す｜寮あり・ビザ支援｜BIGLIGHT JOB",
-  description: "特定技能（製造・建設・介護ほか全16分野）の求人を、地域・分野・タグでかんたん検索。寮あり・未経験OK・ビザサポートつき。外国人材のお仕事探しをBIGLIGHTが無料で応援します。",
+  title: "BIGLIGHT JOB | 特定技能専門の求人・転職サイト",
+  description: "あなたに合った特定技能求人を見つけよう。製造業・建設業・外食業など全国の求人を掲載。履歴書作成・面接練習・ビザ申請・入社後フォローまでBIGLIGHTが無料でサポートします。",
   path: "/",
+  image: "/api/og-home",
 });
 
 export default async function Home({ searchParams }: { searchParams: { q?: string } }) {
