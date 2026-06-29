@@ -41,7 +41,7 @@ const PCOLUMNS: { key: PCol; label: string; w: number; value: (i: ListItem) => s
   { key: "job", label: "求人", w: 180, value: (i) => i.jobTitle },
   { key: "jobCode", label: "求人コード", w: 100, value: (i) => i.jobCode },
   { key: "company", label: "企業", w: 150, value: (i) => i.company },
-  { key: "staff", label: "担当者", w: 120, value: (i) => i.staffName || "未割当" },
+  { key: "staff", label: "担当者", w: 160, value: (i) => i.staffName || "未割当" },
   { key: "createdAt", label: "応募日", w: 100, value: (i) => fmtDay(i.createdAt) },
   { key: "updatedAt", label: "最終更新", w: 100, value: (i) => fmtDay(i.updatedAt) },
 ];
@@ -168,9 +168,8 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_440px]">
-        {/* ===== LEFT: list ===== */}
-        <div className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${sel ? "hidden lg:block" : ""}`}>
+      {/* ===== Danh sách (full-width) ===== */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {/* filter bar */}
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">
             <div className="relative max-w-xs flex-1">
@@ -235,7 +234,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
                         {pvis.map((c) => (
                           <td key={c.key} className="px-3 py-2">
                             {c.key === "status" ? <span className={`badge ${PIPE_TONE[bucket(i.status)]}`}>{PIPE_LABEL[bucket(i.status)]}</span>
-                              : c.key === "staff" ? (i.staffName ? <span className="inline-flex items-center gap-1.5 truncate"><Avatar name={i.staffName} image={i.staffImage} size={6} /><span className="truncate text-xs">{i.staffName}</span></span> : <span className="text-xs text-slate-300">未割当</span>)
+                              : c.key === "staff" ? (i.staffName ? <span className="flex min-w-0 items-center gap-1.5"><Avatar name={i.staffName} image={i.staffImage} size={6} /><span className="truncate text-xs">{i.staffName}</span></span> : <span className="text-xs text-slate-300">未割当</span>)
                               : <span className="block truncate text-xs text-slate-600" title={c.value(i)}>{c.value(i) || <span className="text-slate-300">—</span>}</span>}
                           </td>
                         ))}
@@ -247,23 +246,23 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
           </div>
         </div>
 
-        {/* ===== RIGHT: detail ===== */}
-        <div className={`${sel ? "fixed inset-0 z-50 overflow-y-auto bg-white p-4 lg:static lg:z-auto lg:p-0" : "hidden lg:block"}`}>
-          {!sel ? (
-            <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm text-slate-400">左の一覧から応募者を選択してください。</div>
-          ) : !detail ? (
+      {/* ===== Chi tiết ứng viên: modal đè lên ===== */}
+      {sel && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-2 sm:p-6" onClick={() => { setSel(null); setDetail(null); }}>
+          <div className="my-2 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          {!detail ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-400">読み込み中…</div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               {/* header */}
-              <div className="flex items-center gap-3 border-b border-slate-100 p-4">
-                <button onClick={() => { setSel(null); setDetail(null); }} className="lg:hidden" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 18-6-6 6-6" /></svg></button>
+              <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-2xl border-b border-slate-100 bg-white p-4">
                 <Avatar name={detail.candidate.name} image={detail.candidate.image} size={12} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-base font-black text-ink">{detail.candidate.name}</div>
                   <div className="truncate text-xs text-slate-400">{detail.candidate.kana || "—"} ・ {detail.candidate.nationality ?? "—"}</div>
                 </div>
                 <span className={`badge ${PIPE_TONE[bucket(detail.status)]}`}>{PIPE_LABEL[bucket(detail.status)]}</span>
+                <button onClick={() => { setSel(null); setDetail(null); }} className="ml-1 shrink-0 text-slate-400 hover:text-ink" aria-label="閉じる"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
               </div>
 
               <div className="max-h-[calc(100vh-220px)] space-y-4 overflow-y-auto p-4 lg:max-h-[70vh]">
@@ -378,8 +377,9 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
               </div>
             </div>
           )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
