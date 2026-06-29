@@ -74,12 +74,13 @@ const CSS = `
 `;
 
 export function JobForm({
-  mode, jobId, companies, canInternal, initialForm, code, options,
+  mode, jobId, companies, canInternal, canEdit = true, initialForm, code, options,
 }: {
   mode: "create" | "edit";
   jobId?: string;
   companies: Opt[];
   canInternal: boolean;
+  canEdit?: boolean;
   initialForm?: JobFormState;
   code?: string;
   options?: { industry?: string[]; tags?: string[] };
@@ -180,7 +181,7 @@ export function JobForm({
         {mode === "edit" && !editing ? (
           <>
             <button className="btn btn-ghost" onClick={() => router.push("/admin/jobs")}>一覧へ戻る</button>
-            <button className="btn btn-red" onClick={() => setEditing(true)}>編集</button>
+            {canEdit && <button className="btn btn-red" onClick={() => setEditing(true)}>編集</button>}
           </>
         ) : (
           <>

@@ -10,6 +10,8 @@ const EXCLUDE = new Set([
   "id", "userId", "status", "updatedAt",
   "internalMemo", "consultNote", "contactHistory", "companyHistory", "riskNotes",
   "documents", "prefs", "savedJobIds", "passwordHash",
+  // Thông tin nội bộ của 企業 — KHÔNG cho làm tag chèn mail (tránh lộ hợp đồng/thanh toán).
+  "paymentInfo", "contractDetail", "contractDate", "notes",
 ]);
 
 // Nhãn JP cho field thường gặp (fallback = tên cột). Field mới chưa có nhãn → hiện tên cột.

@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "応募する前にプロフィールを完成してください。", need: true, missing: profileMissing(candidate, candidate.user) }, { status: 422 });
   }
 
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  // Chỉ cho ứng tuyển求人 đã công khai + đang tuyển (không lọt tin nội bộ/nháp).
+  const job = await prisma.job.findFirst({ where: { id: jobId, publicStatus: "PUBLIC" } });
   if (!job) return NextResponse.json({ error: "Job not found" }, { status: 404 });
 
   const applicantNote = typeof note === "string" && note.trim() ? note.trim() : null;

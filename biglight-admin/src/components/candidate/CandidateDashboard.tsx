@@ -68,15 +68,14 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   }
   async function apply(id: string) {
     setBusy(id);
-    const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
-    setBusy(null);
-    if (res.status === 422) {
-      setNotice("応募する前にプロフィールを完成してください。");
-      setSec("profile");
-      return;
-    }
-    setSec("apps");
-    router.refresh();
+    try {
+      const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId: id }) });
+      setBusy(null);
+      if (res.status === 422) { setNotice("応募する前にプロフィールを完成してください。"); setSec("profile"); return; }
+      if (!res.ok) { setNotice("応募に失敗しました。しばらくして再度お試しください。"); return; } // không còn báo "thành công" giả
+      setSec("apps");
+      router.refresh();
+    } catch { setBusy(null); setNotice("応募に失敗しました。通信状態をご確認ください。"); }
   }
   async function cancelApp(jobId: string) {
     setBusy(jobId);

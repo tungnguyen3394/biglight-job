@@ -40,8 +40,6 @@ export function JobsManager({
       if (filters.publicStatus && r.publicStatus !== filters.publicStatus) return false;
       if (filters.dorm === "1" && !r.dormitory) return false;
       if (filters.dorm === "0" && r.dormitory) return false;
-      if (filters.night === "1" && !r.nightShift) return false;
-      if (filters.night === "0" && r.nightShift) return false;
       if (filters.location && r.location !== filters.location) return false;
       if (filters.staff && r.staff !== filters.staff) return false;
       if (filters.dateFrom && r.updatedAt.slice(0, 10) < filters.dateFrom) return false;

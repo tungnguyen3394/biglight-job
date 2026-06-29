@@ -51,10 +51,6 @@ export function JobsFilterPanel({
             <label className="mb-1 block text-xs font-semibold text-slate-500">寮</label>
             <select className="input" value={d.dorm} onChange={(e) => set("dorm", e.target.value)}><option value="">すべて</option><option value="1">寮あり</option><option value="0">寮なし</option></select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-500">夜勤</label>
-            <select className="input" value={d.night} onChange={(e) => set("night", e.target.value)}><option value="">すべて</option><option value="1">夜勤あり</option><option value="0">夜勤なし</option></select>
-          </div>
           <Sel label="勤務地" k="location" opts={options.locations} all="すべて" />
           <Sel label="担当者" k="staff" opts={options.staffs} all="すべて" />
           <div>

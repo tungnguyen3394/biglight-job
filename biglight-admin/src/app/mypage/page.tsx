@@ -26,11 +26,15 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     if (candidate) {
       // Hồ sơ chưa đủ → sang màn hình hoàn thiện hồ sơ (không tạo đơn).
       if (!isProfileComplete(candidate, candidate.user)) redirect("/mypage?need=1");
-      const job = await prisma.job.findUnique({ where: { id: searchParams.apply } });
+      // Chỉ ứng tuyển求人 đã công khai (không lọt tin nội bộ/nháp).
+      const job = await prisma.job.findFirst({ where: { id: searchParams.apply, publicStatus: "PUBLIC" } });
       if (job) {
         const exists = await prisma.application.findFirst({ where: { candidateId: candidate.id, jobId: job.id } });
         if (!exists) {
           await prisma.application.create({ data: { candidateId: candidate.id, jobId: job.id, companyId: job.companyId, status: "NEW" } });
+          // Bỏ khỏi お気に入り cho đồng bộ với API ứng tuyển.
+          const saved = (candidate.savedJobIds ?? []).filter((x) => x !== job.id);
+          if (saved.length !== (candidate.savedJobIds ?? []).length) await prisma.candidate.update({ where: { id: candidate.id }, data: { savedJobIds: saved } });
         }
       }
     }

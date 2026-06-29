@@ -20,10 +20,12 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "fu
 
   async function submit() {
     setState("sending");
-    const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId }) });
-    if (res.status === 422) { const j = await res.json().catch(() => ({})); setMissing(Array.isArray(j.missing) ? j.missing : []); setState("need"); return; }
-    if (res.ok) setState("done");
-    else { setState("form"); alert((await res.json().catch(() => ({}))).error || "送信に失敗しました"); }
+    try {
+      const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId }) });
+      if (res.status === 422) { const j = await res.json().catch(() => ({})); setMissing(Array.isArray(j.missing) ? j.missing : []); setState("need"); return; }
+      if (res.ok) { setState("done"); return; }
+      setState("form"); alert((await res.json().catch(() => ({}))).error || "送信に失敗しました。");
+    } catch { setState("form"); alert("送信に失敗しました。通信状態をご確認ください。"); }
   }
 
   return (

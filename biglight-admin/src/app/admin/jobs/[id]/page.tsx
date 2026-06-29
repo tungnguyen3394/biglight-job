@@ -32,6 +32,7 @@ export default async function EditJobPage({ params }: { params: { id: string } }
         jobId={job.id}
         companies={companies}
         canInternal={canInternal}
+        canEdit={uiCan(user, "update", "job", "jobs.update")}
         initialForm={initialForm}
         code={job.code}
         options={{ industry: opts.industry, tags: opts.tags }}

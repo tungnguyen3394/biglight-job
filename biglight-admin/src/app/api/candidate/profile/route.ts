@@ -8,6 +8,8 @@ function toDate(s?: string | null) {
   return isNaN(d.getTime()) ? null : d;
 }
 const arr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
+// Field KHÔNG gửi (undefined) → giữ giá trị cũ; gửi rỗng → cho phép xóa (null). Tránh mất dữ liệu do submit thiếu key.
+const keepStr = (v: unknown, old: string | null) => (v === undefined ? old : typeof v === "string" && v.trim() ? v.trim() : null);
 
 // POST /api/candidate/profile — lưu hồ sơ của lao động đang đăng nhập (đủ trường như bản gốc).
 export async function POST(req: Request) {
@@ -46,25 +48,25 @@ export async function POST(req: Request) {
     where: { id: candidate.id },
     data: {
       name: typeof b.name === "string" && b.name.trim() ? b.name.trim() : candidate.name,
-      kana: typeof b.kana === "string" && b.kana.trim() ? b.kana.trim() : null,
-      birthdate: toDate(b.birth),
-      gender: b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY",
-      nationality: b.nat || null,
-      phone: typeof b.phone === "string" && b.phone.trim() ? b.phone.trim() : null,
+      kana: keepStr(b.kana, candidate.kana),
+      birthdate: b.birth === undefined ? candidate.birthdate : toDate(b.birth),
+      gender: b.gender === undefined ? candidate.gender : (b.gender === "MALE" || b.gender === "FEMALE" ? b.gender : "ANY"),
+      nationality: keepStr(b.nat, candidate.nationality),
+      phone: keepStr(b.phone, candidate.phone),
       email: typeof b.email === "string" && b.email.trim() ? b.email.trim() : candidate.email,
-      currentAddress: b.address || null,
-      facebookUrl: b.facebookUrl || null,
-      visaType: b.visa || null,
-      currentTokuteiField: b.sswField || null,
-      visaExpiryDate: toDate(b.expiry),
-      japaneseLevel: b.jp || null,
-      desiredSalary: typeof b.desiredSalary === "number" ? b.desiredSalary : null,
-      desiredIndustry: fields.length ? fields.join(",") : null,
-      desiredLocation: areas.length ? areas.join(",") : null,
+      currentAddress: keepStr(b.address, candidate.currentAddress),
+      facebookUrl: keepStr(b.facebookUrl, candidate.facebookUrl),
+      visaType: keepStr(b.visa, candidate.visaType),
+      currentTokuteiField: b.sswField === undefined ? candidate.currentTokuteiField : (b.sswField || null),
+      visaExpiryDate: b.expiry === undefined ? candidate.visaExpiryDate : toDate(b.expiry),
+      japaneseLevel: keepStr(b.jp, candidate.japaneseLevel),
+      desiredSalary: typeof b.desiredSalary === "number" ? b.desiredSalary : (b.desiredSalary === undefined ? candidate.desiredSalary : null),
+      desiredIndustry: b.fields === undefined ? candidate.desiredIndustry : (fields.length ? fields.join(",") : null),
+      desiredLocation: b.areas === undefined ? candidate.desiredLocation : (areas.length ? areas.join(",") : null),
       // bool tiện lọc cho admin (rút từ lựa chọn 3-way)
-      wantDormitory: b.dorm === "寮を希望",
-      canNightShift: b.nightshift === "できる",
-      canShiftWork: b.shiftwork === "できる",
+      wantDormitory: b.dorm === undefined ? candidate.wantDormitory : b.dorm === "寮を希望",
+      canNightShift: b.nightshift === undefined ? candidate.canNightShift : b.nightshift === "できる",
+      canShiftWork: b.shiftwork === undefined ? candidate.canShiftWork : b.shiftwork === "できる",
       changeReason: [reasons.join("、"), b.reasonOther].filter(Boolean).join(" / ") || null,
       prefs,
     },

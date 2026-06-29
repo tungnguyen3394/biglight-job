@@ -132,9 +132,9 @@ export function MailMergeModal({ scope, ids, onClose }: { scope: MergeScope; ids
           <div className="p-10 text-center text-sm text-slate-400">読み込み中…</div>
         ) : result ? (
           <div className="p-8 text-center">
-            <p className="text-lg font-black text-ink">送信が完了しました</p>
-            <p className="mt-2 text-sm text-slate-600">成功 <b className="text-emerald-600">{result.sent}</b> 件 ・ 失敗 <b className="text-red-600">{result.failed}</b> 件</p>
-            <p className="mt-1 text-xs text-slate-400">（GASの仕様上、実際の到達はGmailの「送信済み」でご確認ください）</p>
+            <p className="text-lg font-black text-ink">送信リクエストを実行しました</p>
+            <p className="mt-2 text-sm text-slate-600">リクエスト送信 <b className="text-emerald-600">{result.sent}</b> 件 ・ 接続エラー <b className="text-red-600">{result.failed}</b> 件</p>
+            <p className="mx-auto mt-2 max-w-sm rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">⚠「リクエスト送信」は実際の到達を保証しません。各自Gmailの「送信済み」で必ずご確認ください。</p>
             <div className="mt-5 flex justify-center gap-2">
               <button onClick={() => { setResult(null); setTab("history"); loadLogs(); }} className="btn btn-ghost">送信履歴を見る</button>
               <button onClick={onClose} className="btn btn-navy">閉じる</button>
