@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { can } from "@/lib/permissions";
 import { effectiveAdminLevel, adminCan, uiCan } from "@/lib/adminAccess";
 import { Forbidden } from "@/components/admin/Forbidden";
-import { CompaniesList, type CompanyRow } from "@/components/admin/CompaniesList";
+import { CompaniesManager, type CompanyRow } from "@/components/admin/CompaniesManager";
+
+const ymd = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : null);
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +32,15 @@ export default async function Page() {
     contactName: c.contactName,
     phone: c.phone,
     email: c.email,
+    address: c.address,
+    contractDate: ymd(c.contractDate),
+    paymentInfo: c.paymentInfo,
+    contractDetail: c.contractDetail,
+    notes: c.notes,
     applicants: c._count.applications,
     total: c.jobs.length,
     open: c.jobs.filter((j) => j.status === "OPEN").length,
+    createdAt: new Date(c.createdAt).toISOString().slice(0, 10),
     jobs: c.jobs.map((j) => ({ id: j.id, code: j.code, title: j.title, opStatus: j.status, publicStatus: j.publicStatus })),
   }));
 
@@ -51,7 +59,7 @@ export default async function Page() {
         )}
       </div>
 
-      <CompaniesList rows={rows} canCreateJob={uiCan(user, "create", "job", "jobs.create")} />
+      <CompaniesManager rows={rows} canCreateJob={uiCan(user, "create", "job", "jobs.create")} />
     </div>
   );
 }
