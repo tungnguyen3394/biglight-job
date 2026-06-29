@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { JobStatusBadge, BoolBadge } from "./JobStatusBadge";
 import { JOB_OP_STATUS_LABEL } from "@/lib/constants";
+import { ColumnsIcon } from "@/components/admin/toolbar";
 import { type JobRow, type SortKey, type SortDir } from "@/app/admin/jobs/types";
 
 function SortArrow({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -94,7 +95,7 @@ export function JobsTable({
       <div className="mb-2 flex items-center justify-end">
         <div ref={ref} className="relative">
           <button onClick={() => setMenu((m) => !m)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-bl-red">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" /></svg>
+            <ColumnsIcon />
             表示項目（{cols.length}）
           </button>
           {menu && (

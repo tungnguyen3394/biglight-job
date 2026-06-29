@@ -4,11 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { isBiglight } from "@/lib/api";
 import { effectiveAdminLevel, adminCan } from "@/lib/adminAccess";
 import { Forbidden } from "@/components/admin/Forbidden";
-import { Badge } from "@/components/ui/Badge";
+import { ArticlesTable, type ArticleRow } from "@/components/admin/ArticlesTable";
 
 export const dynamic = "force-dynamic";
-
-const STATUS = { DRAFT: { jp: "下書き", tone: "amber" }, PUBLISHED: { jp: "公開", tone: "green" }, SCHEDULED: { jp: "予約", tone: "blue" } } as const;
 
 export default async function Page() {
   const user = await getSessionUser();
@@ -17,6 +15,12 @@ export default async function Page() {
   const canWrite = adminCan(level, "articles.create");
 
   const articles = await prisma.article.findMany({ orderBy: { updatedAt: "desc" }, take: 200 });
+  const rows: ArticleRow[] = articles.map((a) => ({
+    id: a.id, title: a.title, slug: a.slug, status: a.status, category: a.category,
+    author: a.author, focusKeyword: a.focusKeyword, seoScore: a.seoScore,
+    publishAt: a.publishAt ? a.publishAt.toISOString() : null,
+    createdAt: a.createdAt.toISOString(), updatedAt: a.updatedAt.toISOString(),
+  }));
 
   return (
     <div>
@@ -33,41 +37,10 @@ export default async function Page() {
         )}
       </div>
 
-      {articles.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="card p-10 text-center text-slate-400">まだ記事がありません。「記事を作成」から SEO 記事を作成できます。</div>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 text-left text-xs text-slate-500">
-                <th className="p-3">タイトル</th>
-                <th className="p-3">カテゴリ</th>
-                <th className="p-3">キーワード</th>
-                <th className="p-3">SEO</th>
-                <th className="p-3">ステータス</th>
-                <th className="p-3">更新日</th>
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {articles.map((ar) => {
-                const st = STATUS[ar.status as keyof typeof STATUS] ?? STATUS.DRAFT;
-                const tone = ar.seoScore >= 80 ? "text-emerald-600" : ar.seoScore >= 50 ? "text-amber-600" : "text-red-600";
-                return (
-                  <tr key={ar.id} className="border-b border-slate-50 hover:bg-slate-50">
-                    <td className="p-3"><Link href={`/admin/articles/${ar.id}`} className="font-semibold text-navy hover:underline">{ar.title}</Link>{ar.slug && <div className="text-xs text-slate-400">/{ar.slug}</div>}</td>
-                    <td className="p-3 text-slate-600">{ar.category ?? "—"}</td>
-                    <td className="p-3 text-slate-600">{ar.focusKeyword ?? "—"}</td>
-                    <td className={`p-3 font-bold ${tone}`}>{ar.seoScore}</td>
-                    <td className="p-3"><Badge tone={st.tone as never}>{st.jp}</Badge></td>
-                    <td className="p-3 whitespace-nowrap text-xs text-slate-400">{new Date(ar.updatedAt).toLocaleDateString("ja-JP")}</td>
-                    <td className="p-3"><Link href={`/admin/articles/${ar.id}`} className="text-xs font-semibold text-brand-blue hover:underline">{canWrite ? "編集" : "表示"}</Link></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ArticlesTable rows={rows} canWrite={canWrite} />
       )}
     </div>
   );

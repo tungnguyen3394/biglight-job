@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
 
 export type CandidateRow = {
   id: string;
@@ -114,7 +115,6 @@ const COLUMNS: { key: ColKey; label: string; w: number; value: (r: CandidateRow)
   { key: "createdAt", label: "登録日", w: 110, value: (r) => r.createdAt.slice(0, 10) },
 ];
 const DEFAULT_COLS: ColKey[] = ["name", "nationality", "phone", "email", "visaType", "japaneseLevel", "createdAt", "status"];
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Sắp xếp nâng cao (đa trường, ưu tiên theo thứ tự).
 type SortField = "createdAt" | "lastActive" | "name" | "gender" | "birthdate" | "nationality" | "visaType" | "japaneseLevel" | "sswField" | "desiredIndustry" | "desiredLocation" | "desiredSalary" | "arrival" | "startWork" | "apps" | "status";
@@ -263,28 +263,6 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     hasSNS: "SNS登録あり",
   };
 
-  // ----- xuất CSV (theo cột hiển thị + kết quả đã lọc) -----
-  function exportCsv() {
-    const header = visCols.map((c) => c.label);
-    const body = filtered.map((r) => visCols.map((c) => c.value(r)));
-    const csv = [header, ...body].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `応募者一覧_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  // ----- in (mở cửa sổ in với bảng đã lọc) -----
-  function printList() {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    const head = visCols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
-    const body = filtered.map((r) => `<tr>${visCols.map((c) => `<td>${escapeHtml(c.value(r))}</td>`).join("")}</tr>`).join("");
-    w.document.write(`<!doctype html><meta charset="utf-8"><title>応募者一覧</title><style>body{font-family:'Noto Sans JP',sans-serif;padding:20px;color:#16181d}h1{font-size:18px;margin:0 0 4px}.meta{color:#6b7280;font-size:12px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f3f4f6}</style><h1>応募者一覧（${filtered.length}名）</h1><div class="meta">${new Date().toLocaleString("ja-JP")}</div><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`);
-    w.document.close(); w.focus(); w.print();
-  }
-
   function renderCell(key: ColKey, r: CandidateRow) {
     switch (key) {
       case "name":
@@ -367,8 +345,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
 
         {/* 絞り込み (gom các bộ lọc) */}
         <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+            <FilterIcon />
             絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
           </summary>
           <div className="absolute left-0 z-30 mt-1 max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -387,8 +365,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
 
         {/* 並び替え nâng cao (đa trường) */}
         <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" /></svg>
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+            <SortIcon />
             並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-200 px-1.5 text-[10px] font-bold text-slate-600">{sortList.length}</span>}
           </summary>
           <div className="absolute left-0 z-30 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -416,7 +394,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
         <div className="ml-auto flex items-center gap-2">
           {/* 表示項目 */}
           <details className="relative">
-            <summary className="btn btn-ghost btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden">表示項目</summary>
+            <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
             <div className="absolute right-0 z-30 mt-1 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
               <div className="mb-1 flex gap-3 border-b border-slate-100 px-1 pb-1.5">
                 <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
@@ -430,9 +408,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
               ))}
             </div>
           </details>
-          <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
-          <button onClick={printList} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>印刷</button>
-          <button onClick={() => selected.size && setMailOpen(true)} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /><path d="m22 6-10 7L2 6" /></svg>メール送信{selected.size > 0 && `（${selected.size}）`}</button>
+          <ExportBar compact filename="応募者一覧" title="応募者一覧" getData={() => ({ headers: visCols.map((c) => c.label), rows: filtered.map((r) => visCols.map((c) => c.value(r))) })} />
+          <button onClick={() => selected.size && setMailOpen(true)} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40"><MailIcon />メール送信{selected.size > 0 && `（${selected.size}）`}</button>
           <span className="text-sm text-slate-500">{filtered.length} 名</span>
         </div>
       </div>

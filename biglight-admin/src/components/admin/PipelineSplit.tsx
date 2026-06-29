@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PIPELINE_STATUSES, PIPE_LABEL, PIPE_TONE, bucket, type PipeStatus } from "@/lib/pipeline";
+import { FilterIcon, SortIcon, ColumnsIcon, ExportBar } from "@/components/admin/toolbar";
 
 type Staff = { id: string; name: string; image: string | null };
 type ListItem = {
@@ -29,6 +30,31 @@ const uniq = (a: (string | null)[]) => Array.from(new Set(a.filter((x): x is str
 const fmtDay = (iso: string) => iso.slice(0, 10).replace(/-/g, "/");
 const fmtDT = (iso: string) => `${iso.slice(0, 10).replace(/-/g, "/")} ${iso.slice(11, 16)}`;
 
+// Cột bật/tắt qua 表示項目 (cột 氏名 luôn hiển thị).
+type PCol = "kana" | "nationality" | "status" | "job" | "jobCode" | "company" | "staff" | "createdAt" | "updatedAt";
+const PCOLUMNS: { key: PCol; label: string; w: number; value: (i: ListItem) => string }[] = [
+  { key: "kana", label: "フリガナ", w: 130, value: (i) => i.kana || "" },
+  { key: "nationality", label: "国籍", w: 100, value: (i) => i.nationality || "" },
+  { key: "status", label: "ステータス", w: 120, value: (i) => PIPE_LABEL[bucket(i.status)] },
+  { key: "job", label: "求人", w: 180, value: (i) => i.jobTitle },
+  { key: "jobCode", label: "求人コード", w: 100, value: (i) => i.jobCode },
+  { key: "company", label: "企業", w: 150, value: (i) => i.company },
+  { key: "staff", label: "担当者", w: 120, value: (i) => i.staffName || "未割当" },
+  { key: "createdAt", label: "応募日", w: 100, value: (i) => fmtDay(i.createdAt) },
+  { key: "updatedAt", label: "最終更新", w: 100, value: (i) => fmtDay(i.updatedAt) },
+];
+const PDEFAULT: PCol[] = ["nationality", "status", "job", "company", "staff", "createdAt", "updatedAt"];
+type PSortKey = "createdAt" | "updatedAt" | "name" | "status" | "company" | "staff" | "nationality";
+const PSORT: { key: PSortKey; label: string; val: (i: ListItem) => string }[] = [
+  { key: "createdAt", label: "応募日", val: (i) => i.createdAt },
+  { key: "updatedAt", label: "最終更新", val: (i) => i.updatedAt },
+  { key: "name", label: "氏名", val: (i) => i.kana || i.name },
+  { key: "status", label: "ステータス", val: (i) => i.status },
+  { key: "company", label: "企業", val: (i) => i.company },
+  { key: "staff", label: "担当者", val: (i) => i.staffName || "" },
+  { key: "nationality", label: "国籍", val: (i) => i.nationality || "" },
+];
+
 export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const [list, setList] = useState<ListItem[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -45,6 +71,10 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const [memoDraft, setMemoDraft] = useState("");
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [pSort, setPSort] = useState<{ key: PSortKey; dir: "asc" | "desc" }>({ key: "createdAt", dir: "desc" });
+  const [pcols, setPcols] = useState<Set<PCol>>(() => new Set(PDEFAULT));
+  const togglePcol = (k: PCol) => setPcols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const pvis = PCOLUMNS.filter((c) => pcols.has(c.key));
 
   async function loadList() {
     const r = await fetch("/api/admin/pipeline");
@@ -80,16 +110,21 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const jobs = useMemo(() => uniq(list.map((i) => i.jobTitle)), [list]);
   const nats = useMemo(() => uniq(list.map((i) => i.nationality)), [list]);
 
-  const filtered = useMemo(() => list.filter((i) => {
-    if (fStatus && bucket(i.status) !== fStatus) return false;
-    if (fStaff && i.staffId !== fStaff) return false;
-    if (fCompany && i.company !== fCompany) return false;
-    if (fJob && i.jobTitle !== fJob) return false;
-    if (fNat && i.nationality !== fNat) return false;
-    if (fDate && i.createdAt.slice(0, 10) < fDate) return false;
-    if (q && !`${i.name}${i.kana ?? ""}${i.jobTitle}${i.company}`.toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  }), [list, fStatus, fStaff, fCompany, fJob, fNat, fDate, q]);
+  const filtered = useMemo(() => {
+    const out = list.filter((i) => {
+      if (fStatus && bucket(i.status) !== fStatus) return false;
+      if (fStaff && i.staffId !== fStaff) return false;
+      if (fCompany && i.company !== fCompany) return false;
+      if (fJob && i.jobTitle !== fJob) return false;
+      if (fNat && i.nationality !== fNat) return false;
+      if (fDate && i.createdAt.slice(0, 10) < fDate) return false;
+      if (q && !`${i.name}${i.kana ?? ""}${i.jobTitle}${i.company}`.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+    const sf = PSORT.find((s) => s.key === pSort.key)!;
+    out.sort((a, b) => { const r = sf.val(a).localeCompare(sf.val(b), "ja"); return pSort.dir === "desc" ? -r : r; });
+    return out;
+  }, [list, fStatus, fStaff, fCompany, fJob, fNat, fDate, q, pSort]);
 
   // dashboard counts
   const counts = useMemo(() => {
@@ -138,8 +173,8 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="氏名・求人・企業で検索" className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-bl-red" />
             </div>
             <details className="relative">
-              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}</summary>
-              <div className="absolute right-0 z-30 mt-1 w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><FilterIcon />絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}</summary>
+              <div className="absolute left-0 z-30 mt-1 w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
                 <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className={inputCls} value={fStaff} onChange={(e) => setFStaff(e.target.value)}><option value="">すべて</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
                 <div><div className="mb-1 text-xs font-bold text-slate-500">企業</div><select className={inputCls} value={fCompany} onChange={(e) => setFCompany(e.target.value)}><option value="">すべて</option>{companies.map((c) => <option key={c}>{c}</option>)}</select></div>
                 <div><div className="mb-1 text-xs font-bold text-slate-500">求人</div><select className={inputCls} value={fJob} onChange={(e) => setFJob(e.target.value)}><option value="">すべて</option>{jobs.map((j) => <option key={j}>{j}</option>)}</select></div>
@@ -148,6 +183,26 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
                 {activeFilters > 0 && <button onClick={() => { setFStaff(""); setFCompany(""); setFJob(""); setFNat(""); setFDate(""); }} className="text-xs font-semibold text-bl-red hover:underline">クリア</button>}
               </div>
             </details>
+            <details className="relative">
+              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><SortIcon />並び替え</summary>
+              <div className="absolute left-0 z-30 mt-1 w-56 space-y-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                <select className={inputCls} value={pSort.key} onChange={(e) => setPSort((p) => ({ ...p, key: e.target.value as PSortKey }))}>
+                  {PSORT.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+                <button onClick={() => setPSort((p) => ({ ...p, dir: p.dir === "asc" ? "desc" : "asc" }))} className="mt-1 w-full rounded-lg bg-slate-50 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">{pSort.dir === "asc" ? "昇順 ↑" : "降順 ↓"}</button>
+              </div>
+            </details>
+            <details className="relative">
+              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
+              <div className="absolute left-0 z-30 mt-1 grid w-64 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                {PCOLUMNS.map((c) => (
+                  <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                    <input type="checkbox" checked={pcols.has(c.key)} onChange={() => togglePcol(c.key)} />{c.label}
+                  </label>
+                ))}
+              </div>
+            </details>
+            <ExportBar compact filename="応募進捗" title="応募進捗一覧" getData={() => ({ headers: ["氏名", ...PCOLUMNS.map((c) => c.label)], rows: filtered.map((i) => [i.name, ...PCOLUMNS.map((c) => c.value(i))]) })} />
             <span className="ml-auto text-sm text-slate-500">{filtered.length} 件</span>
           </div>
 
@@ -156,20 +211,22 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
             {loading ? <div className="p-10 text-center text-sm text-slate-400">読み込み中…</div>
               : filtered.length === 0 ? <div className="p-12 text-center text-sm text-slate-400">該当する応募がありません。</div>
               : (
-                <table className="w-full table-fixed text-sm" style={{ minWidth: 880 }}>
-                  <colgroup><col style={{ width: 220 }} /><col style={{ width: 90 }} /><col style={{ width: 200 }} /><col style={{ width: 150 }} /><col style={{ width: 110 }} /><col style={{ width: 120 }} /></colgroup>
+                <table className="w-full table-fixed text-sm" style={{ minWidth: 240 + pvis.reduce((s, c) => s + c.w, 0) }}>
+                  <colgroup><col style={{ width: 200 }} />{pvis.map((c) => <col key={c.key} style={{ width: c.w }} />)}</colgroup>
                   <thead><tr className="border-b border-slate-100 text-left text-xs text-slate-500">
-                    <th className="px-3 py-2.5">氏名 / 国籍</th><th className="px-3 py-2.5">ステータス</th><th className="px-3 py-2.5">求人 / 企業</th><th className="px-3 py-2.5">担当者</th><th className="px-3 py-2.5">応募日</th><th className="px-3 py-2.5">最終更新</th>
+                    <th className="px-3 py-2.5">氏名</th>{pvis.map((c) => <th key={c.key} className="px-3 py-2.5">{c.label}</th>)}
                   </tr></thead>
                   <tbody>
                     {filtered.map((i) => (
                       <tr key={i.id} onClick={() => select(i.id)} className={`h-[56px] cursor-pointer border-b border-slate-50 align-middle hover:bg-bl-redsoft/40 ${sel === i.id ? "bg-bl-redsoft/60" : ""}`}>
-                        <td className="px-3 py-2"><div className="flex items-center gap-2"><Avatar name={i.name} image={i.image} size={8} /><div className="min-w-0"><div className="truncate font-semibold text-ink" title={i.name}>{i.name}</div><div className="truncate text-xs text-slate-400">{i.nationality ?? "—"}</div></div></div></td>
-                        <td className="px-3 py-2"><span className={`badge ${PIPE_TONE[bucket(i.status)]}`}>{PIPE_LABEL[bucket(i.status)]}</span></td>
-                        <td className="px-3 py-2"><div className="truncate font-medium text-slate-700" title={i.jobTitle}>{i.jobTitle}</div><div className="truncate text-xs text-slate-400">{i.company}</div></td>
-                        <td className="px-3 py-2">{i.staffName ? <span className="inline-flex items-center gap-1.5 truncate"><Avatar name={i.staffName} image={i.staffImage} size={6} /><span className="truncate text-xs">{i.staffName}</span></span> : <span className="text-xs text-slate-300">未割当</span>}</td>
-                        <td className="px-3 py-2 text-xs text-slate-500">{fmtDay(i.createdAt)}</td>
-                        <td className="px-3 py-2 text-xs text-slate-400">{fmtDay(i.updatedAt)}</td>
+                        <td className="px-3 py-2"><div className="flex items-center gap-2"><Avatar name={i.name} image={i.image} size={8} /><div className="min-w-0 truncate font-semibold text-ink" title={i.name}>{i.name}</div></div></td>
+                        {pvis.map((c) => (
+                          <td key={c.key} className="px-3 py-2">
+                            {c.key === "status" ? <span className={`badge ${PIPE_TONE[bucket(i.status)]}`}>{PIPE_LABEL[bucket(i.status)]}</span>
+                              : c.key === "staff" ? (i.staffName ? <span className="inline-flex items-center gap-1.5 truncate"><Avatar name={i.staffName} image={i.staffImage} size={6} /><span className="truncate text-xs">{i.staffName}</span></span> : <span className="text-xs text-slate-300">未割当</span>)
+                              : <span className="block truncate text-xs text-slate-600" title={c.value(i)}>{c.value(i) || <span className="text-slate-300">—</span>}</span>}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>

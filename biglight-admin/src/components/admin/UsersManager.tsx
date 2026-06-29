@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { AdminRole, Role, AccountStatus } from "@prisma/client";
 import { ADMIN_LEVEL_LABEL } from "@/lib/adminAccess";
+import { FilterIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 
 export interface UserRow {
   id: string;
@@ -114,13 +115,10 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
     });
   }, [users, q, fRole, fStatus]);
 
-  function exportCsv() {
-    const head = ["氏名", "メール", "ロール", "状態", "最終ログイン"];
-    const body = filtered.map((u) => [u.name, u.email, ADMIN_LEVEL_LABEL[levelOf(u)] ?? "", u.status === "ACTIVE" ? "有効" : "ロック", u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("ja-JP") : ""]);
-    const csv = [head, ...body].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `users_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
-  }
+  const getUsersData = () => ({
+    headers: ["氏名", "メール", "ロール", "状態", "最終ログイン", "メール送信"],
+    rows: filtered.map((u) => [u.name, u.email, ADMIN_LEVEL_LABEL[levelOf(u)] ?? "", u.status === "ACTIVE" ? "有効" : "ロック", u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString("ja-JP") : "", u.canSendMail ? "許可" : "不可"]),
+  });
 
   const stats = useMemo(() => {
     const s = { total: users.length, ADMIN: 0, STAFF: 0, VIEW: 0, locked: 0 };
@@ -280,16 +278,21 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><IconSearch /></span>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="氏名・メールで検索" className="input w-full pl-9" />
           </div>
-          <select value={fRole} onChange={(e) => setFRole(e.target.value as "" | AdminRole)} className="input w-auto text-sm">
-            <option value="">権限：すべて</option>
-            {LEVELS.map((l) => <option key={l} value={l}>{ADMIN_LEVEL_LABEL[l]}</option>)}
-          </select>
-          <select value={fStatus} onChange={(e) => setFStatus(e.target.value as "" | "ACTIVE" | "SUSPENDED")} className="input w-auto text-sm">
-            <option value="">状態：すべて</option>
-            <option value="ACTIVE">有効</option>
-            <option value="SUSPENDED">ロック</option>
-          </select>
-          <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
+          <Dropdown icon={<FilterIcon />} label="絞り込み" badge={[fRole, fStatus].filter(Boolean).length} width="w-56">
+            <div><div className="mb-1 text-xs font-bold text-slate-500">権限</div>
+              <select value={fRole} onChange={(e) => setFRole(e.target.value as "" | AdminRole)} className="input w-full text-sm">
+                <option value="">すべて</option>
+                {LEVELS.map((l) => <option key={l} value={l}>{ADMIN_LEVEL_LABEL[l]}</option>)}
+              </select></div>
+            <div><div className="mb-1 text-xs font-bold text-slate-500">状態</div>
+              <select value={fStatus} onChange={(e) => setFStatus(e.target.value as "" | "ACTIVE" | "SUSPENDED")} className="input w-full text-sm">
+                <option value="">すべて</option>
+                <option value="ACTIVE">有効</option>
+                <option value="SUSPENDED">ロック</option>
+              </select></div>
+            {(fRole || fStatus) && <button onClick={() => { setFRole(""); setFStatus(""); }} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
+          </Dropdown>
+          <ExportBar compact filename="ユーザー一覧" title="ユーザー一覧" getData={getUsersData} />
           <div className="ml-auto text-xs text-slate-400">{filtered.length} 件</div>
         </div>
 

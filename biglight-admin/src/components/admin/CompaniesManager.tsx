@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge, publicStatusTone } from "@/components/ui/Badge";
 import { PUBLIC_STATUS_LABEL, JOB_OP_STATUS_LABEL } from "@/lib/constants";
+import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
 
 export type CompanyRow = {
   id: string;
@@ -59,7 +60,6 @@ const SORT_FIELDS: { key: SortField; label: string; cmp: (a: CompanyRow, b: Comp
   { key: "createdAt", label: "登録日", cmp: (a, b) => jcmp(a.createdAt, b.createdAt) },
 ];
 const SORT_LABEL = (k: SortField) => SORT_FIELDS.find((f) => f.key === k)?.label ?? k;
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; canCreateJob: boolean }) {
   const [q, setQ] = useState("");
@@ -135,41 +135,21 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
   const clearFilters = () => { setFInd(""); setFContact(""); setFJobs(""); };
   const totalOrders = rows.reduce((s, r) => s + r.total, 0);
 
-  // ----- CSV -----
-  function exportCsv() {
-    const header = visCols.map((c) => c.label);
-    const data = filtered.map((r) => visCols.map((c) => c.value(r)));
-    const csv = [header, ...data].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `企業一覧_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-  }
-
-  // ----- 印刷 -----
-  function printList() {
-    const header = visCols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
-    const rowsHtml = filtered.map((r) => `<tr>${visCols.map((c) => `<td>${escapeHtml(c.value(r))}</td>`).join("")}</tr>`).join("");
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>企業一覧</title><style>body{font-family:sans-serif;padding:16px}h1{font-size:18px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#f3f4f6}</style></head><body><h1>企業一覧（${filtered.length}社）</h1><table><thead><tr>${header}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`);
-    w.document.close(); w.focus(); w.print();
-  }
+  const getData = () => ({ headers: visCols.map((c) => c.label), rows: filtered.map((r) => visCols.map((c) => c.value(r))) });
 
   return (
     <div className="space-y-4">
       {/* ===== toolbar ===== */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
-          <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+          <SearchIcon />
           <input className="input pl-9" placeholder="企業名・業種・担当者で検索" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
 
         {/* 絞り込み */}
         <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+            <FilterIcon />
             絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
           </summary>
           <div className="absolute left-0 z-30 mt-1 max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -182,8 +162,8 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
 
         {/* 並び替え */}
         <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 16 4 4 4-4M7 20V4M21 8l-4-4-4 4M17 4v16" /></svg>
+          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+            <SortIcon />
             並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{sortList.length}</span>}
           </summary>
           <div className="absolute right-0 z-30 mt-1 w-72 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -209,8 +189,8 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
         {/* 表示項目 (chỉ áp dụng リスト) */}
         {view === "list" && (
           <details className="relative">
-            <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1 [&::-webkit-details-marker]:hidden">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+            <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+              <ColumnsIcon />
               表示項目
             </summary>
             <div className="absolute right-0 z-30 mt-1 grid w-72 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
@@ -230,10 +210,9 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <button onClick={() => setView("list")} className={`px-2.5 py-1.5 text-xs font-bold ${view === "list" ? "bg-ink text-white" : "bg-white text-slate-500"}`}>リスト</button>
             <button onClick={() => setView("card")} className={`px-2.5 py-1.5 text-xs font-bold ${view === "card" ? "bg-ink text-white" : "bg-white text-slate-500"}`}>カード</button>
           </div>
-          <button onClick={exportCsv} className="btn btn-ghost btn-sm gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>CSV</button>
-          <button onClick={printList} className="btn btn-ghost btn-sm gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>印刷</button>
+          <ExportBar compact filename="企業一覧" title="企業一覧" getData={getData} />
           <button onClick={() => { if (selected.size) { setMailOpen(true); setSendMsg(""); setConfirming(false); } }} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+            <MailIcon />
             メール送信{selected.size > 0 && `（${selected.size}）`}
           </button>
           <span className="text-sm text-slate-500">{filtered.length} 社 ・ 求人 {totalOrders} 件</span>
