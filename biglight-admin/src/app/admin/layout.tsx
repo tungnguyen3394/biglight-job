@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { effectiveAdminLevel } from "@/lib/adminAccess";
+import { effectiveAdminLevel, permsForLevel } from "@/lib/adminAccess";
+import { loadRolePerms } from "@/lib/rolePerms";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = {
@@ -16,10 +17,12 @@ export default async function AdminLayout({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  await loadRolePerms(); // nạp override quyền Staff/View (server cache) cho cả UI
   const level = effectiveAdminLevel(user);
+  const perms = permsForLevel(level); // quyền hiệu lực → truyền xuống Sidebar (client) cho nhất quán
 
   return (
-    <AdminShell name={user.name} role={user.role} level={level}>
+    <AdminShell name={user.name} role={user.role} level={level} perms={perms}>
       {children}
     </AdminShell>
   );

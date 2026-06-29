@@ -592,6 +592,15 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Quyền theo cấp (Staff/View) — Admin chỉnh bằng checkbox ở ユーザー管理. Admin luôn full.
+model RolePerm {
+  level     String   @id // "STAFF" | "VIEW"
+  perms     String[]
+  updatedAt DateTime @updatedAt
+
+  @@map("role_perms")
+}
+
 // Mail Merge — mẫu email dùng chung (scope: candidate | company).
 model MailTemplate {
   id          String   @id @default(cuid())

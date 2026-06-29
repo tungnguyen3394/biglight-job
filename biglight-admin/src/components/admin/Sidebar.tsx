@@ -22,7 +22,7 @@ const ICONS: Record<string, React.ReactNode> = {
   "/admin/settings": <><circle cx="12" cy="12" r="3" /><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.6h-4l-.3 2.6a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4z" /></>,
 };
 
-export function Sidebar({ role, level, collapsed }: { role: Role; level: AdminLevel | null; collapsed?: boolean }) {
+export function Sidebar({ role, level, perms, collapsed }: { role: Role; level: AdminLevel | null; perms?: string[]; collapsed?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -36,7 +36,7 @@ export function Sidebar({ role, level, collapsed }: { role: Role; level: AdminLe
       <nav className="flex flex-col gap-4 overflow-y-auto">
         {NAV_GROUPS.map((group, gi) => {
           const items = group.items.filter(
-            (n) => n.roles.includes(role) && (!n.perm || level == null || adminCan(level, n.perm))
+            (n) => n.roles.includes(role) && (!n.perm || (perms ? perms.includes(n.perm) : level != null && adminCan(level, n.perm)))
           );
           if (items.length === 0) return null;
           return (

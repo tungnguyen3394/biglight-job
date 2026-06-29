@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AdminRole, Role, AccountStatus } from "@prisma/client";
-import { ADMIN_LEVEL_LABEL } from "@/lib/adminAccess";
+import { ADMIN_LEVEL_LABEL, PERM_GROUPS } from "@/lib/adminAccess";
 import { FilterIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 
 export interface UserRow {
@@ -47,27 +47,6 @@ const LEVEL_RING: Record<AdminRole, string> = {
 const LEVEL_DOT: Record<AdminRole, string> = { ADMIN: "bg-red-500", STAFF: "bg-emerald-500", VIEW: "bg-blue-500" };
 
 // Bảng "danh sách cấp quyền" — mô tả mỗi cấp được/không được làm gì.
-const LEGEND: { level: AdminRole; sub: string; can: string[]; cannot: string[] }[] = [
-  {
-    level: "ADMIN",
-    sub: "全権限",
-    can: ["求人・応募者・記事・企業の全操作", "応募ステータス変更・CV管理", "メッセージ返信・削除", "ユーザー管理・権限変更・ロック", "設定・エクスポート"],
-    cannot: [],
-  },
-  {
-    level: "STAFF",
-    sub: "日常運用",
-    can: ["求人の追加・編集・削除・公開", "応募者の追加・編集・削除・状態変更", "記事の作成・編集・削除", "メッセージ返信", "エクスポート"],
-    cannot: ["企業管理", "ユーザー管理", "設定", "メッセージ削除"],
-  },
-  {
-    level: "VIEW",
-    sub: "閲覧のみ",
-    can: ["ダッシュボード・各一覧の閲覧", "企業情報の閲覧", "CVダウンロード", "エクスポート"],
-    cannot: ["追加・編集・削除", "ステータス変更", "メッセージ返信", "ユーザー管理・設定"],
-  },
-];
-
 function fmtDate(s: string | null): string {
   if (!s) return "—";
   return s.slice(0, 10).replace(/-/g, "/");
@@ -78,8 +57,6 @@ const IconSearch = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="
 const IconLock = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>);
 const IconUnlock = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.5-2" /></svg>);
 const IconTrash = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>);
-const IconCheck = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-emerald-500"><path d="M20 6 9 17l-5-5" /></svg>);
-const IconX = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-slate-300"><path d="M18 6 6 18M6 6l12 12" /></svg>);
 
 export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: string }) {
   const [users, setUsers] = useState<UserRow[]>(initial);
@@ -88,6 +65,20 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
   const [err, setErr] = useState("");
   const [notice, setNotice] = useState("");
   const [showLegend, setShowLegend] = useState(true);
+  // ----- quyền Staff/View chỉnh bằng checkbox -----
+  const [rolePerms, setRolePerms] = useState<{ STAFF: string[]; VIEW: string[] }>({ STAFF: [], VIEW: [] });
+  const [permLoaded, setPermLoaded] = useState(false);
+  const [permBusy, setPermBusy] = useState<"STAFF" | "VIEW" | null>(null);
+  useEffect(() => { fetch("/api/admin/role-perms").then((r) => r.json()).then((j) => { if (j.perms) { setRolePerms(j.perms); setPermLoaded(true); } }).catch(() => {}); }, []);
+  const hasPerm = (lvl: "STAFF" | "VIEW", p: string) => rolePerms[lvl].includes(p);
+  const togglePerm = (lvl: "STAFF" | "VIEW", p: string) => setRolePerms((s) => ({ ...s, [lvl]: s[lvl].includes(p) ? s[lvl].filter((x) => x !== p) : [...s[lvl], p] }));
+  async function savePerms(lvl: "STAFF" | "VIEW") {
+    setPermBusy(lvl); setErr(""); setNotice("");
+    const r = await fetch("/api/admin/role-perms", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: lvl, perms: rolePerms[lvl] }) });
+    setPermBusy(null);
+    if (r.ok) setNotice(`${ADMIN_LEVEL_LABEL[lvl]} の権限を保存しました（次回アクセスから反映）。`);
+    else setErr((await r.json().catch(() => ({}))).error || "保存に失敗しました。");
+  }
   const [logsOpen, setLogsOpen] = useState(false);
   const [logs, setLogs] = useState<AuditEntry[] | null>(null);
   async function loadLogs() {
@@ -230,20 +221,32 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
         </button>
         {showLegend && (
           <div className="grid gap-3 border-t border-slate-100 p-4 md:grid-cols-3">
-            {LEGEND.map((lg) => (
-              <div key={lg.level} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
-                <div className="mb-2.5 flex items-center gap-2">
-                  <span className={`badge ${LEVEL_PILL[lg.level]}`}>{ADMIN_LEVEL_LABEL[lg.level]}</span>
-                  <span className="text-xs text-slate-400">{lg.sub}</span>
+            {/* Admin — toàn quyền, không chỉnh */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
+              <div className="mb-2.5 flex items-center gap-2"><span className={`badge ${LEVEL_PILL.ADMIN}`}>Admin</span><span className="text-xs text-slate-400">全権限（固定）</span></div>
+              <p className="text-xs leading-relaxed text-slate-500">すべての操作・ユーザー管理・設定が可能。権限の変更はできません。</p>
+            </div>
+            {/* Staff / View — checkbox chỉnh được */}
+            {(["STAFF", "VIEW"] as const).map((lvl) => (
+              <div key={lvl} className="rounded-xl border border-slate-100 bg-white p-3.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2"><span className={`badge ${LEVEL_PILL[lvl]}`}>{ADMIN_LEVEL_LABEL[lvl]}</span><span className="text-xs text-slate-400">チェックで許可</span></div>
+                  <button onClick={() => savePerms(lvl)} disabled={!permLoaded || permBusy === lvl} className="btn btn-navy btn-sm disabled:opacity-40">{permBusy === lvl ? "保存中…" : "保存"}</button>
                 </div>
-                <ul className="space-y-1.5">
-                  {lg.can.map((t, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600"><IconCheck />{t}</li>
+                <div className="max-h-80 space-y-2.5 overflow-y-auto pr-1">
+                  {PERM_GROUPS.map((grp) => (
+                    <div key={grp.group}>
+                      <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">{grp.group}</div>
+                      <div className="mt-0.5 grid grid-cols-2 gap-x-2">
+                        {grp.items.map((it) => (
+                          <label key={it.perm} className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-xs text-slate-600 hover:bg-slate-50">
+                            <input type="checkbox" className="h-3.5 w-3.5 accent-bl-red" checked={hasPerm(lvl, it.perm)} disabled={!permLoaded} onChange={() => togglePerm(lvl, it.perm)} />{it.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                  {lg.cannot.map((t, i) => (
-                    <li key={`n${i}`} className="flex items-start gap-1.5 text-xs text-slate-400 line-through decoration-slate-300"><IconX />{t}</li>
-                  ))}
-                </ul>
+                </div>
               </div>
             ))}
           </div>

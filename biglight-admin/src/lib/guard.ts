@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { effectiveAdminLevel, adminCan, type Permission, type AdminLevel } from "@/lib/adminAccess";
+import { loadRolePerms } from "@/lib/rolePerms";
 import type { SessionUser } from "@/lib/permissions";
 
 export type GuardOk = { ok: true; user: SessionUser; level: AdminLevel };
@@ -15,6 +16,7 @@ export type GuardFail = { ok: false; res: NextResponse };
 export async function guard(perm: Permission): Promise<GuardOk | GuardFail> {
   const user = await getSessionUser();
   if (!user) return { ok: false, res: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  await loadRolePerms(); // nạp override quyền Staff/View từ DB (cache)
   const level = effectiveAdminLevel(user);
   if (!level || !adminCan(level, perm)) {
     return { ok: false, res: NextResponse.json({ error: "Forbidden", perm }, { status: 403 }) };
