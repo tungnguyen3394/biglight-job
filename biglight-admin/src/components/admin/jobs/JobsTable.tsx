@@ -99,7 +99,7 @@ export function JobsTable({
             表示項目（{cols.length}）
           </button>
           {menu && (
-            <div className="absolute right-0 z-50 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+            <div className="absolute right-0 z-50 mt-2 w-60 max-w-[90vw] rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
               <div className="mb-2 flex gap-2">
                 <button onClick={() => setVisible(new Set(ALL_KEYS))} className="flex-1 rounded-lg bg-slate-100 py-1 text-xs font-bold text-slate-700">すべて選択</button>
                 <button onClick={() => setVisible(new Set())} className="flex-1 rounded-lg bg-slate-100 py-1 text-xs font-bold text-slate-700">クリア</button>

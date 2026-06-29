@@ -154,7 +154,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <FilterIcon />
             絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
           </summary>
-          <div className="absolute left-0 z-30 mt-1 max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+          <div className="absolute left-0 z-30 mt-1 max-w-[90vw] max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
             <div><div className="mb-1 text-xs font-bold text-slate-500">業種</div><select className="input w-full" value={fInd} onChange={(e) => setFInd(e.target.value)}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
             <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className="input w-full" value={fContact} onChange={(e) => setFContact(e.target.value)}><option value="">すべて</option>{contacts.map((c) => <option key={c}>{c}</option>)}</select></div>
             <div><div className="mb-1 text-xs font-bold text-slate-500">求人状況</div><select className="input w-full" value={fJobs} onChange={(e) => setFJobs(e.target.value)}><option value="">すべて</option><option value="open">募集中あり</option><option value="none">求人なし</option></select></div>
@@ -168,7 +168,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <SortIcon />
             並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{sortList.length}</span>}
           </summary>
-          <div className="absolute right-0 z-30 mt-1 w-72 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+          <div className="absolute right-0 z-30 mt-1 max-w-[90vw] w-72 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
             {sortList.map((s, i) => (
               <div key={s.key} className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1.5">
                 <span className="text-[10px] font-bold text-slate-400">{i + 1}</span>
@@ -196,7 +196,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
               <ColumnsIcon />
               表示項目
             </summary>
-            <div className="absolute right-0 z-30 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+            <div className="absolute right-0 z-30 mt-1 max-w-[90vw] w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
               <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
                 <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
                 <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>

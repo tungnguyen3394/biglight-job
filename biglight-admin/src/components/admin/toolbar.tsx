@@ -27,7 +27,7 @@ export function Dropdown({ icon, label, badge, align = "left", width = "w-64", c
         {label}
         {badge != null && badge > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{badge}</span>}
       </summary>
-      <div className={`absolute ${align === "right" ? "right-0" : "left-0"} z-30 mt-1 max-h-[70vh] ${width} space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl`}>
+      <div className={`absolute ${align === "right" ? "right-0" : "left-0"} z-30 mt-1 max-h-[70vh] ${width} max-w-[90vw] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl`}>
         {children}
       </div>
     </details>

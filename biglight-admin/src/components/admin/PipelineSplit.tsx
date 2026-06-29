@@ -179,7 +179,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
             </div>
             <details className="relative">
               <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><FilterIcon />絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}</summary>
-              <div className="absolute left-0 z-30 mt-1 w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
                 <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className={inputCls} value={fStaff} onChange={(e) => setFStaff(e.target.value)}><option value="">すべて</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
                 <div><div className="mb-1 text-xs font-bold text-slate-500">企業</div><select className={inputCls} value={fCompany} onChange={(e) => setFCompany(e.target.value)}><option value="">すべて</option>{companies.map((c) => <option key={c}>{c}</option>)}</select></div>
                 <div><div className="mb-1 text-xs font-bold text-slate-500">求人</div><select className={inputCls} value={fJob} onChange={(e) => setFJob(e.target.value)}><option value="">すべて</option>{jobs.map((j) => <option key={j}>{j}</option>)}</select></div>
@@ -190,7 +190,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
             </details>
             <details className="relative">
               <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><SortIcon />並び替え</summary>
-              <div className="absolute left-0 z-30 mt-1 w-56 space-y-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-56 space-y-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
                 <select className={inputCls} value={pSort.key} onChange={(e) => setPSort((p) => ({ ...p, key: e.target.value as PSortKey }))}>
                   {PSORT.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
                 </select>
@@ -200,7 +200,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
             </details>
             <details className="relative">
               <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
-              <div className="absolute left-0 z-30 mt-1 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
                 <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
                   <button onClick={selectAllPcols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
                   <button onClick={clearPcols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
