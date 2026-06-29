@@ -7,6 +7,7 @@ import { useLoginModal } from "./useLoginModal";
 export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "full" }: { jobId: string; jobTitle: string; loggedIn: boolean; autoOpen?: boolean; variant?: "full" | "pill" }) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<"form" | "sending" | "done" | "need">("form");
+  const [missing, setMissing] = useState<string[]>([]);
   // Chưa đăng nhập → mở modal đăng ký; sau khi đăng ký xong quay lại trang này với apply=1 để mở xác nhận.
   const { onRegister, modal } = useLoginModal(`/jobs/${jobId}?apply=1`);
 
@@ -20,7 +21,7 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "fu
   async function submit() {
     setState("sending");
     const res = await fetch("/api/candidate/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId }) });
-    if (res.status === 422) { setState("need"); return; }
+    if (res.status === 422) { const j = await res.json().catch(() => ({})); setMissing(Array.isArray(j.missing) ? j.missing : []); setState("need"); return; }
     if (res.ok) setState("done");
     else { setState("form"); alert((await res.json().catch(() => ({}))).error || "送信に失敗しました"); }
   }
@@ -58,8 +59,16 @@ export function ApplyButton({ jobId, jobTitle, loggedIn, autoOpen, variant = "fu
             ) : state === "need" ? (
               <div className="py-3">
                 <p className="rounded-lg bg-bl-redsoft px-3 py-2 text-sm font-semibold text-bl-red">応募する前にプロフィールを完成してください。</p>
-                <p className="mt-2 text-xs text-bl-gray">必須項目（氏名・生年月日・性別・国籍・電話番号・在留資格・メール）を入力すると応募できます。</p>
-                <Link href="/mypage" className="mt-4 block rounded-xl bg-bl-red py-3 text-center text-sm font-bold text-white">プロフィールを入力する</Link>
+                {missing.length > 0 ? (
+                  <div className="mt-3 rounded-lg border border-bl-line bg-[#FFF8E7] px-3 py-2.5 text-sm">
+                    <b className="text-ink">次の必須項目が未入力です：</b>
+                    <p className="mt-1 font-bold text-bl-red">{missing.join("・")}</p>
+                    <p className="mt-1 text-xs text-bl-gray">入力して保存すると、もう一度「応募する」で応募できます。</p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-bl-gray">必須項目を入力すると応募できます。</p>
+                )}
+                <Link href="/mypage?need=1" className="mt-4 block rounded-xl bg-bl-red py-3 text-center text-sm font-bold text-white">プロフィールを入力する</Link>
               </div>
             ) : (
               <>

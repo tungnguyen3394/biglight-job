@@ -7,10 +7,10 @@ import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./Can
 import type { SswField } from "@/lib/sswJobs";
 import CandidateMessages from "./CandidateMessages";
 import { type DocMap } from "./CandidateDocuments";
+import { StageTracker, StageTimeline } from "@/components/common/StageTracker";
+import { type FlowEvent } from "@/lib/applicationFlow";
 
-const STAGES = ["応募", "面談", "面接", "内定", "ビザ申請中", "入社"];
-
-export type AppView = { id: string; jobId: string; code: string; title: string; company: string; stage: number; statusLabel: string; ended: boolean };
+export type AppView = { id: string; jobId: string; code: string; title: string; company: string; stage: number; statusLabel: string; ended: boolean; timeline: FlowEvent[] };
 export type SavedJob = { id: string; title: string; industry: string; location: string; city: string | null; salaryMain: string | null };
 
 type SecKey = "profile" | "apps" | "saved" | "messages" | "settings";
@@ -39,25 +39,6 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "saved", label: "お気に入り求人" },
   { key: "messages", label: "メッセージ" },
 ];
-
-function Tracker({ stage }: { stage: number }) {
-  return (
-    <div className="flex items-start overflow-x-auto pb-1">
-      {STAGES.map((label, i) => {
-        const done = i < stage, cur = i === stage;
-        return (
-          <div key={label} className="flex flex-1 items-start" style={{ minWidth: 64 }}>
-            <div className="flex flex-1 flex-col items-center gap-1.5 text-center">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-xs font-black ${done ? "border-bl-green bg-bl-green text-white" : cur ? "border-bl-red bg-bl-red text-white shadow-[0_0_0_4px_#FDECEA]" : "border-bl-line bg-bl-bg text-bl-gray2"}`}>{done ? "✓" : i + 1}</div>
-              <div className={`text-[11px] font-semibold ${done ? "text-ink" : cur ? "font-black text-bl-red" : "text-bl-gray2"}`}>{label}</div>
-            </div>
-            {i < STAGES.length - 1 && <div className={`mt-[18px] h-[3px] flex-1 rounded ${done ? "bg-bl-green" : "bg-bl-line"}`} />}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
   const router = useRouter();
@@ -127,6 +108,25 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
 
       {applied && <div className="mb-5 flex items-center gap-2 rounded-2xl border border-bl-green bg-bl-greensoft p-4 text-sm font-semibold text-bl-green"><Ic d={<path d="M20 6 9 17l-5-5" />} />応募を受け付けました。担当者がご連絡します。</div>}
 
+      {/* Banner nổi (sticky): liệt kê 必須 còn thiếu, hoặc thông báo đã có thể ứng tuyển */}
+      {missing.length > 0 ? (
+        <div className="sticky top-2 z-20 mb-5 rounded-2xl border-2 border-bl-red bg-bl-redsoft p-4 shadow-lg">
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex-none text-bl-red"><Ic d={<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>} /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-bl-red">応募するには、次の必須項目の入力が必要です</p>
+              <p className="mt-1 text-sm font-bold text-ink">{missing.join("・")}</p>
+              <p className="mt-1 text-xs text-bl-gray">下のフォームに入力して保存すると、応募できるようになります。</p>
+            </div>
+            <button onClick={() => go("profile")} className="flex-none self-center rounded-xl bg-bl-red px-4 py-2 text-xs font-bold text-white hover:bg-bl-redd">入力する</button>
+          </div>
+        </div>
+      ) : (
+        <div className="sticky top-2 z-20 mb-5 flex items-center gap-2 rounded-2xl border border-bl-green bg-bl-greensoft px-4 py-3 text-sm font-bold text-bl-green shadow-sm">
+          <Ic d={<path d="M20 6 9 17l-5-5" />} />プロフィールが完成しました。求人に応募できます。
+        </div>
+      )}
+
       <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
         {/* ===== Mobile: tabs ngang (chỉ mobile) ===== */}
         <nav className="mb-4 flex gap-1.5 overflow-x-auto pb-1 lg:hidden">
@@ -189,9 +189,14 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${a.ended ? "bg-bl-line text-bl-gray" : "bg-bl-redsoft text-bl-red"}`}>{a.statusLabel}</span>
                       <h3 className="ml-1 text-base font-bold">{a.title}</h3>
                     </div>
-                    {!a.ended && <Tracker stage={a.stage} />}
+                    <StageTracker stage={a.stage} ended={a.ended} />
+                    {/* Tiến trình chi tiết — mỗi bước kèm ghi chú từ担当者 */}
+                    <div className="mt-4 border-t border-bl-line pt-3">
+                      <p className="mb-2 text-xs font-black text-bl-gray2">進捗の記録</p>
+                      <StageTimeline events={a.timeline} />
+                    </div>
                     {!a.ended && (
-                      <div className="mt-4 border-t border-bl-line pt-3">
+                      <div className="mt-3 border-t border-bl-line pt-3">
                         <button onClick={() => cancelApp(a.jobId)} disabled={busy === a.jobId} className="text-xs font-bold text-bl-gray2 hover:text-bl-red disabled:opacity-50">
                           {busy === a.jobId ? "処理中…" : "応募を取り消す（お気に入りに戻す）"}
                         </button>

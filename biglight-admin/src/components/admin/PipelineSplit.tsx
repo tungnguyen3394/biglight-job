@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PIPELINE_STATUSES, PIPE_LABEL, PIPE_TONE, bucket, type PipeStatus } from "@/lib/pipeline";
 import { FilterIcon, SortIcon, ColumnsIcon, ExportBar } from "@/components/admin/toolbar";
+import { StageTracker } from "@/components/common/StageTracker";
+import { STAGE_OF, isEnded } from "@/lib/applicationFlow";
 
 type Staff = { id: string; name: string; image: string | null };
 type ListItem = {
@@ -69,6 +71,7 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const [fNat, setFNat] = useState("");
   const [fDate, setFDate] = useState("");
   const [memoDraft, setMemoDraft] = useState("");
+  const [noteDraft, setNoteDraft] = useState("");
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [pSort, setPSort] = useState<{ key: PSortKey; dir: "asc" | "desc" }>({ key: "createdAt", dir: "desc" });
@@ -255,6 +258,10 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
               </div>
 
               <div className="max-h-[calc(100vh-220px)] space-y-4 overflow-y-auto p-4 lg:max-h-[70vh]">
+                {/* Tiến trình 6 bước — GIỐNG HỆT phía ứng viên */}
+                <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                  <StageTracker stage={STAGE_OF[detail.status] ?? 0} ended={isEnded(detail.status)} />
+                </div>
                 {/* ステータス + 担当者 */}
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block"><span className="mb-1 block text-xs font-bold text-slate-500">ステータス変更</span>
@@ -311,9 +318,19 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
                   <Link href={`/admin/candidates/${detail.candidate.id}`} className="btn btn-ghost btn-sm border border-slate-200">応募者詳細・書類</Link>
                 </div>
 
-                {/* 社内メモ */}
+                {/* 進捗メモ（応募者に表示）— hiện ở timeline cả admin lẫn ứng viên */}
                 <div>
-                  <div className="mb-1 text-xs font-bold text-slate-500">社内メモ</div>
+                  <div className="mb-1 flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                    進捗メモを追加
+                    <span className="rounded bg-bl-redsoft px-1.5 py-0.5 text-[10px] font-bold text-bl-red">応募者に表示</span>
+                  </div>
+                  <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} disabled={!canEdit} rows={2} className={`${inputCls} resize-none`} placeholder="応募者のマイページに表示されるメモ（次の予定・必要書類 など）…" />
+                  {canEdit && <button onClick={async () => { const t = noteDraft.trim(); if (!t) return; await patch({ note: t }); setNoteDraft(""); }} className="btn btn-navy btn-sm mt-1.5">メモを追加</button>}
+                </div>
+
+                {/* 社内メモ（社内のみ・応募者には非表示） */}
+                <div>
+                  <div className="mb-1 flex items-center gap-1.5 text-xs font-bold text-slate-500">社内メモ<span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">社内のみ</span></div>
                   <textarea value={memoDraft} onChange={(e) => setMemoDraft(e.target.value)} disabled={!canEdit} rows={3} className={`${inputCls} resize-none`} placeholder="社内向けメモ…" />
                   {canEdit && <button onClick={() => patch({ internalMemo: memoDraft })} className="btn btn-navy btn-sm mt-1.5">メモを保存</button>}
                 </div>

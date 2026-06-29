@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { isProfileComplete } from "@/lib/candidateProfile";
+import { isProfileComplete, profileMissing } from "@/lib/candidateProfile";
 import { notify } from "@/lib/notify";
 
 async function getCandidate() {
@@ -18,9 +18,9 @@ export async function POST(req: Request) {
   const { jobId, note } = await req.json().catch(() => ({}));
   if (!jobId) return NextResponse.json({ error: "No jobId" }, { status: 400 });
 
-  // Chặn ứng tuyển khi hồ sơ chưa đủ trường bắt buộc.
+  // Chặn ứng tuyển khi hồ sơ chưa đủ trường bắt buộc (trả về danh sách mục còn thiếu).
   if (!isProfileComplete(candidate, candidate.user)) {
-    return NextResponse.json({ error: "応募する前にプロフィールを完成してください。", need: true }, { status: 422 });
+    return NextResponse.json({ error: "応募する前にプロフィールを完成してください。", need: true, missing: profileMissing(candidate, candidate.user) }, { status: 422 });
   }
 
   const job = await prisma.job.findUnique({ where: { id: jobId } });

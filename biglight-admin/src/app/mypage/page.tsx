@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { APP_STATUS_LABEL } from "@/lib/constants";
 import { salaryRange } from "@/lib/site";
 import { isProfileComplete } from "@/lib/candidateProfile";
+import { STAGE_OF, ENDED_STATUSES, type FlowEvent } from "@/lib/applicationFlow";
 import { getAllOptions, getSswTree } from "@/lib/options";
 import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
@@ -15,18 +16,6 @@ import { type DocMap } from "@/components/candidate/CandidateDocuments";
 const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
 export const dynamic = "force-dynamic";
-
-// 6 bước: 応募→面談→面接→内定→ビザ申請中→入社
-const STAGE_OF: Record<string, number> = {
-  NEW: 0,
-  CONSULTING: 1, DOC_CHECK: 1, CV_SENT: 1,
-  INTERVIEW_ARRANGING: 2, INTERVIEW_SCHEDULED: 2, INTERVIEWED: 2,
-  OFFER: 3, CONTRACT: 3,
-  VISA_APPLYING: 4, VISA_APPROVED: 4,
-  JOIN_SCHEDULED: 5, JOINED: 5,
-  REJECTED: 0, DECLINED: 0, CANCELLED: 0,
-};
-const ENDED = new Set(["REJECTED", "DECLINED", "CANCELLED"]);
 
 export default async function MyPage({ searchParams }: { searchParams: { apply?: string; t?: string; applied?: string; fberror?: string; gerror?: string; redirect?: string; need?: string; sec?: string } }) {
   const session = await getSessionUser();
@@ -60,19 +49,41 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
 
   const candidate = await prisma.candidate.findUnique({
     where: { userId: session.id },
-    include: { user: true, applications: { include: { job: { include: { company: true } } }, orderBy: { createdAt: "desc" } } },
+    include: {
+      user: true,
+      applications: {
+        include: { job: { include: { company: true } }, statusHistories: { orderBy: { changedAt: "asc" } } },
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
 
-  const apps: AppView[] = (candidate?.applications ?? []).map((a) => ({
-    id: a.id,
-    jobId: a.jobId,
-    code: a.job.code,
-    title: a.job.title,
-    company: a.job.company.name,
-    stage: STAGE_OF[a.status] ?? 0,
-    statusLabel: APP_STATUS_LABEL[a.status] ?? a.status,
-    ended: ENDED.has(a.status),
-  }));
+  const apps: AppView[] = (candidate?.applications ?? []).map((a) => {
+    // Dòng thời gian: mốc 応募 (lúc tạo đơn, ghi chú = lời nhắn ứng tuyển) + các lần admin đổi trạng thái (kèm memo).
+    const timeline: FlowEvent[] = [
+      { status: "NEW", label: "応募", at: ymd(a.createdAt), memo: a.applicantNote ?? null },
+      ...a.statusHistories
+        // Ẩn mốc NEW (đã có) và ASSIGN (đổi担当者 — nội bộ). NOTE = ghi chú担当者 gửi ứng viên.
+        .filter((h) => h.newStatus !== "NEW" && h.newStatus !== "ASSIGN")
+        .map((h) => ({
+          status: h.newStatus,
+          label: h.newStatus === "NOTE" ? "担当者からのお知らせ" : (APP_STATUS_LABEL[h.newStatus] ?? h.newStatus),
+          at: ymd(h.changedAt),
+          memo: h.memo ?? null,
+        })),
+    ];
+    return {
+      id: a.id,
+      jobId: a.jobId,
+      code: a.job.code,
+      title: a.job.title,
+      company: a.job.company.name,
+      stage: STAGE_OF[a.status] ?? 0,
+      statusLabel: APP_STATUS_LABEL[a.status] ?? a.status,
+      ended: ENDED_STATUSES.has(a.status),
+      timeline,
+    };
+  });
 
   const p = (candidate?.prefs as Record<string, unknown>) || {};
   const sArr = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
