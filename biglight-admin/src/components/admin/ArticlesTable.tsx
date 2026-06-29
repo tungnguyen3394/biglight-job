@@ -52,6 +52,8 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
   const [cols, setCols] = useState<Set<ColKey>>(() => new Set(DEFAULT_COLS));
   const visCols = COLUMNS.filter((c) => cols.has(c.key));
   const toggleCol = (k: ColKey) => setCols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
+  const clearCols = () => setCols(new Set(["title"]));
 
   const cats = useMemo(() => uniq(rows.map((r) => r.category)), [rows]);
   const activeFilters = [fCat, fStatus].filter(Boolean).length;
@@ -90,9 +92,14 @@ export function ArticlesTable({ rows, canWrite }: { rows: ArticleRow[]; canWrite
             {SORT_FIELDS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
           </select>
           <button onClick={() => setSort((p) => ({ ...p, dir: p.dir === "asc" ? "desc" : "asc" }))} className="w-full rounded-lg bg-slate-50 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">{sort.dir === "asc" ? "昇順 ↑" : "降順 ↓"}</button>
+          <button onClick={() => setSort({ key: "updatedAt", dir: "desc" })} className="mt-1 w-full text-xs font-semibold text-bl-red hover:underline">リセット</button>
         </Dropdown>
 
         <Dropdown icon={<ColumnsIcon />} label="表示項目" align="right" width="w-72">
+          <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
+            <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+            <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
+          </div>
           <div className="grid grid-cols-2 gap-1">
             {COLUMNS.map((c) => (
               <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">

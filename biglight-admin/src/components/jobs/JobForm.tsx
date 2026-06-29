@@ -21,6 +21,9 @@ const CSS = `
 .bl-jf .btn-red:disabled{opacity:.6}
 .bl-jf .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
 .bl-jf .btn-ghost:hover{border-color:var(--gray-2)}
+.bl-jf .jf-fieldset{border:0;margin:0;padding:0;min-inline-size:0}
+.bl-jf .jf-fieldset:disabled{opacity:.96}
+.bl-jf .ro-badge{margin-left:8px;font-size:11px;font-weight:800;color:var(--red);background:#FDECEA;border:1px solid #F3C9C5;border-radius:999px;padding:2px 8px}
 .bl-jf .jf-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:start}
 .bl-jf .jf-form{min-width:0}
 .bl-jf .jf-pv{position:sticky;top:80px;min-width:0}
@@ -86,6 +89,8 @@ export function JobForm({
   const FIELD_OPTS = options?.industry ?? FIELDS;
   const TAG_OPTS = options?.tags ?? STD_TAGS;
   const [s, setS] = useState<JobFormState>(initialForm ?? makeDefaultForm(companies[0]?.id ?? ""));
+  // Chế độ sửa: tạo mới luôn cho sửa; sửa求人 đã tạo thì mở ở read-only đến khi bấm 編集.
+  const [editing, setEditing] = useState(mode === "create");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [benefitCustom, setBenefitCustom] = useState("");
@@ -171,13 +176,23 @@ export function JobForm({
     <div className="bl-jf">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="jf-head">
-        <span className="ht">求人票の{mode === "create" ? "作成" : "編集"}（管理）</span>
-        <button className="btn btn-ghost" onClick={clearForm}>クリア</button>
-        <button className="btn btn-ghost" onClick={() => router.push("/admin/jobs")}>キャンセル</button>
-        <button className="btn btn-red" onClick={save} disabled={saving}>{saving ? "保存中…" : mode === "create" ? "求人を作成" : "変更を保存"}</button>
+        <span className="ht">求人票の{mode === "create" ? "作成" : "編集"}（管理）{mode === "edit" && !editing && <span className="ro-badge">閲覧モード</span>}</span>
+        {mode === "edit" && !editing ? (
+          <>
+            <button className="btn btn-ghost" onClick={() => router.push("/admin/jobs")}>一覧へ戻る</button>
+            <button className="btn btn-red" onClick={() => setEditing(true)}>編集</button>
+          </>
+        ) : (
+          <>
+            <button className="btn btn-ghost" onClick={clearForm}>クリア</button>
+            <button className="btn btn-ghost" onClick={() => { if (mode === "edit") { if (initialForm) setS(initialForm); setEditing(false); } else router.push("/admin/jobs"); }}>キャンセル</button>
+            <button className="btn btn-red" onClick={save} disabled={saving}>{saving ? "保存中…" : mode === "create" ? "求人を作成" : "変更を保存"}</button>
+          </>
+        )}
       </div>
       {err && <div className="admin-note" style={{ color: "#A8231C", background: "#FDECEA", borderColor: "#F3C9C5" }}>{err}</div>}
 
+      <fieldset className="jf-fieldset" disabled={!editing}>
       <div className="jf-layout">
         {/* ============ FORM ============ */}
         <div className="jf-form">
@@ -332,6 +347,7 @@ export function JobForm({
           <JobPreview s={s} companyName={companyName} code={code} />
         </div>
       </div>
+      </fieldset>
     </div>
   );
 }

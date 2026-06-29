@@ -45,7 +45,7 @@ const PCOLUMNS: { key: PCol; label: string; w: number; value: (i: ListItem) => s
   { key: "createdAt", label: "応募日", w: 100, value: (i) => fmtDay(i.createdAt) },
   { key: "updatedAt", label: "最終更新", w: 100, value: (i) => fmtDay(i.updatedAt) },
 ];
-const PDEFAULT: PCol[] = ["nationality", "status", "job", "company", "staff", "createdAt", "updatedAt"];
+const PDEFAULT: PCol[] = ["status", "job", "company", "staff", "createdAt"];
 type PSortKey = "createdAt" | "updatedAt" | "name" | "status" | "company" | "staff" | "nationality";
 const PSORT: { key: PSortKey; label: string; val: (i: ListItem) => string }[] = [
   { key: "createdAt", label: "応募日", val: (i) => i.createdAt },
@@ -77,6 +77,8 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
   const [pSort, setPSort] = useState<{ key: PSortKey; dir: "asc" | "desc" }>({ key: "createdAt", dir: "desc" });
   const [pcols, setPcols] = useState<Set<PCol>>(() => new Set(PDEFAULT));
   const togglePcol = (k: PCol) => setPcols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const selectAllPcols = () => setPcols(new Set(PCOLUMNS.map((c) => c.key)));
+  const clearPcols = () => setPcols(new Set());
   const pvis = PCOLUMNS.filter((c) => pcols.has(c.key));
 
   async function loadList() {
@@ -193,16 +195,23 @@ export default function PipelineSplit({ canEdit }: { canEdit: boolean }) {
                   {PSORT.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
                 </select>
                 <button onClick={() => setPSort((p) => ({ ...p, dir: p.dir === "asc" ? "desc" : "asc" }))} className="mt-1 w-full rounded-lg bg-slate-50 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">{pSort.dir === "asc" ? "昇順 ↑" : "降順 ↓"}</button>
+                <button onClick={() => setPSort({ key: "createdAt", dir: "desc" })} className="mt-1 w-full text-xs font-semibold text-bl-red hover:underline">リセット</button>
               </div>
             </details>
             <details className="relative">
               <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
-              <div className="absolute left-0 z-30 mt-1 grid w-64 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-                {PCOLUMNS.map((c) => (
-                  <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                    <input type="checkbox" checked={pcols.has(c.key)} onChange={() => togglePcol(c.key)} />{c.label}
-                  </label>
-                ))}
+              <div className="absolute left-0 z-30 mt-1 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
+                  <button onClick={selectAllPcols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+                  <button onClick={clearPcols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {PCOLUMNS.map((c) => (
+                    <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                      <input type="checkbox" checked={pcols.has(c.key)} onChange={() => togglePcol(c.key)} />{c.label}
+                    </label>
+                  ))}
+                </div>
               </div>
             </details>
             <ExportBar compact filename="応募進捗" title="応募進捗一覧" getData={() => ({ headers: ["氏名", ...PCOLUMNS.map((c) => c.label)], rows: filtered.map((i) => [i.name, ...PCOLUMNS.map((c) => c.value(i))]) })} />

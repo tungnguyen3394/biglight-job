@@ -71,6 +71,8 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
   const [cols, setCols] = useState<Set<ColKey>>(() => new Set(DEFAULT_COLS));
   const visCols = COLUMNS.filter((c) => cols.has(c.key));
   const toggleCol = (k: ColKey) => setCols((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
+  const clearCols = () => setCols(new Set(["name"]));
 
   // ----- chọn để gửi mail -----
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -183,6 +185,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
                 {availableSort.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
               </select>
             )}
+            <button onClick={() => setSortList([{ key: "name", dir: "asc" }])} className="text-xs font-semibold text-bl-red hover:underline">リセット</button>
           </div>
         </details>
 
@@ -193,13 +196,19 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
               <ColumnsIcon />
               表示項目
             </summary>
-            <div className="absolute right-0 z-30 mt-1 grid w-72 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-              {COLUMNS.map((c) => (
-                <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                  <input type="checkbox" checked={cols.has(c.key)} disabled={c.key === "name"} onChange={() => toggleCol(c.key)} />
-                  {c.label}
-                </label>
-              ))}
+            <div className="absolute right-0 z-30 mt-1 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+              <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
+                <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+                <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
+              </div>
+              <div className="grid grid-cols-2 gap-1">
+                {COLUMNS.map((c) => (
+                  <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                    <input type="checkbox" checked={cols.has(c.key)} disabled={c.key === "name"} onChange={() => toggleCol(c.key)} />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
             </div>
           </details>
         )}
