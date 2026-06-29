@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge, publicStatusTone } from "@/components/ui/Badge";
 import { PUBLIC_STATUS_LABEL, JOB_OP_STATUS_LABEL } from "@/lib/constants";
 import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
+import { MailMergeModal } from "@/components/admin/MailMergeModal";
 
 export type CompanyRow = {
   id: string;
@@ -74,30 +75,10 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
   const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
   const clearCols = () => setCols(new Set(["name"]));
 
-  // ----- chọn để gửi mail -----
+  // ----- chọn để gửi mail merge -----
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mailOpen, setMailOpen] = useState(false);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState("");
-  const [confirming, setConfirming] = useState(false);
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  async function doSend() {
-    const ids = [...selected];
-    if (!ids.length || !subject.trim() || !body.trim() || sending) return;
-    setSending(true); setSendMsg("");
-    const r = await fetch("/api/admin/companies/mail", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) { setSending(false); setConfirming(false); setSendMsg(j.error || "送信に失敗しました。"); return; }
-    try {
-      await fetch(j.gasUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ secret: j.secret, to: j.emails, subject, body, replyTo: j.replyTo, name: j.name }) });
-      setSendMsg(`${j.emails.length}件に送信しました。`);
-      setSelected(new Set()); setSubject(""); setBody(""); setConfirming(false);
-      setTimeout(() => { setMailOpen(false); setSendMsg(""); }, 1800);
-    } catch { setSendMsg("送信に失敗しました（GASに接続できません）。"); }
-    finally { setSending(false); }
-  }
 
   // ----- sắp xếp nâng cao -----
   const addSort = (k: SortField) => setSortList((p) => (p.some((s) => s.key === k) ? p : [...p, { key: k, dir: "asc" }]));
@@ -220,7 +201,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <button onClick={() => setView("card")} className={`px-2.5 py-1.5 text-xs font-bold ${view === "card" ? "bg-ink text-white" : "bg-white text-slate-500"}`}>カード</button>
           </div>
           <ExportBar compact filename="企業一覧" title="企業一覧" getData={getData} />
-          <button onClick={() => { if (selected.size) { setMailOpen(true); setSendMsg(""); setConfirming(false); } }} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40">
+          <button onClick={() => { if (selected.size) setMailOpen(true); }} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40">
             <MailIcon />
             メール送信{selected.size > 0 && `（${selected.size}）`}
           </button>
@@ -308,40 +289,8 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
         </div>
       )}
 
-      {/* ===== modal gửi mail ===== */}
-      {mailOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setMailOpen(false); setConfirming(false); }}>
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-black text-ink">メール送信（{selected.size}社）</h3>
-              <button onClick={() => { setMailOpen(false); setConfirming(false); }} className="text-slate-400 hover:text-ink">✕</button>
-            </div>
-            <p className="mb-3 text-xs text-slate-500">選択した企業のメールアドレス宛に送信します。返信先はあなた（ログイン中のスタッフ）になります。</p>
-            <label className="mb-1 block text-xs font-bold text-slate-500">件名</label>
-            <input value={subject} onChange={(e) => { setSubject(e.target.value); setConfirming(false); }} className="input mb-3 w-full" placeholder="件名を入力" />
-            <label className="mb-1 block text-xs font-bold text-slate-500">本文</label>
-            <textarea value={body} onChange={(e) => { setBody(e.target.value); setConfirming(false); }} rows={8} className="input w-full" placeholder="本文を入力…" />
-            {sendMsg && <p className={`mt-2 text-sm font-semibold ${sendMsg.includes("送信しました") ? "text-emerald-600" : "text-red-600"}`}>{sendMsg}</p>}
-            {confirming && (
-              <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 ring-1 ring-amber-100">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 shrink-0"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></svg>
-                選択した{selected.size}社のメールアドレスへ送信します。送信後は取り消せません。よろしいですか？
-              </div>
-            )}
-            <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => { setMailOpen(false); setConfirming(false); }} className="btn btn-ghost">キャンセル</button>
-              {confirming ? (
-                <>
-                  <button onClick={() => setConfirming(false)} disabled={sending} className="btn btn-ghost">戻る</button>
-                  <button onClick={doSend} disabled={sending} className="btn btn-navy disabled:opacity-50">{sending ? "送信中…" : "はい、送信する"}</button>
-                </>
-              ) : (
-                <button onClick={() => setConfirming(true)} disabled={!subject.trim() || !body.trim()} className="btn btn-navy disabled:opacity-50">送信する</button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Mail Merge — gửi email cá nhân hoá cho công ty đã chọn */}
+      {mailOpen && <MailMergeModal scope="company" ids={[...selected]} onClose={() => setMailOpen(false)} />}
     </div>
   );
 }

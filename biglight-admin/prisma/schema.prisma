@@ -592,6 +592,41 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Mail Merge — mẫu email dùng chung (scope: candidate | company).
+model MailTemplate {
+  id          String   @id @default(cuid())
+  scope       String // "candidate" | "company"
+  name        String
+  subject     String   @db.Text
+  body        String   @db.Text
+  emptyMode   String   @default("blank") // "blank" | "placeholder"
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([scope])
+  @@map("mail_templates")
+}
+
+// Mail Merge — lịch sử gửi + trạng thái từng người nhận (recipients JSON).
+model MailSendLog {
+  id          String   @id @default(cuid())
+  scope       String // "candidate" | "company"
+  subject     String   @db.Text
+  body        String   @db.Text
+  sentById    String?
+  sentByName  String
+  total       Int      @default(0)
+  sentCount   Int      @default(0)
+  failedCount Int      @default(0)
+  recipients  Json     @default("[]") // [{ id, name, email, status }]
+  createdAt   DateTime @default(now())
+
+  @@index([scope])
+  @@index([createdAt])
+  @@map("mail_send_logs")
+}
+
 model StatusHistory {
   id            String   @id @default(cuid())
   applicationId String
