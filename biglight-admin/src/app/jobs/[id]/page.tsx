@@ -84,6 +84,9 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const hasSalary = job.baseSalary != null || job.expectedMonthly != null || job.expectedTakeHome != null;
   const sal = (fd.salary as { hourly?: number; monthlyBase?: number; allowanceTotal?: number; overtimePay?: number; gross?: number } | undefined) || undefined;
   const allowances = (Array.isArray(fd.allowances) ? fd.allowances : []) as { name?: string; amount?: number | ""; note?: string }[];
+  const numOrU = (v: unknown) => (typeof v === "number" ? v : undefined);
+  const wkDays = numOrU(fd.workDays), wkHours = numOrU(fd.workHoursPerDay), otHours = numOrU(fd.overtimeMonthly), otRate = numOrU(fd.overtimeRate);
+  const hasWorkCond = wkDays != null || wkHours != null || otHours != null;
   const hasHousing = job.dormitoryAvailable || !!str(fd.houseType) || job.dormitoryFee != null || !!job.utilitiesCost || !!job.wifi || !!job.commuteMethod || !!str(fd.room) || !!str(fd.roomDesc) || !!str(fd.otherCost) || typeof fd.roommates === "number";
   const hasContent = !!job.description || appeal.length > 0 || active.length > 0;
 
@@ -139,23 +142,19 @@ export default async function JobDetail({ params, searchParams }: { params: { id
           {/* 1. 給与 */}
           <Card title="給与">
             {hasSalary ? (
-              <div className="rounded-xl bg-bl-bg p-4">
+              <div className="space-y-3">
+                {/* 1. 基本給 */}
                 {job.baseSalary != null && (
-                  <>
+                  <div className="rounded-xl bg-bl-bg p-4">
                     <div className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</div>
                     <div className="text-2xl font-black text-bl-red">{fmtYen(job.baseSalary)}</div>
-                  </>
-                )}
-                {(sal?.hourly || sal?.monthlyBase || sal?.overtimePay || job.expectedTakeHome != null) && (
-                  <div className="mt-3 grid grid-cols-2 gap-2 border-t border-bl-line pt-3 text-sm">
-                    {sal?.hourly ? <div><div className="text-xs text-bl-gray">時給</div><div className="font-bold">{fmtYen(sal.hourly)}</div></div> : null}
-                    {sal?.monthlyBase ? <div><div className="text-xs text-bl-gray">基本給（月額）</div><div className="font-bold">{fmtYen(sal.monthlyBase)}</div></div> : null}
-                    {sal?.overtimePay ? <div><div className="text-xs text-bl-gray">残業代（目安）</div><div className="font-bold">{fmtYen(sal.overtimePay)}</div></div> : null}
-                    {job.expectedTakeHome != null && <div><div className="text-xs text-bl-gray">手取り目安</div><div className="font-bold">{fmtYen(job.expectedTakeHome)}</div></div>}
+                    {payNote && <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-bl-gray2">{payNote}</p>}
                   </div>
                 )}
+
+                {/* 2. 各種手当 */}
                 {allowances.length > 0 && (
-                  <div className="mt-3 border-t border-bl-line pt-3">
+                  <div className="rounded-xl border border-bl-line p-4">
                     <div className="mb-1.5 text-xs font-bold text-bl-gray">各種手当</div>
                     <ul className="space-y-1 text-sm">
                       {allowances.map((a, i) => (
@@ -165,15 +164,50 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                         </li>
                       ))}
                     </ul>
+                    {sal?.allowanceTotal ? <div className="mt-2 flex items-center justify-between border-t border-bl-line pt-2 text-sm font-bold"><span>手当合計</span><span>{fmtYen(sal.allowanceTotal)}</span></div> : null}
                   </div>
                 )}
+
+                {/* 3. 勤務条件 */}
+                {hasWorkCond && (
+                  <div className="rounded-xl border border-bl-line p-4">
+                    <div className="mb-2 text-xs font-bold text-bl-gray">勤務条件（目安）</div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                      <div><div className="text-[11px] text-bl-gray">日数 / 月</div><div className="font-bold">{wkDays != null ? `${wkDays}日` : "—"}</div></div>
+                      <div><div className="text-[11px] text-bl-gray">時間 / 1日</div><div className="font-bold">{wkHours != null ? `${wkHours}時間` : "—"}</div></div>
+                      <div><div className="text-[11px] text-bl-gray">残業 / 月</div><div className="font-bold">{otHours != null ? `${otHours}時間` : "—"}</div></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. 残業代見込み */}
+                {sal?.overtimePay ? (
+                  <div className="flex items-center justify-between rounded-xl border border-bl-line px-4 py-3 text-sm">
+                    <span className="text-bl-gray">残業代見込み{otRate ? `（×${otRate}）` : ""}</span>
+                    <span className="font-bold text-ink">{fmtYen(sal.overtimePay)}</span>
+                  </div>
+                ) : null}
+
+                {/* 5. 総支給見込み — nổi bật */}
                 {(sal?.gross || job.expectedMonthly != null) && (
-                  <div className="mt-3 flex items-center justify-between border-t border-bl-line pt-3">
-                    <span className="text-xs font-bold text-bl-gray">総支給（月収目安）</span>
-                    <span className="text-lg font-black text-bl-red">{fmtYen((sal?.gross ?? job.expectedMonthly) as number)}</span>
+                  <div className="rounded-2xl border-2 border-bl-red/25 bg-bl-redsoft/40 px-4 py-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="leading-tight"><div className="text-sm font-black text-ink">総支給見込み</div><div className="text-[10px] text-bl-gray2">税金・社会保険を引く前</div></div>
+                      <div className="text-2xl font-black text-ink">{fmtYen((sal?.gross ?? job.expectedMonthly) as number)}</div>
+                    </div>
                   </div>
                 )}
-                {payNote && <p className="mt-3 whitespace-pre-wrap border-t border-bl-line pt-3 text-xs leading-relaxed text-bl-gray">{payNote}</p>}
+
+                {/* 6. 手取り給与（概算）— nổi bật nhất */}
+                {job.expectedTakeHome != null && (
+                  <div className="rounded-2xl bg-bl-red p-5 text-white shadow-lg shadow-bl-red/20">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-black">手取り給与（概算）</div>
+                      <div className="text-3xl font-black leading-none">{fmtYen(job.expectedTakeHome)}</div>
+                    </div>
+                    <p className="mt-2.5 text-[11px] leading-relaxed text-white/85">※税金・社会保険などを考慮した概算金額です。実際の手取り額は勤務条件や控除内容により異なります。</p>
+                  </div>
+                )}
               </div>
             ) : Empty}
           </Card>
