@@ -34,9 +34,9 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
     const apply = () => {
       const el = boxRef.current;
       if (!el) return;
-      if (mq.matches && vv) {
-        el.style.height = `${vv.height}px`;
-        el.style.top = `${vv.offsetTop}px`;
+      if (mq.matches) {
+        el.style.height = `${vv ? vv.height : window.innerHeight}px`;
+        el.style.top = `${vv ? vv.offsetTop : 0}px`;
         el.style.bottom = "auto";
       } else {
         el.style.height = "";
@@ -47,10 +47,12 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
     apply();
     vv?.addEventListener("resize", apply);
     vv?.addEventListener("scroll", apply);
+    window.addEventListener("resize", apply);
     mq.addEventListener?.("change", apply);
     return () => {
       vv?.removeEventListener("resize", apply);
       vv?.removeEventListener("scroll", apply);
+      window.removeEventListener("resize", apply);
       mq.removeEventListener?.("change", apply);
     };
   }, []);
@@ -97,7 +99,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
   }
 
   return (
-    <div ref={boxRef} className="fixed inset-0 z-40 flex h-[100dvh] flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
+    <div ref={boxRef} className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
       <div className="flex shrink-0 items-center gap-2 border-b border-bl-line px-4 py-2.5">
         {onClose && (
           <button onClick={onClose} className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bl-gray hover:bg-bl-line lg:hidden" aria-label="戻る">
