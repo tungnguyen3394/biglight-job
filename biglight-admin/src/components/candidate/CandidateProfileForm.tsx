@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   NATIONALITIES, VISA_TYPES, JP_LEVELS, SKILL_FIELDS, PREF_OPTIONS,
@@ -273,21 +273,6 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
   const sswCats = SSW.find((d) => d.field === f.sswField)?.categories ?? [];
   const sswTasks = sswCats.find((c) => c.category === f.sswCategory)?.mainTasks ?? [];
 
-  const pct = useMemo(() => {
-    const filled = (k: string): boolean => {
-      if (k === "gender") return f.gender === "MALE" || f.gender === "FEMALE";
-      if (k === "cur") return !!f.sswField;
-      if (k === "docs") return Object.values(initDocs).some((a) => a.length > 0);
-      const v = (f as Record<string, unknown>)[k];
-      if (Array.isArray(v)) return v.length > 0;
-      if (k === "sal") return (v as number) > 0;
-      return String(v ?? "").trim() !== "";
-    };
-    let s = 0;
-    for (const k of PROFILE_KEYS) if (filled(k)) s += WEIGHT[k];
-    return Math.round((s / TOTAL_WEIGHT) * 100);
-  }, [f, initDocs]);
-
   async function save() {
     setErr("");
     if (!emailLocked && !f.email.trim()) { setErr("メールアドレスを入力してください。"); return; }
@@ -306,23 +291,6 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
 
   return (
     <div className="space-y-4">
-      {/* Completion + chế độ */}
-      <div className="rounded-2xl border border-bl-line bg-white p-4 shadow-sm">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <b className="text-sm">プロフィール完成度</b>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-black text-bl-red">{pct}%</span>
-            {!editing && (
-              <button onClick={() => { setEditing(true); setSaved(false); }} className="inline-flex items-center gap-1.5 rounded-xl border border-bl-red px-3 py-1.5 text-xs font-bold text-bl-red hover:bg-bl-redsoft">
-                <IconEdit /> 編集する
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-bl-bg"><div className="h-full rounded-full bg-bl-red transition-all" style={{ width: `${pct}%` }} /></div>
-        <p className="mt-2 text-xs text-bl-gray">{!editing ? "「編集する」を押すと内容を変更できます。" : pct < 100 ? "入力するほど、あなたに合う求人が見つかりやすくなります。" : "入力ありがとうございます！担当者があなたに合う求人をご紹介します。"}</p>
-      </div>
-
       {/* fieldset disabled = chế độ xem (khóa nhập); editing = mở khóa */}
       <fieldset disabled={!editing} className="m-0 min-w-0 space-y-4 border-0 p-0">
         <Card n={1} title="基本情報">

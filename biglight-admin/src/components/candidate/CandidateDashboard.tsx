@@ -136,12 +136,12 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* Header gọn: ☰ (mobile) ở góc trái + tiêu đề mục */}
-      <div className="mb-3 flex items-center gap-1.5">
-        <button onClick={() => setDrawer(true)} aria-label="メニュー" className="-ml-1.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-ink hover:bg-bl-bg lg:hidden">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+      {/* Header (Apple Settings): ☰ to ở góc trái + tiêu đề lớn */}
+      <div className="mb-3 flex items-center gap-1">
+        <button onClick={() => setDrawer(true)} aria-label="メニュー" className="-ml-2 flex h-11 w-11 flex-none items-center justify-center rounded-xl text-ink hover:bg-bl-bg lg:hidden">
+          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
-        <h1 className="truncate text-lg font-black text-ink">{heading || "マイページ"}</h1>
+        <h1 className="truncate text-xl font-black text-ink">{heading || "マイページ"}</h1>
       </div>
 
       {/* Một thanh duy nhất: プロフィール % + mốc 応募可能 + AIマッチング */}
@@ -159,9 +159,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           {canApply
             ? <span className="flex items-center gap-1 font-bold text-bl-green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>応募できます</span>
             : <button onClick={() => go("profile")} className="font-bold text-bl-red">あと{missing.length}項目 →</button>}
-          <span className="text-bl-gray2">AIマッチング <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
+          <span className="text-bl-gray2">AIおすすめ <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
         </div>
-        {pct < 100 && <p className="mt-1.5 text-[11px] leading-snug text-bl-gray2">入力するほどおすすめ求人が増えます</p>}
       </div>
 
       {/* Thông báo xanh — gọn 1 dòng, icon check nhỏ */}
