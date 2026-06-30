@@ -44,17 +44,21 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "messages", label: "メッセージ" },
 ];
 
-// Menu drawer (app-style): trang + mục dashboard
-const NAV: { label: string; icon: React.ReactNode; sec?: SecKey; href?: string; ext?: boolean }[] = [
-  { label: "ホーム", icon: ICONS.home, href: "/" },
-  { label: "求人", icon: ICONS.jobs, href: "/jobs" },
-  { label: "お気に入り", icon: ICONS.saved, sec: "saved" },
-  { label: "メッセージ", icon: ICONS.messages, sec: "messages" },
-  { label: "応募履歴", icon: ICONS.apps, sec: "apps" },
-  { label: "プロフィール", icon: ICONS.user, sec: "profile" },
-  { label: "手取り計算", icon: ICONS.salary, href: "/biglight-job-salary.html", ext: true },
-  { label: "ガイド", icon: ICONS.guide, href: "/guide" },
-  { label: "設定", icon: ICONS.settings, sec: "settings" },
+// Drawer: CHỈ mục phụ + tiện ích (ホーム/求人/ガイド/マイページ đã có ở footer → không lặp).
+type DrawerItem = { label: string; icon: React.ReactNode; sec?: SecKey; href?: string; ext?: boolean; logout?: boolean; gray?: boolean };
+const GROUPS: { title: string; items: DrawerItem[] }[] = [
+  { title: "応募・活動", items: [
+    { label: "お気に入り", icon: ICONS.saved, sec: "saved" },
+    { label: "メッセージ", icon: ICONS.messages, sec: "messages" },
+    { label: "応募履歴", icon: ICONS.apps, sec: "apps" },
+  ] },
+  { title: "便利機能", items: [
+    { label: "手取り計算", icon: ICONS.salary, href: "/biglight-job-salary.html", ext: true },
+  ] },
+  { title: "その他", items: [
+    { label: "設定", icon: ICONS.settings, sec: "settings" },
+    { label: "ログアウト", icon: ICONS.logout, logout: true, gray: true },
+  ] },
 ];
 
 export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
@@ -174,7 +178,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
       <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
         {/* ===== Mobile: drawer Minimal (trượt từ trái) + overlay ===== */}
         <div className={`fixed inset-0 z-50 lg:hidden ${drawer ? "" : "pointer-events-none"}`} aria-hidden={!drawer}>
-          <div onClick={() => setDrawer(false)} className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawer ? "opacity-100" : "opacity-0"}`} />
+          <div onClick={() => setDrawer(false)} className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${drawer ? "opacity-100" : "opacity-0"}`} />
           <div className={`absolute left-0 top-0 flex h-full w-[300px] max-w-[86vw] flex-col bg-white transition-transform duration-300 ${drawer ? "translate-x-0" : "-translate-x-full"}`}>
             {/* Đầu: avatar + tên + % */}
             <div className="flex items-center gap-3 px-5 pb-4 pt-5">
@@ -184,15 +188,20 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
                 <div className="text-xs text-bl-gray2">プロフィール {pct}%</div>
               </div>
             </div>
-            <nav className="flex-1 overflow-y-auto px-2 pb-4">
-              {NAV.map((it) => {
-                const active = it.sec && it.sec === sec;
-                const cls = `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-semibold transition ${active ? "text-bl-red" : "text-ink hover:bg-bl-bg"}`;
-                return it.sec
-                  ? <button key={it.label} onClick={() => { go(it.sec!); setDrawer(false); }} className={cls}><Ic d={it.icon} size={20} sw={1.7} />{it.label}</button>
-                  : <a key={it.label} href={it.href} target={it.ext ? "_blank" : undefined} rel={it.ext ? "noopener noreferrer" : undefined} onClick={() => setDrawer(false)} className={cls}><Ic d={it.icon} size={20} sw={1.7} />{it.label}</a>;
-              })}
-              <button onClick={() => { setDrawer(false); logout(); }} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-semibold text-bl-gray2 hover:bg-bl-bg"><Ic d={ICONS.logout} size={20} sw={1.7} />ログアウト</button>
+            <nav className="flex-1 overflow-y-auto px-3 pb-6 pt-1">
+              {GROUPS.map((g) => (
+                <div key={g.title} className="mb-5">
+                  <div className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-bl-gray2">{g.title}</div>
+                  {g.items.map((it) => {
+                    const active = !!it.sec && it.sec === sec;
+                    const cls = `flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left text-[15px] font-semibold transition ${it.gray ? "text-bl-gray2 hover:bg-bl-bg" : active ? "text-bl-red" : "text-ink hover:bg-bl-bg"}`;
+                    const inner = <><Ic d={it.icon} size={20} sw={1.7} />{it.label}</>;
+                    if (it.logout) return <button key={it.label} onClick={() => { setDrawer(false); logout(); }} className={cls}>{inner}</button>;
+                    if (it.sec) return <button key={it.label} onClick={() => { go(it.sec!); setDrawer(false); }} className={cls}>{inner}</button>;
+                    return <a key={it.label} href={it.href} target={it.ext ? "_blank" : undefined} rel={it.ext ? "noopener noreferrer" : undefined} onClick={() => setDrawer(false)} className={cls}>{inner}</a>;
+                  })}
+                </div>
+              ))}
             </nav>
           </div>
         </div>
