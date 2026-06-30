@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./CandidateProfileForm";
@@ -44,6 +44,11 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   const router = useRouter();
   const validSec = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
   const [sec, setSec] = useState<SecKey>(validSec ?? (needProfile || !complete ? "profile" : applied ? "apps" : "profile"));
+  // Khi URL đổi ?sec=... (vd bấm nút メッセージ ở header lúc đang ở マイページ) → mở đúng tab.
+  useEffect(() => {
+    const v = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
+    if (v) setSec(v);
+  }, [initialSec]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
 
