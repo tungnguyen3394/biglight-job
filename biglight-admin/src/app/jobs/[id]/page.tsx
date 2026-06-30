@@ -11,6 +11,7 @@ import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { SaveButton } from "@/components/candidate/SaveButton";
 import { ApplyButton } from "@/components/candidate/ApplyButton";
+import RecommendScore from "@/components/candidate/RecommendScore";
 
 export const dynamic = "force-dynamic";
 
@@ -231,6 +232,9 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               {loggedIn ? "プロフィール情報でかんたん応募" : "無料・Facebook / Google で30秒登録"}
             </p>
           </div>
+
+          {/* おすすめスコア (mock frontend) — dưới phần lương/応募 */}
+          <RecommendScore jobId={job.id} jobTitle={job.title} />
 
           {/* 2. 住居・生活 */}
           <Card title="住居・生活">

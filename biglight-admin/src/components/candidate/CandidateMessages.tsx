@@ -64,6 +64,12 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+  // Điền sẵn ô nhập khi mở từ「この求人についてAIに相談」(?ask=...) — không tạo chat mới.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ask = new URLSearchParams(window.location.search).get("ask");
+    if (ask) setDraft((d) => d || ask);
+  }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
   async function send() {

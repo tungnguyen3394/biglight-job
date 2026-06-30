@@ -10,6 +10,7 @@ import SiteFooter from "./SiteFooter";
 import { useLoginModal } from "./useLoginModal";
 import { PREFECTURES } from "@/lib/prefectures";
 import { RESIDENCE_LABEL } from "@/lib/constants";
+import { recommendScore } from "@/lib/recommend";
 import { JP_LEVELS } from "@/lib/candidateFields";
 
 export type BrowseJob = {
@@ -75,6 +76,7 @@ function cellText(j: BrowseJob, key: string): string {
 
 function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: boolean; onToggleSave: () => void; onApply: () => void }) {
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
+  const rec = recommendScore(job.id);
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-bl-red hover:shadow-lg">
       <Link href={`/jobs/${job.id}`} className="relative block h-32 overflow-hidden">
@@ -83,6 +85,8 @@ function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: bo
           {job.open && job.isUrgent && <span className="rounded-full bg-bl-red px-2 py-0.5 text-[11px] font-black text-white shadow">急募</span>}
           {!job.open && <span className="rounded-full bg-bl-gray px-2 py-0.5 text-[11px] font-bold text-white">募集終了</span>}
         </div>
+        {/* おすすめスコア (mock) — nhỏ, không chiếm diện tích */}
+        <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-black text-bl-red shadow-sm">★ おすすめ {rec.score}%</span>
         <button onClick={(e) => { e.preventDefault(); onToggleSave(); }} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-lg leading-none shadow hover:bg-white" aria-label="お気に入り">
           <span className={saved ? "text-bl-red" : "text-bl-gray2"}>{saved ? "♥" : "♡"}</span>
         </button>
