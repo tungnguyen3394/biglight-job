@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./CandidateProfileForm";
@@ -49,6 +49,12 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
     const v = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
     if (v) setSec(v);
   }, [initialSec]);
+  // Slider bar (mobile): tự cuộn tab đang chọn vào giữa.
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = tabBarRef.current?.querySelector(`[data-sec="${sec}"]`) as HTMLElement | null;
+    el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [sec]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
 
@@ -98,7 +104,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         <Ic d={ICONS[key]} />{label}
       </button>
     ) : (
-      <button key={key} onClick={() => go(key)} className={`flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs font-bold ${sec === key ? "bg-bl-red text-white" : "bg-white text-bl-gray"}`}>
+      <button key={key} data-sec={key} onClick={() => go(key)} className={`flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-bold transition ${sec === key ? "bg-bl-red text-white shadow" : "text-bl-gray hover:text-ink"}`}>
         <Ic d={ICONS[key]} size={15} />{label}
       </button>
     );
@@ -133,8 +139,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
       )}
 
       <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
-        {/* ===== Mobile: tabs ngang (chỉ mobile) ===== */}
-        <nav className="mb-4 flex gap-1.5 overflow-x-auto pb-1 lg:hidden">
+        {/* ===== Mobile: slider bar (chỉ mobile) ===== */}
+        <nav ref={tabBarRef} className="mb-4 flex gap-1 overflow-x-auto rounded-full bg-bl-bg p-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {ITEMS.map((it) => navBtn(it.key, it.label, false))}
           {navBtn("settings", "設定", false)}
         </nav>

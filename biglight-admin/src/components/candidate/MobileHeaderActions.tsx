@@ -48,19 +48,21 @@ export default function MobileHeaderActions({ loggedIn }: { loggedIn?: boolean }
   const unreadMsg = loggedIn && items.some((i) => !i.isRead && i.type === "message");
 
   return (
-    <div className="flex items-center gap-1">
-      {/* Messenger (Facebook) — nổi bật, ưu tiên nhắn qua FB */}
-      <MessengerLink variant="compact" />
+    <div className="flex items-center gap-2">
+      {/* Messenger (Facebook) — pill nổi bật */}
+      <div className="flex-1"><MessengerLink variant="pillSm" /></div>
 
-      {/* メッセージ */}
-      <Link href="/mypage?sec=messages" className="relative flex h-9 w-9 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg" aria-label="メッセージ">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" /></svg>
-        {unreadMsg && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-bl-red" />}
+      {/* メッセージ web (có AI tư vấn) — pill nổi bật nhất */}
+      <Link href="/mypage?sec=messages" className="relative flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-bl-red to-bl-redd px-3 py-2 text-[13px] font-black text-white shadow-md ring-1 ring-bl-red/20 transition hover:opacity-90" aria-label="メッセージ（AI相談）">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z" /></svg>
+        メッセージ
+        <span className="rounded bg-white/25 px-1 py-0.5 text-[9px] font-black leading-none">AI</span>
+        {unreadMsg && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-white bg-amber-400" />}
       </Link>
 
       {/* Chuông */}
-      <div ref={ref} className="relative">
-        <button onClick={openBell} className="relative flex h-9 w-9 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg" aria-label="お知らせ">
+      <div ref={ref} className="relative flex-none">
+        <button onClick={openBell} className="relative flex h-10 w-10 items-center justify-center rounded-xl text-bl-gray hover:bg-bl-bg" aria-label="お知らせ">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
           {loggedIn && unread > 0 && <span className="absolute right-0.5 top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-bl-red px-1 text-[9px] font-bold text-white">{unread > 9 ? "9+" : unread}</span>}
         </button>

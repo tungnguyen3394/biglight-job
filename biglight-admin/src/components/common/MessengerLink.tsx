@@ -18,9 +18,21 @@ const ICON = (
   <svg viewBox="0 0 24 24" fill="#fff" className="h-[18px] w-[18px]"><path d="M12 2C6.5 2 2 6.1 2 11.2c0 2.9 1.4 5.5 3.7 7.2V22l3.4-1.9c.9.25 1.9.39 2.9.39 5.5 0 10-4.1 10-9.2S17.5 2 12 2zm1 12.4l-2.5-2.7-4.9 2.7 5.4-5.7 2.6 2.7 4.8-2.7-5.4 5.7z" /></svg>
 );
 
-export default function MessengerLink({ variant = "compact" }: { variant?: "compact" | "pill" }) {
+export default function MessengerLink({ variant = "compact" }: { variant?: "compact" | "pill" | "pillSm" }) {
   if (!USERNAME) return null;
   const url = `https://m.me/${USERNAME}`;
+
+  if (variant === "pillSm") {
+    // Pill gọn full-width (dùng ở hàng nút header mobile, đặt trong flex-1).
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" onClick={track} aria-label="Messengerで相談"
+        className="relative inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-[#00B2FF] to-[#0866FF] px-3 py-2 text-[13px] font-black text-white shadow-md ring-1 ring-[#0866FF]/20 transition hover:opacity-90">
+        {ICON}
+        Messenger
+        <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-bl-red opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-white bg-bl-red" /></span>
+      </a>
+    );
+  }
 
   if (variant === "pill") {
     return (
