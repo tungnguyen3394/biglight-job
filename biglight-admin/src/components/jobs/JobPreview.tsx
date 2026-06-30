@@ -1,6 +1,6 @@
 "use client";
 
-import { CODEPREF, type JobFormState } from "@/lib/jobFormModel";
+import { CODEPREF, computeSalary, type JobFormState } from "@/lib/jobFormModel";
 
 const CSS = `
 .bl-pv{--red:#D02E26;--ink:#16181D;--gray:#5B6472;--gray-2:#9AA2AE;--line:#ECECEF;--bg:#F7F8FA;--green:#1F9D55;--green-soft:#E6F6EC;--blue:#2563EB;--shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.08);font-family:'Noto Sans JP',system-ui,sans-serif;color:var(--ink)}
@@ -90,6 +90,7 @@ export function JobPreview({ s, companyName, code }: { s: JobFormState; companyN
     ["その他実費", s.otherCost || "—"],
   ];
   const empty = (t: string) => <span className="pv-empty">{t}</span>;
+  const c = computeSalary(s);
 
   return (
     <div className="bl-pv">
@@ -112,7 +113,11 @@ export function JobPreview({ s, companyName, code }: { s: JobFormState; companyN
               ) : (
                 <div className="full"><div className="k">基本給</div><div className="v">{empty("未入力")}</div></div>
               )}
-              <div><div className="k">月収例</div><div className="v">{s.monthly !== "" ? yen(s.monthly) + "円" : empty("—")}</div></div>
+              <div><div className="k">時給</div><div className="v">{c.hourly ? "¥" + yen(c.hourly) : empty("—")}</div></div>
+              <div><div className="k">基本給（月額）</div><div className="v">{c.monthlyBase ? "¥" + yen(c.monthlyBase) : empty("—")}</div></div>
+              {c.allowanceTotal > 0 && <div><div className="k">手当合計</div><div className="v">¥{yen(c.allowanceTotal)}</div></div>}
+              {c.overtimePay > 0 && <div><div className="k">残業代</div><div className="v">¥{yen(c.overtimePay)}</div></div>}
+              <div className="full"><div className="k">総支給（月収目安）</div><div className="v sal">{c.gross ? "¥" + yen(c.gross) : empty("—")}</div></div>
               <div><div className="k">募集人数</div><div className="v">{recruitLine}</div></div>
               <div><div className="k">勤務地</div><div className="v">{s.pref} {s.city}</div></div>
               <div><div className="k">日本語</div><div className="v">{s.jp}</div></div>
@@ -126,7 +131,7 @@ export function JobPreview({ s, companyName, code }: { s: JobFormState; companyN
               <div className="pv-kv" style={{ marginBottom: 0 }}>
                 <div className="full"><div className="k">雇用期間</div><div className="v">{s.term || "—"}</div></div>
                 <div><div className="k">勤務時間</div><div className="v">{s.hours || "—"}</div></div>
-                <div><div className="k">残業</div><div className="v">{s.overtime || "—"}</div></div>
+                <div><div className="k">残業</div><div className="v">{s.overtimeMonthly !== "" ? `月平均${s.overtimeMonthly}時間` : "—"}</div></div>
                 <div><div className="k">休日・休暇</div><div className="v">{s.holiday || "—"}</div></div>
                 <div><div className="k">通勤手段</div><div className="v">{s.commute || "—"}</div></div>
                 <div className="full"><div className="k">賞与・昇給</div><div className="v">{s.bonus || "—"}</div></div>

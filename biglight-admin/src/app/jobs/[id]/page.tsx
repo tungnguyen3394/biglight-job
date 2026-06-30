@@ -82,6 +82,8 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const loc = `${job.location}${job.city ? ` ${job.city}` : ""}`;
 
   const hasSalary = job.baseSalary != null || job.expectedMonthly != null || job.expectedTakeHome != null;
+  const sal = (fd.salary as { hourly?: number; monthlyBase?: number; allowanceTotal?: number; overtimePay?: number; gross?: number } | undefined) || undefined;
+  const allowances = (Array.isArray(fd.allowances) ? fd.allowances : []) as { name?: string; amount?: number | ""; note?: string }[];
   const hasHousing = job.dormitoryAvailable || !!str(fd.houseType) || job.dormitoryFee != null || !!job.utilitiesCost || !!job.wifi || !!job.commuteMethod || !!str(fd.room) || !!str(fd.roomDesc) || !!str(fd.otherCost) || typeof fd.roommates === "number";
   const hasContent = !!job.description || appeal.length > 0 || active.length > 0;
 
@@ -144,10 +146,31 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                     <div className="text-2xl font-black text-bl-red">{fmtYen(job.baseSalary)}</div>
                   </>
                 )}
-                {(job.expectedMonthly != null || job.expectedTakeHome != null) && (
+                {(sal?.hourly || sal?.monthlyBase || sal?.overtimePay || job.expectedTakeHome != null) && (
                   <div className="mt-3 grid grid-cols-2 gap-2 border-t border-bl-line pt-3 text-sm">
-                    {job.expectedMonthly != null && <div><div className="text-xs text-bl-gray">月収例</div><div className="font-bold">{fmtYen(job.expectedMonthly)}</div></div>}
+                    {sal?.hourly ? <div><div className="text-xs text-bl-gray">時給</div><div className="font-bold">{fmtYen(sal.hourly)}</div></div> : null}
+                    {sal?.monthlyBase ? <div><div className="text-xs text-bl-gray">基本給（月額）</div><div className="font-bold">{fmtYen(sal.monthlyBase)}</div></div> : null}
+                    {sal?.overtimePay ? <div><div className="text-xs text-bl-gray">残業代（目安）</div><div className="font-bold">{fmtYen(sal.overtimePay)}</div></div> : null}
                     {job.expectedTakeHome != null && <div><div className="text-xs text-bl-gray">手取り目安</div><div className="font-bold">{fmtYen(job.expectedTakeHome)}</div></div>}
+                  </div>
+                )}
+                {allowances.length > 0 && (
+                  <div className="mt-3 border-t border-bl-line pt-3">
+                    <div className="mb-1.5 text-xs font-bold text-bl-gray">各種手当</div>
+                    <ul className="space-y-1 text-sm">
+                      {allowances.map((a, i) => (
+                        <li key={i} className="flex items-start justify-between gap-2">
+                          <span>{a.name}{a.note ? <span className="ml-1 text-xs text-bl-gray2">（{a.note}）</span> : null}</span>
+                          {a.amount != null && a.amount !== "" && <span className="shrink-0 font-bold">{fmtYen(a.amount as number)}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {(sal?.gross || job.expectedMonthly != null) && (
+                  <div className="mt-3 flex items-center justify-between border-t border-bl-line pt-3">
+                    <span className="text-xs font-bold text-bl-gray">総支給（月収目安）</span>
+                    <span className="text-lg font-black text-bl-red">{fmtYen((sal?.gross ?? job.expectedMonthly) as number)}</span>
                   </div>
                 )}
                 {payNote && <p className="mt-3 whitespace-pre-wrap border-t border-bl-line pt-3 text-xs leading-relaxed text-bl-gray">{payNote}</p>}

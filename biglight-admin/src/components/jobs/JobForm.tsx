@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { JobPreview } from "./JobPreview";
 import {
   FIELDS, PREFS, PAY_TYPES, STD_BENEFITS, STD_TAGS, JP_LEVELS, START_OPTS, HOUSE_TYPES,
-  makeDefaultForm, formToPayload, type JobFormState, type Num,
+  makeDefaultForm, formToPayload, computeSalary, ALLOWANCE_SUGGEST, type JobFormState, type Num, type Allowance,
 } from "@/lib/jobFormModel";
 import { PUBLIC_STATUS_LABEL } from "@/lib/constants";
 
@@ -52,6 +52,18 @@ const CSS = `
 .bl-jf .chip-btn.on{background:var(--red);color:#fff}
 .bl-jf .chip-btn.multi.on{background:var(--green-soft);color:var(--green);border-color:#BCE7CC}
 .bl-jf .chip-btn.tag.on{background:#E8F0FE;color:var(--blue);border-color:#C7DBFD}
+.bl-jf .calc{margin-top:13px;border:1.5px solid #E5E8EC;border-radius:14px;overflow:hidden}
+.bl-jf .calc .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;font-size:13px;border-top:1px solid #EEF0F3}
+.bl-jf .calc .row:first-child{border-top:none}
+.bl-jf .calc .row .lbl{color:var(--gray);font-weight:600}
+.bl-jf .calc .row .val{font-weight:800;color:var(--ink)}
+.bl-jf .calc .row.total{background:#FFF1F0}
+.bl-jf .calc .row.total .lbl{color:var(--red);font-weight:800}
+.bl-jf .calc .row.total .val{color:var(--red);font-size:19px}
+.bl-jf .allow-row{display:grid;grid-template-columns:1.1fr 130px 1.3fr 34px;gap:8px;align-items:center;margin-bottom:8px}
+.bl-jf .allow-x{border:none;background:var(--bg);color:var(--gray);border-radius:9px;cursor:pointer;height:42px;font-size:16px}
+.bl-jf .allow-x:hover{background:#FFE3E0;color:var(--red)}
+@media(max-width:680px){.bl-jf .allow-row{grid-template-columns:1fr 1fr 34px}.bl-jf .allow-row .note-cell{grid-column:1 / -1}}
 .bl-jf .chip-add{display:flex;gap:7px;margin-top:9px}
 .bl-jf .chip-add .inp{flex:1;padding:8px 11px}
 .bl-jf .chip-add button{flex:0 0 auto;padding:8px 14px;border-radius:10px;background:var(--ink);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;border:none}
@@ -126,6 +138,15 @@ export function JobForm({
 
   // recruit clamp
   const pNum = (v: string): Num => (v === "" ? "" : Math.max(0, Math.floor(Number(v) || 0)));
+  // số thập phân (giờ/ngày 7.5, 割増率 1.25)
+  const pDec = (v: string): Num => (v === "" ? "" : Math.max(0, Number(v) || 0));
+  const yen = (n: number) => n.toLocaleString("ja-JP");
+
+  // ----- 手当 (allowances) -----
+  const calc = computeSalary(s);
+  const addAllow = (name = "") => setS((p) => ({ ...p, allowances: [...p.allowances, { name, amount: "" as Num, note: "" }] }));
+  const updAllow = (i: number, patch: Partial<Allowance>) => setS((p) => ({ ...p, allowances: p.allowances.map((a, j) => (j === i ? { ...a, ...patch } : a)) }));
+  const delAllow = (i: number) => setS((p) => ({ ...p, allowances: p.allowances.filter((_, j) => j !== i) }));
   const T = s.recruitTotal === "" ? 0 : s.recruitTotal;
   const M = s.recruitMale === "" ? 0 : s.recruitMale;
   const F = s.recruitFemale === "" ? 0 : s.recruitFemale;
@@ -224,14 +245,45 @@ export function JobForm({
           {/* 2 給与 */}
           <div className="section">
             <h2><span className="num">2</span>給与</h2>
-            <p className="sdesc">基本給・月収例・手取り（労働者が最も気にする部分）</p>
+            <p className="sdesc">時給・月給・手当・残業代・総支給を自動計算（労働者が最も気にする部分）</p>
             <div className="field full" style={{ marginBottom: 13 }}><label>基本給 — 区分</label><div className="chips">{PAY_TYPES.map((p) => <button type="button" key={p} className={`chip-btn${s.payType === p ? " on" : ""}`} onClick={() => set("payType", p)}>{p}</button>)}</div><span className="hint">時給・日給・月給のいずれか</span></div>
             <div className="grid cols3">
-              <div className="field"><label>金額</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.payAmount} onChange={(e) => set("payAmount", pNum(e.target.value))} placeholder="例）1300" /><span className="unit">円</span></div><span className="hint">区分に対応した金額</span></div>
-              <div className="field"><label>月収例</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.monthly} onChange={(e) => set("monthly", pNum(e.target.value))} placeholder="例）250000" /><span className="unit">円</span></div><span className="hint">残業・手当込みの目安</span></div>
-              <div className="field"><label>手取り月収</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.takehome} onChange={(e) => set("takehome", pNum(e.target.value))} placeholder="例）205000" /><span className="unit">円</span></div><span className="hint">税・社会保険を引いた後／家賃は含まない</span></div>
-              <div className="field full"><label>基本給の補足</label><input className="inp" value={s.payNote} onChange={(e) => set("payNote", e.target.value)} placeholder="例）試用期間3ヶ月は時給1,200円 / 深夜手当別途" /><span className="hint">条件や手当の注意書き</span></div>
+              <div className="field"><label>金額（{s.payType}）</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.payAmount} onChange={(e) => set("payAmount", pNum(e.target.value))} placeholder={s.payType === "月給" ? "例）250000" : s.payType === "日給" ? "例）11000" : "例）1300"} /><span className="unit">円</span></div><span className="hint">区分に対応した金額</span></div>
+              <div className="field"><label>日数 / 月</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.workDays} onChange={(e) => set("workDays", pNum(e.target.value))} placeholder="例）22" /><span className="unit">日</span></div><span className="hint">1ヶ月の勤務日数</span></div>
+              <div className="field"><label>時間 / 1日</label><div className="with-unit"><input className="inp" type="number" inputMode="decimal" step="0.5" value={s.workHoursPerDay} onChange={(e) => set("workHoursPerDay", pDec(e.target.value))} placeholder="例）8" /><span className="unit">時間</span></div><span className="hint">1日の実働時間</span></div>
             </div>
+            <div className="grid cols3">
+              <div className="field"><label>残業時間 / 月</label><div className="with-unit"><input className="inp" type="number" inputMode="decimal" step="0.5" value={s.overtimeMonthly} onChange={(e) => set("overtimeMonthly", pDec(e.target.value))} placeholder="例）20" /><span className="unit">時間</span></div><span className="hint">想定の月平均残業</span></div>
+              <div className="field"><label>残業割増率</label><div className="with-unit"><input className="inp" type="number" inputMode="decimal" step="0.05" value={s.overtimeRate} onChange={(e) => set("overtimeRate", pDec(e.target.value))} placeholder="1.25" /><span className="unit">倍</span></div><span className="hint">残業代＝時給×割増率×残業時間</span></div>
+              <div className="field"><label>手取り月収（手入力）</label><div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={s.takehome} onChange={(e) => set("takehome", pNum(e.target.value))} placeholder="例）205000" /><span className="unit">円</span></div><span className="hint">税・社会保険を引いた後／家賃は含まない</span></div>
+            </div>
+
+            {/* 各種手当 */}
+            <div className="field full" style={{ marginTop: 6 }}>
+              <label>各種手当（複数追加可）</label>
+              <div className="chips" style={{ marginBottom: 10 }}>{ALLOWANCE_SUGGEST.map((name) => <button type="button" key={name} className="chip-btn" onClick={() => addAllow(name === "その他" ? "" : name)}>＋ {name}</button>)}</div>
+              {s.allowances.map((a, i) => (
+                <div className="allow-row" key={i}>
+                  <input className="inp" value={a.name} onChange={(e) => updAllow(i, { name: e.target.value })} placeholder="手当名（例）夜勤手当" />
+                  <div className="with-unit"><input className="inp" type="number" inputMode="numeric" value={a.amount} onChange={(e) => updAllow(i, { amount: pNum(e.target.value) })} placeholder="金額" /><span className="unit">円</span></div>
+                  <input className="inp note-cell" value={a.note} onChange={(e) => updAllow(i, { note: e.target.value })} placeholder=" メモ / 支給条件（例）月15日以上で支給" />
+                  <button type="button" className="allow-x" onClick={() => delAllow(i)} aria-label="削除">✕</button>
+                </div>
+              ))}
+              <button type="button" className="chip-btn" onClick={() => addAllow()} style={{ marginTop: 2 }}>＋ 手当を追加</button>
+            </div>
+
+            {/* 自動計算（読み取り専用） */}
+            <div className="calc">
+              <div className="row"><span className="lbl">時給</span><span className="val">{calc.hourly ? `¥${yen(calc.hourly)}` : "—"}</span></div>
+              <div className="row"><span className="lbl">基本給（月額）</span><span className="val">{calc.monthlyBase ? `¥${yen(calc.monthlyBase)}` : "—"}</span></div>
+              <div className="row"><span className="lbl">各種手当 合計</span><span className="val">{calc.allowanceTotal ? `¥${yen(calc.allowanceTotal)}` : "¥0"}</span></div>
+              <div className="row"><span className="lbl">残業代（{s.overtimeRate || 1.25}倍 × {s.overtimeMonthly || 0}h）</span><span className="val">{calc.overtimePay ? `¥${yen(calc.overtimePay)}` : "¥0"}</span></div>
+              <div className="row total"><span className="lbl">総支給（月収目安）</span><span className="val">{calc.gross ? `¥${yen(calc.gross)}` : "—"}</span></div>
+              <div className="row"><span className="lbl">手取り月収（手入力）</span><span className="val">{s.takehome !== "" ? `¥${yen(Number(s.takehome))}` : "—"}</span></div>
+            </div>
+
+            <div className="field full" style={{ marginTop: 13 }}><label>基本給の補足</label><input className="inp" value={s.payNote} onChange={(e) => set("payNote", e.target.value)} placeholder="例）試用期間3ヶ月は時給1,200円 / 深夜手当別途" /><span className="hint">条件や手当の注意書き</span></div>
           </div>
 
           {/* 3 募集要項 */}
@@ -253,7 +305,6 @@ export function JobForm({
             <div className="grid">
               <div className="field"><label>雇用期間</label><input className="inp" value={s.term} onChange={(e) => set("term", e.target.value)} placeholder="例）特定技能1号（通算上限5年）" /><span className="hint">在留資格・契約期間</span></div>
               <div className="field"><label>勤務時間</label><input className="inp" value={s.hours} onChange={(e) => set("hours", e.target.value)} placeholder="例）8:00〜17:00（休憩60分）" /><span className="hint">シフト・実働時間</span></div>
-              <div className="field"><label>残業時間</label><input className="inp" value={s.overtime} onChange={(e) => set("overtime", e.target.value)} placeholder="例）月平均20時間程度" /><span className="hint">月平均の目安</span></div>
               <div className="field"><label>休日・休暇</label><input className="inp" value={s.holiday} onChange={(e) => set("holiday", e.target.value)} placeholder="例）土日休み・年間休日120日" /><span className="hint">週休・年間休日・長期休暇</span></div>
               <div className="field"><label>通勤手段</label><input className="inp" value={s.commute} onChange={(e) => set("commute", e.target.value)} placeholder="例）寮から徒歩10分 / 送迎あり" /><span className="hint">通勤方法</span></div>
               <div className="field"><label>賞与・昇給</label><input className="inp" value={s.bonus} onChange={(e) => set("bonus", e.target.value)} placeholder="例）賞与年2回・昇給あり" /><span className="hint">ボーナス・昇給の有無</span></div>
