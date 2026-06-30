@@ -39,6 +39,8 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "saved", label: "お気に入り求人" },
   { key: "messages", label: "メッセージ" },
 ];
+// Nhãn ngắn cho rail dọc bên trái (mobile)
+const SHORT: Record<SecKey, string> = { profile: "プロフィール", apps: "応募状況", saved: "お気に入り", messages: "メッセージ", settings: "設定" };
 
 export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
   const router = useRouter();
@@ -104,8 +106,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         <Ic d={ICONS[key]} />{label}
       </button>
     ) : (
-      <button key={key} data-sec={key} onClick={() => go(key)} className={`flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-bold transition ${sec === key ? "bg-bl-red text-white shadow" : "text-bl-gray hover:text-ink"}`}>
-        <Ic d={ICONS[key]} size={15} />{label}
+      <button key={key} data-sec={key} onClick={() => go(key)} className={`flex flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-center text-[10px] font-bold leading-tight transition ${sec === key ? "bg-bl-red text-white shadow" : "text-bl-gray hover:bg-white"}`}>
+        <Ic d={ICONS[key]} size={19} /><span className="break-keep">{label}</span>
       </button>
     );
 
@@ -138,11 +140,14 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         </div>
       )}
 
-      <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
-        {/* ===== Mobile: slider bar (chỉ mobile) ===== */}
-        <nav ref={tabBarRef} className="mb-4 flex gap-1 overflow-x-auto rounded-full bg-bl-bg p-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {ITEMS.map((it) => navBtn(it.key, it.label, false))}
-          {navBtn("settings", "設定", false)}
+      <div className="flex gap-2.5 lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
+        {/* ===== Mobile: slider bar DỌC bên trái (chỉ mobile) ===== */}
+        <nav ref={tabBarRef} className="flex w-[80px] flex-none flex-col gap-1 self-start overflow-y-auto rounded-2xl bg-bl-bg p-1.5 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {ITEMS.map((it) => navBtn(it.key, SHORT[it.key], false))}
+          {navBtn("settings", SHORT.settings, false)}
+          <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mt-0.5 flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-bl-red to-bl-redd px-1 py-2.5 text-center text-[10px] font-bold leading-tight text-white">
+            <Ic d={ICONS.salary} size={19} /><span className="break-keep">手取り計算</span>
+          </a>
         </nav>
 
         {/* ===== Desktop: sidebar dọc (chỉ desktop) ===== */}
@@ -159,13 +164,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           </nav>
         </aside>
 
-        {/* ===== Mobile: nút 手取り計算 (chỉ mobile) ===== */}
-        <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-bl-red to-bl-redd p-4 text-white lg:hidden">
-          <span className="flex items-center gap-2 text-sm font-black"><Ic d={ICONS.salary} />手取り計算ツール</span><span className="text-sm font-bold">計算する →</span>
-        </a>
-
         {/* ===== Nội dung ===== */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="mb-3 hidden text-lg font-black lg:block">{heading}</h2>
 
           {notice && (
