@@ -1,5 +1,5 @@
 // Client helper: gọi API xóa thống nhất (đơn lẻ/hàng loạt) cho các bảng admin.
-export type DelEntity = "job" | "candidate" | "article" | "application";
+export type DelEntity = "job" | "candidate" | "article" | "application" | "company";
 
 export async function requestDelete(entity: DelEntity, ids: string[]): Promise<{ ok: boolean; error?: string; count?: number }> {
   const r = await fetch("/api/admin/bulk-delete", {

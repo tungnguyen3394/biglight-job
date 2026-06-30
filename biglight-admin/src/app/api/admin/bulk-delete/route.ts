@@ -6,9 +6,9 @@ import type { Permission } from "@/lib/adminAccess";
 
 export const dynamic = "force-dynamic";
 
-type Entity = "job" | "candidate" | "article" | "application";
+type Entity = "job" | "candidate" | "article" | "application" | "company";
 const PERM: Record<Entity, Permission> = {
-  job: "jobs.delete", candidate: "applicants.delete", article: "articles.delete", application: "applicants.delete",
+  job: "jobs.delete", candidate: "applicants.delete", article: "articles.delete", application: "applicants.delete", company: "companies.delete",
 };
 
 // POST { entity, ids } — xóa dữ liệu có kiểm soát chặt:
@@ -27,6 +27,23 @@ export async function POST(req: Request) {
   if (!g.ok) return g.res;
   if (ids.length > 1 && g.level !== "ADMIN") {
     return NextResponse.json({ error: "一括削除はAdminのみ可能です。" }, { status: 403 });
+  }
+
+  // 企業: còn 求人 thì CHẶN xóa (an toàn dữ liệu) — phải xóa/chuyển đơn trước.
+  if (entity === "company") {
+    const jobCount = await prisma.job.count({ where: { companyId: { in: ids } } });
+    if (jobCount > 0) {
+      return NextResponse.json({ error: `この企業にはまだ ${jobCount} 件の求人があります。先に求人を削除または移動してください。` }, { status: 409 });
+    }
+    const names = (await prisma.company.findMany({ where: { id: { in: ids } }, select: { name: true } })).map((r) => r.name);
+    await prisma.$transaction([
+      prisma.user.updateMany({ where: { companyId: { in: ids } }, data: { companyId: null } }),
+      prisma.candidateCommission.deleteMany({ where: { companyId: { in: ids } } }),
+      prisma.application.deleteMany({ where: { companyId: { in: ids } } }),
+      prisma.company.deleteMany({ where: { id: { in: ids } } }),
+    ]);
+    await reportDelete(g.user, entity, names);
+    return NextResponse.json({ ok: true, count: ids.length });
   }
 
   let names: string[] = [];

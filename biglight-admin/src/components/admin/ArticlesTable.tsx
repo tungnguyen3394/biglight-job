@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 import { requestDelete } from "@/lib/adminDelete";
+import { useAutoCloseDetails } from "@/lib/useAutoCloseDetails";
 
 const TrashIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>;
 
@@ -50,6 +51,7 @@ const SORT_FIELDS: { key: SortField; label: string; cmp: (a: ArticleRow, b: Arti
 
 export function ArticlesTable({ rows, canWrite, canRowDelete = false, canBulkDelete = false }: { rows: ArticleRow[]; canWrite: boolean; canRowDelete?: boolean; canBulkDelete?: boolean }) {
   const router = useRouter();
+  useAutoCloseDetails();
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [delBusy, setDelBusy] = useState(false);
   const toggleSel = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });

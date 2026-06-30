@@ -2,12 +2,12 @@ import { prisma } from "./prisma";
 import { logAudit } from "./audit";
 import { notify } from "./notify";
 
-const LABEL: Record<string, string> = { job: "求人", candidate: "応募者", article: "記事", application: "応募" };
+const LABEL: Record<string, string> = { job: "求人", candidate: "応募者", article: "記事", application: "応募", company: "企業" };
 
 // Ghi 操作ログ + gửi thông báo cho TẤT CẢ admin mỗi khi có xóa dữ liệu.
 export async function reportDelete(
   actor: { id: string; name: string },
-  entity: "job" | "candidate" | "article" | "application",
+  entity: "job" | "candidate" | "article" | "application" | "company",
   names: string[],
 ) {
   const label = LABEL[entity] ?? entity;

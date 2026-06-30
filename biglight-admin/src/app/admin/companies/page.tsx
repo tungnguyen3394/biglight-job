@@ -59,7 +59,7 @@ export default async function Page() {
         )}
       </div>
 
-      <CompaniesManager rows={rows} canCreateJob={uiCan(user, "create", "job", "jobs.create")} />
+      <CompaniesManager rows={rows} canCreateJob={uiCan(user, "create", "job", "jobs.create")} canRowDelete={adminCan(level, "companies.delete")} canBulkDelete={level === "ADMIN"} />
     </div>
   );
 }

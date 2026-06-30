@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
 import { MailMergeModal } from "@/components/admin/MailMergeModal";
 import { requestDelete } from "@/lib/adminDelete";
+import { useAutoCloseDetails } from "@/lib/useAutoCloseDetails";
 
 export type CandidateRow = {
   id: string;
@@ -145,6 +146,7 @@ const SORT_LABEL = (k: SortField) => SORT_FIELDS.find((f) => f.key === k)?.label
 
 export function CandidatesTable({ rows, canRowDelete = false, canBulkDelete = false }: { rows: CandidateRow[]; canRowDelete?: boolean; canBulkDelete?: boolean }) {
   const router = useRouter();
+  useAutoCloseDetails();
   const [delBusy, setDelBusy] = useState(false);
   async function delRows(ids: string[], label: string) {
     if (!ids.length || delBusy) return;

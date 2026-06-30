@@ -2,10 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge, publicStatusTone } from "@/components/ui/Badge";
 import { PUBLIC_STATUS_LABEL, JOB_OP_STATUS_LABEL } from "@/lib/constants";
 import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
 import { MailMergeModal } from "@/components/admin/MailMergeModal";
+import { requestDelete } from "@/lib/adminDelete";
+import { useAutoCloseDetails } from "@/lib/useAutoCloseDetails";
 
 export type CompanyRow = {
   id: string;
@@ -62,7 +65,9 @@ const SORT_FIELDS: { key: SortField; label: string; cmp: (a: CompanyRow, b: Comp
 ];
 const SORT_LABEL = (k: SortField) => SORT_FIELDS.find((f) => f.key === k)?.label ?? k;
 
-export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; canCreateJob: boolean }) {
+export function CompaniesManager({ rows, canCreateJob, canRowDelete = false, canBulkDelete = false }: { rows: CompanyRow[]; canCreateJob: boolean; canRowDelete?: boolean; canBulkDelete?: boolean }) {
+  const router = useRouter();
+  useAutoCloseDetails();
   const [q, setQ] = useState("");
   const [view, setView] = useState<"list" | "card">("list");
   const [fInd, setFInd] = useState("");
@@ -75,10 +80,27 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
   const selectAllCols = () => setCols(new Set(COLUMNS.map((c) => c.key)));
   const clearCols = () => setCols(new Set(["name"]));
 
-  // ----- chọn để gửi mail merge -----
+  // ----- chọn hàng (dùng chung cho gửi mail + xóa hàng loạt) -----
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mailOpen, setMailOpen] = useState(false);
+  const [mailIds, setMailIds] = useState<string[]>([]);
+  const [delBusy, setDelBusy] = useState(false);
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+
+  async function delCompanies(ids: string[], label: string) {
+    if (!ids.length || delBusy) return;
+    if (!window.confirm(`${label}を削除します。元に戻せません。よろしいですか？\n（求人が残っている企業は削除できません）`)) return;
+    setDelBusy(true);
+    const r = await requestDelete("company", ids);
+    setDelBusy(false);
+    if (r.ok) { setSelected(new Set()); router.refresh(); } else alert(r.error);
+  }
+
+  const openMail = () => {
+    const ids = filtered.filter((r) => r.email && selected.has(r.id)).map((r) => r.id);
+    if (!ids.length) { alert("選択した企業にメールアドレスがありません。"); return; }
+    setMailIds(ids); setMailOpen(true);
+  };
 
   // ----- sắp xếp nâng cao -----
   const addSort = (k: SortField) => setSortList((p) => (p.some((s) => s.key === k) ? p : [...p, { key: k, dir: "asc" }]));
@@ -110,9 +132,8 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
     return out;
   }, [rows, q, fInd, fContact, fJobs, sortList]);
 
-  const emailRows = filtered.filter((r) => r.email);
-  const allSelected = emailRows.length > 0 && emailRows.every((r) => selected.has(r.id));
-  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(emailRows.map((r) => r.id)));
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(filtered.map((r) => r.id)));
 
   const activeFilters = [fInd, fContact, fJobs].filter(Boolean).length;
   const clearFilters = () => { setFInd(""); setFContact(""); setFJobs(""); };
@@ -201,10 +222,16 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <button onClick={() => setView("card")} className={`px-2.5 py-1.5 text-xs font-bold ${view === "card" ? "bg-ink text-white" : "bg-white text-slate-500"}`}>カード</button>
           </div>
           <ExportBar compact filename="企業一覧" title="企業一覧" getData={getData} />
-          <button onClick={() => { if (selected.size) setMailOpen(true); }} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40">
+          <button onClick={openMail} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40">
             <MailIcon />
             メール送信{selected.size > 0 && `（${selected.size}）`}
           </button>
+          {canBulkDelete && (
+            <button onClick={() => delCompanies([...selected], `${selected.size} 社`)} disabled={selected.size === 0 || delBusy} className="btn btn-sm gap-1.5 border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-40">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>
+              選択削除{selected.size > 0 && `（${selected.size}）`}
+            </button>
+          )}
           <span className="text-sm text-slate-500">{filtered.length} 社 ・ 求人 {totalOrders} 件</span>
         </div>
       </div>
@@ -217,7 +244,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-bold text-slate-500">
-                <th className="w-12 px-3 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleAll} title="メール対象を全選択" /></th>
+                <th className="w-12 px-3 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleAll} title="全選択" /></th>
                 {visCols.map((c) => <th key={c.key} className="px-3 py-2.5 font-bold" style={{ minWidth: c.w }}>{c.label}</th>)}
                 <th className="px-3 py-2.5" />
               </tr>
@@ -225,7 +252,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
             <tbody className="divide-y divide-slate-50">
               {filtered.map((r) => (
                 <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-2.5">{r.email ? <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSel(r.id)} /> : <span className="text-[10px] text-slate-300" title="メール未登録">—</span>}</td>
+                  <td className="px-3 py-2.5"><input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSel(r.id)} title={r.email ? "選択" : "メール未登録（削除のみ）"} /></td>
                   {visCols.map((c) => (
                     <td key={c.key} className="px-3 py-2.5 align-top">
                       {c.key === "name"
@@ -235,6 +262,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
                   ))}
                   <td className="whitespace-nowrap px-3 py-2.5 text-right">
                     <Link href={`/admin/companies/${r.id}`} className="text-xs font-semibold text-bl-red hover:underline">詳細 ›</Link>
+                    {canRowDelete && <button onClick={() => delCompanies([r.id], r.name)} disabled={delBusy} className="ml-3 text-xs font-semibold text-slate-400 hover:text-red-600 disabled:opacity-40">削除</button>}
                   </td>
                 </tr>
               ))}
@@ -249,7 +277,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
           {filtered.map((c) => (
             <div key={c.id} className="card p-5">
               <div className="flex flex-wrap items-start gap-3">
-                {c.email && <input type="checkbox" className="mt-1.5" checked={selected.has(c.id)} onChange={() => toggleSel(c.id)} title="メール対象" />}
+                {(canBulkDelete || c.email) && <input type="checkbox" className="mt-1.5" checked={selected.has(c.id)} onChange={() => toggleSel(c.id)} title={c.email ? "選択" : "メール未登録（削除のみ）"} />}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href={`/admin/companies/${c.id}`} className="text-base font-black text-ink hover:text-bl-red hover:underline">{c.name}</Link>
@@ -268,6 +296,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
                   <Link href={`/admin/companies/${c.id}`} className="text-center"><div className="text-2xl font-black text-bl-red hover:underline">{c.applicants}</div><div className="text-[10px] font-bold text-slate-400">応募者数</div></Link>
                   <Link href={`/admin/companies/${c.id}`} className="btn btn-ghost gap-1.5 px-3 py-2 text-xs">詳細<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg></Link>
                   {canCreateJob && <Link href={`/admin/jobs/new?company=${c.id}`} className="btn btn-ghost gap-1.5 px-3 py-2 text-xs"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>求人追加</Link>}
+                  {canRowDelete && <button onClick={() => delCompanies([c.id], c.name)} disabled={delBusy} className="btn btn-ghost gap-1.5 px-3 py-2 text-xs text-red-600 hover:bg-red-50"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>削除</button>}
                 </div>
               </div>
               {c.jobs.length > 0 ? (
@@ -290,7 +319,7 @@ export function CompaniesManager({ rows, canCreateJob }: { rows: CompanyRow[]; c
       )}
 
       {/* Mail Merge — gửi email cá nhân hoá cho công ty đã chọn */}
-      {mailOpen && <MailMergeModal scope="company" ids={[...selected]} onClose={() => setMailOpen(false)} />}
+      {mailOpen && <MailMergeModal scope="company" ids={mailIds} onClose={() => setMailOpen(false)} />}
     </div>
   );
 }
