@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import Linkify from "@/components/common/Linkify";
 
 type Msg = {
   id: string; senderRole: string;
@@ -99,7 +100,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
                     </div>
                   ) : (
                     <div className={`whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${mine ? "rounded-br-sm bg-bl-red text-white" : "rounded-bl-sm border border-bl-line bg-white text-ink"}`}>
-                      {disp(m)}
+                      <Linkify text={disp(m)} linkClassName={`font-semibold underline underline-offset-2 break-all ${mine ? "text-white hover:opacity-80" : "text-bl-blue hover:opacity-80"}`} />
                     </div>
                   )}
                   {canRecall && (

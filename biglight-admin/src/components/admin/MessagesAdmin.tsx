@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CONV_STATUS_LABEL, CONV_STATUS_TONE } from "@/lib/messageConstants";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import Linkify from "@/components/common/Linkify";
 
 type Conv = { id: string; candidateId: string; name: string; image: string | null; lastMessage: string | null; lastMessageAt: string | null; unread: boolean; status: keyof typeof CONV_STATUS_LABEL; staffName: string | null };
 type Msg = { id: string; senderRole: string; senderId: string | null; senderName?: string | null; originalText: string; originalLanguage: string; translatedText: string | null; translatedLanguage: string | null; createdAt: string; deleted?: boolean; recalled?: boolean };
@@ -222,7 +223,7 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
                               {m.recalled ? "このメッセージは取り消されました" : "このメッセージは削除されました"}
                             </div>
                           ) : (
-                            <div className={`relative whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${left ? "rounded-bl-sm border border-slate-200 bg-white text-ink" : "rounded-br-sm bg-bl-red text-white"}`}>{disp(m)}</div>
+                            <div className={`relative whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${left ? "rounded-bl-sm border border-slate-200 bg-white text-ink" : "rounded-br-sm bg-bl-red text-white"}`}><Linkify text={disp(m)} linkClassName={`font-semibold underline underline-offset-2 break-all ${left ? "text-bl-blue hover:opacity-80" : "text-white hover:opacity-80"}`} /></div>
                           )}
                           {hasMenu && (
                             <div className="relative">
