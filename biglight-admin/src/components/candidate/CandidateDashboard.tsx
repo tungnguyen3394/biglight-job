@@ -16,8 +16,8 @@ export type SavedJob = { id: string; title: string; industry: string; location: 
 type SecKey = "profile" | "apps" | "saved" | "messages" | "settings";
 
 // Icon line (SVG) — gọn, không dùng emoji
-function Ic({ d, size = 18 }: { d: React.ReactNode; size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
+function Ic({ d, size = 18, sw = 2 }: { d: React.ReactNode; size?: number; sw?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{d}</svg>;
 }
 const ICONS: Record<string, React.ReactNode> = {
   profile: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
@@ -27,6 +27,10 @@ const ICONS: Record<string, React.ReactNode> = {
   salary: <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M9 11l3 3 3-3M12 10v6" /></>,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 0 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" /></>,
   logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></>,
+  home: <><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></>,
+  jobs: <><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>,
+  guide: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" /></>,
+  user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></>,
   pin: <><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></>,
   yen: <><path d="M12 4l5 7M12 4 7 11M12 11v9M8 13h8M8 16.5h8" /></>,
   send: <path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />,
@@ -38,6 +42,19 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "apps", label: "応募状況・進捗" },
   { key: "saved", label: "お気に入り求人" },
   { key: "messages", label: "メッセージ" },
+];
+
+// Menu drawer (app-style): trang + mục dashboard
+const NAV: { label: string; icon: React.ReactNode; sec?: SecKey; href?: string; ext?: boolean }[] = [
+  { label: "ホーム", icon: ICONS.home, href: "/" },
+  { label: "求人", icon: ICONS.jobs, href: "/jobs" },
+  { label: "お気に入り", icon: ICONS.saved, sec: "saved" },
+  { label: "メッセージ", icon: ICONS.messages, sec: "messages" },
+  { label: "応募履歴", icon: ICONS.apps, sec: "apps" },
+  { label: "プロフィール", icon: ICONS.user, sec: "profile" },
+  { label: "手取り計算", icon: ICONS.salary, href: "/biglight-job-salary.html", ext: true },
+  { label: "ガイド", icon: ICONS.guide, href: "/guide" },
+  { label: "設定", icon: ICONS.settings, sec: "settings" },
 ];
 
 export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
@@ -64,7 +81,17 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   if (!emailLocked && !profile.email?.trim()) missing.push("メールアドレス");
   // % hoàn thành hồ sơ (mẫu số = số trường 必須 đang kiểm tra)
   const totalReq = emailLocked ? 6 : 7;
-  const pct = Math.max(0, Math.min(100, Math.round(((totalReq - missing.length) / totalReq) * 100)));
+  const canApply = missing.length === 0;
+  // 1 thanh duy nhất: 必須 lấp tới mốc 60% (= 応募可能); 任意 lấp 60→100% (= AIマッチング cao hơn)
+  const optList: unknown[] = [
+    profile.kana?.trim(), profile.phone?.trim(), profile.address?.trim(), profile.jp?.trim(),
+    profile.sswField?.trim(), profile.desiredJobType?.trim(), profile.otherSkills?.trim(), profile.start?.trim(), profile.dorm?.trim(),
+    profile.fields?.length, profile.areas?.length, profile.sal > 0 ? 1 : 0, profile.reasons?.length, profile.priorities?.length,
+  ];
+  const reqRatio = (totalReq - missing.length) / totalReq;
+  const optRatio = optList.filter(Boolean).length / optList.length;
+  const pct = Math.max(0, Math.min(100, Math.round(reqRatio * 60 + optRatio * 40)));
+  const stars = Math.max(1, Math.min(5, Math.round(pct / 20)));
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -109,30 +136,32 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* Welcome */}
-      <div className="mb-3">
-        <h1 className="text-lg font-black text-ink">ようこそ、{name} さん</h1>
-        <p className="mt-0.5 text-[13px] text-bl-gray">応募状況の確認・担当者との連絡ができます。</p>
+      {/* Header gọn: ☰ (mobile) ở góc trái + tiêu đề mục */}
+      <div className="mb-3 flex items-center gap-1.5">
+        <button onClick={() => setDrawer(true)} aria-label="メニュー" className="-ml-1.5 flex h-9 w-9 flex-none items-center justify-center rounded-xl text-ink hover:bg-bl-bg lg:hidden">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+        <h1 className="truncate text-lg font-black text-ink">{heading || "マイページ"}</h1>
       </div>
 
-      {/* Profile Completion — progress navy, % đen, thoáng */}
-      <div className="mb-3 rounded-[20px] border border-bl-line bg-white p-4 shadow-sm">
+      {/* Một thanh duy nhất: プロフィール % + mốc 応募可能 + AIマッチング */}
+      <div className="mb-3 rounded-2xl border border-bl-line bg-white p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-bold text-ink">プロフィール完成度</span>
-          <span className="text-lg font-black text-ink">{pct}%</span>
+          <span className="text-sm font-bold text-ink">プロフィール</span>
+          <span className="text-sm font-black text-ink">{pct}%</span>
         </div>
-        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-bl-line">
+        <div className="relative mb-2.5 mt-2 h-2.5 w-full overflow-hidden rounded-full bg-bl-line">
           <div className="h-full rounded-full bg-[#13335c] transition-all duration-500" style={{ width: `${pct}%` }} />
+          {/* mốc 応募可能 (60%) */}
+          <span className="absolute top-0 h-full w-[2px] -translate-x-1/2 bg-white" style={{ left: "60%" }} />
         </div>
-        <p className="mt-2 text-xs text-bl-gray">
-          {missing.length === 0 ? "プロフィールが完成しました。求人に応募できます。" : `あと少しで完成します（未入力：${missing.join("・")}）`}
-        </p>
-        {missing.length > 0 && sec !== "profile" && (
-          <button onClick={() => go("profile")} className="mt-3 flex h-[54px] w-full items-center justify-center gap-1.5 rounded-2xl bg-bl-red text-sm font-bold text-white transition hover:bg-bl-redd">
-            編集する
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </button>
-        )}
+        <div className="flex items-center justify-between text-xs">
+          {canApply
+            ? <span className="flex items-center gap-1 font-bold text-bl-green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>応募できます</span>
+            : <button onClick={() => go("profile")} className="font-bold text-bl-red">あと{missing.length}項目 →</button>}
+          <span className="text-bl-gray2">AIマッチング <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
+        </div>
+        {pct < 100 && <p className="mt-1.5 text-[11px] leading-snug text-bl-gray2">入力するほどおすすめ求人が増えます</p>}
       </div>
 
       {/* Thông báo xanh — gọn 1 dòng, icon check nhỏ */}
@@ -144,39 +173,27 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
       )}
 
       <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
-        {/* ===== Mobile: top bar (nút menu) — mở drawer ===== */}
-        <div className="mb-3 flex items-center gap-2.5 lg:hidden">
-          <button onClick={() => setDrawer(true)} aria-label="メニューを開く" className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-bl-line bg-white text-ink shadow-sm">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-          </button>
-          <span className="truncate text-base font-black text-ink">{heading}</span>
-        </div>
-
-        {/* ===== Mobile: drawer trượt từ trái + overlay ===== */}
+        {/* ===== Mobile: drawer Minimal (trượt từ trái) + overlay ===== */}
         <div className={`fixed inset-0 z-50 lg:hidden ${drawer ? "" : "pointer-events-none"}`} aria-hidden={!drawer}>
           <div onClick={() => setDrawer(false)} className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawer ? "opacity-100" : "opacity-0"}`} />
-          <div className={`absolute left-0 top-0 flex h-full w-[80%] max-w-[300px] flex-col bg-white shadow-2xl transition-transform duration-300 ${drawer ? "translate-x-0" : "-translate-x-full"}`}>
-            <div className="flex items-center justify-between border-b border-bl-line px-4 py-3.5">
-              <span className="text-base font-black text-ink">メニュー</span>
-              <button onClick={() => setDrawer(false)} aria-label="閉じる" className="flex h-8 w-8 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
+          <div className={`absolute left-0 top-0 flex h-full w-[300px] max-w-[86vw] flex-col bg-white transition-transform duration-300 ${drawer ? "translate-x-0" : "-translate-x-full"}`}>
+            {/* Đầu: avatar + tên + % */}
+            <div className="flex items-center gap-3 px-5 pb-4 pt-5">
+              <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-bl-redsoft text-base font-black text-bl-red">{name?.trim()?.[0] ?? "?"}</div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-black text-ink">{name} さん</div>
+                <div className="text-xs text-bl-gray2">プロフィール {pct}%</div>
+              </div>
             </div>
-            <nav className="flex-1 overflow-y-auto p-2">
-              {ITEMS.map((it) => (
-                <button key={it.key} onClick={() => { go(it.key); setDrawer(false); }} className={`mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${sec === it.key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
-                  <Ic d={ICONS[it.key]} />{it.label}
-                </button>
-              ))}
-              <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" onClick={() => setDrawer(false)} className="mt-1 flex w-full items-center gap-2.5 rounded-xl bg-gradient-to-br from-bl-red to-bl-redd px-3 py-3 text-left text-sm font-bold text-white">
-                <Ic d={ICONS.salary} />手取り計算ツール
-              </a>
-              <button onClick={() => { go("settings"); setDrawer(false); }} className={`mt-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${sec === "settings" ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
-                <Ic d={ICONS.settings} />アカウント設定
-              </button>
-              <button onClick={() => { setDrawer(false); logout(); }} className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold text-bl-gray2 hover:bg-bl-bg hover:text-bl-red">
-                <Ic d={ICONS.logout} />ログアウト
-              </button>
+            <nav className="flex-1 overflow-y-auto px-2 pb-4">
+              {NAV.map((it) => {
+                const active = it.sec && it.sec === sec;
+                const cls = `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-semibold transition ${active ? "text-bl-red" : "text-ink hover:bg-bl-bg"}`;
+                return it.sec
+                  ? <button key={it.label} onClick={() => { go(it.sec!); setDrawer(false); }} className={cls}><Ic d={it.icon} size={20} sw={1.7} />{it.label}</button>
+                  : <a key={it.label} href={it.href} target={it.ext ? "_blank" : undefined} rel={it.ext ? "noopener noreferrer" : undefined} onClick={() => setDrawer(false)} className={cls}><Ic d={it.icon} size={20} sw={1.7} />{it.label}</a>;
+              })}
+              <button onClick={() => { setDrawer(false); logout(); }} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-semibold text-bl-gray2 hover:bg-bl-bg"><Ic d={ICONS.logout} size={20} sw={1.7} />ログアウト</button>
             </nav>
           </div>
         </div>
@@ -197,7 +214,6 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
 
         {/* ===== Nội dung (mobile full width) ===== */}
         <div className="min-w-0">
-          <h2 className="mb-3 hidden text-lg font-black lg:block">{heading}</h2>
 
           {notice && (
             <div className="mb-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-700">
