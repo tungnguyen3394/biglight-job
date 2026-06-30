@@ -99,7 +99,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
   }
 
   return (
-    <div ref={boxRef} className="fixed inset-0 z-40 flex flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
+    <div ref={boxRef} className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
       <div className="flex shrink-0 items-center gap-2 border-b border-bl-line px-4 py-2.5">
         {onClose && (
           <button onClick={onClose} className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bl-gray hover:bg-bl-line lg:hidden" aria-label="戻る">
@@ -165,7 +165,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
         <div ref={endRef} />
       </div>
 
-      <div className="shrink-0">
+      <div className="shrink-0 pb-[env(safe-area-inset-bottom)] lg:pb-0">
         <ChatComposer value={draft} onChange={setDraft} onSend={send} sending={sending} target="ja" variant="round" onFocus={scrollEnd} placeholder="メッセージを入力… / Nhập tin nhắn…" />
       </div>
     </div>
