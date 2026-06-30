@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./CandidateProfileForm";
@@ -39,8 +39,6 @@ const ITEMS: { key: SecKey; label: string }[] = [
   { key: "saved", label: "お気に入り求人" },
   { key: "messages", label: "メッセージ" },
 ];
-// Nhãn ngắn cho rail dọc bên trái (mobile)
-const SHORT: Record<SecKey, string> = { profile: "プロフィール", apps: "応募状況", saved: "お気に入り", messages: "メッセージ", settings: "設定" };
 
 export default function CandidateDashboard({ name, apps, applied, profile, docs, saved, emailLocked, complete = true, needProfile, initialSec, fieldOptions, sswTree }: { name: string; apps: AppView[]; applied?: boolean; profile: ProfileInit; docs: DocMap; saved: SavedJob[]; emailLocked?: boolean; complete?: boolean; needProfile?: boolean; initialSec?: string; fieldOptions?: FieldOptions; sswTree?: SswField[] }) {
   const router = useRouter();
@@ -51,14 +49,9 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
     const v = (["profile", "apps", "saved", "messages", "settings"] as const).find((k) => k === initialSec);
     if (v) setSec(v);
   }, [initialSec]);
-  // Slider bar (mobile): tự cuộn tab đang chọn vào giữa.
-  const tabBarRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = tabBarRef.current?.querySelector(`[data-sec="${sec}"]`) as HTMLElement | null;
-    el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  }, [sec]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
+  const [drawer, setDrawer] = useState(false); // mobile: sidebar dạng drawer
 
   // các trường bắt buộc còn thiếu (để hiện banner ở mục プロフィール入力)
   const missing: string[] = [];
@@ -150,15 +143,43 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         </div>
       )}
 
-      <div className="flex gap-3 lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
-        {/* ===== Mobile: slider bar DỌC bên trái (chỉ mobile) ===== */}
-        <nav ref={tabBarRef} className="flex w-[60px] flex-none flex-col gap-0.5 self-start overflow-y-auto rounded-[18px] bg-bl-bg p-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {ITEMS.map((it) => navBtn(it.key, SHORT[it.key], false))}
-          {navBtn("settings", SHORT.settings, false)}
-          <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mt-0.5 flex flex-col items-center gap-1 rounded-xl px-0.5 py-2 text-center text-[10px] font-bold leading-tight text-[#13335c] hover:bg-white/60">
-            <Ic d={ICONS.salary} size={22} /><span className="break-keep">手取り計算</span>
-          </a>
-        </nav>
+      <div className="lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
+        {/* ===== Mobile: top bar (nút menu) — mở drawer ===== */}
+        <div className="mb-3 flex items-center gap-2.5 lg:hidden">
+          <button onClick={() => setDrawer(true)} aria-label="メニューを開く" className="flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-bl-line bg-white text-ink shadow-sm">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+          <span className="truncate text-base font-black text-ink">{heading}</span>
+        </div>
+
+        {/* ===== Mobile: drawer trượt từ trái + overlay ===== */}
+        <div className={`fixed inset-0 z-50 lg:hidden ${drawer ? "" : "pointer-events-none"}`} aria-hidden={!drawer}>
+          <div onClick={() => setDrawer(false)} className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${drawer ? "opacity-100" : "opacity-0"}`} />
+          <div className={`absolute left-0 top-0 flex h-full w-[80%] max-w-[300px] flex-col bg-white shadow-2xl transition-transform duration-300 ${drawer ? "translate-x-0" : "-translate-x-full"}`}>
+            <div className="flex items-center justify-between border-b border-bl-line px-4 py-3.5">
+              <span className="text-base font-black text-ink">メニュー</span>
+              <button onClick={() => setDrawer(false)} aria-label="閉じる" className="flex h-8 w-8 items-center justify-center rounded-full text-bl-gray hover:bg-bl-bg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-2">
+              {ITEMS.map((it) => (
+                <button key={it.key} onClick={() => { go(it.key); setDrawer(false); }} className={`mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${sec === it.key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
+                  <Ic d={ICONS[it.key]} />{it.label}
+                </button>
+              ))}
+              <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" onClick={() => setDrawer(false)} className="mt-1 flex w-full items-center gap-2.5 rounded-xl bg-gradient-to-br from-bl-red to-bl-redd px-3 py-3 text-left text-sm font-bold text-white">
+                <Ic d={ICONS.salary} />手取り計算ツール
+              </a>
+              <button onClick={() => { go("settings"); setDrawer(false); }} className={`mt-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${sec === "settings" ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
+                <Ic d={ICONS.settings} />アカウント設定
+              </button>
+              <button onClick={() => { setDrawer(false); logout(); }} className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-3 text-left text-sm font-semibold text-bl-gray2 hover:bg-bl-bg hover:text-bl-red">
+                <Ic d={ICONS.logout} />ログアウト
+              </button>
+            </nav>
+          </div>
+        </div>
 
         {/* ===== Desktop: sidebar dọc (chỉ desktop) ===== */}
         <aside className="hidden lg:sticky lg:top-20 lg:block">
@@ -174,8 +195,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           </nav>
         </aside>
 
-        {/* ===== Nội dung ===== */}
-        <div className="min-w-0 flex-1">
+        {/* ===== Nội dung (mobile full width) ===== */}
+        <div className="min-w-0">
           <h2 className="mb-3 hidden text-lg font-black lg:block">{heading}</h2>
 
           {notice && (
