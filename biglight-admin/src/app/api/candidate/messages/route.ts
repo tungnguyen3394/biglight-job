@@ -65,8 +65,10 @@ export async function POST(req: Request) {
   if (aiKeyConfigured() && fresh?.aiEnabled && !paused) {
     const cfg = await getAiConfig();
     if (cfg.enabled) {
-      const hist = await prisma.message.findMany({ where: { conversationId: conv.id, recalledAt: null, deletedAt: null }, orderBy: { createdAt: "asc" }, take: 30, select: { senderRole: true, originalText: true } });
-      const turns: ChatTurn[] = hist.map((h) => ({ role: h.senderRole === "CANDIDATE" ? "user" : "assistant", content: h.originalText }));
+      // LẤY 30 TIN MỚI NHẤT (desc) rồi đảo lại đúng thứ tự thời gian — KHÔNG lấy 30 tin cũ nhất,
+      // nếu không khi hội thoại dài AI sẽ không thấy câu trả lời mới và hỏi lại câu cũ.
+      const histDesc = await prisma.message.findMany({ where: { conversationId: conv.id, recalledAt: null, deletedAt: null }, orderBy: { createdAt: "desc" }, take: 30, select: { senderRole: true, originalText: true } });
+      const turns: ChatTurn[] = histDesc.reverse().map((h) => ({ role: h.senderRole === "CANDIDATE" ? "user" : "assistant", content: h.originalText }));
       const ai = await aiReply(turns, cfg.instructions, cfg.model);
       if (ai && ai.text) {
         const aiJa = src === "ja" ? ai.text : await translate(ai.text, "ja", src);
