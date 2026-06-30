@@ -90,7 +90,8 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   const heading = sec === "settings" ? "アカウント設定" : ITEMS.find((i) => i.key === sec)?.label ?? "";
 
   // nút điều hướng dùng chung
-  const go = (key: SecKey) => { setSec(key); setNotice(""); };
+  // Đổi tab: cập nhật state ngay (mượt) + đồng bộ URL ?sec= để nút メッセージ ở header luôn điều hướng đúng.
+  const go = (key: SecKey) => { setSec(key); setNotice(""); router.replace(`/mypage?sec=${key}`, { scroll: false }); };
   const navBtn = (key: SecKey, label: string, vertical: boolean) =>
     vertical ? (
       <button key={key} onClick={() => go(key)} className={`mb-0.5 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${sec === key ? "bg-bl-redsoft text-bl-red" : "text-bl-gray hover:bg-bl-bg hover:text-ink"}`}>
