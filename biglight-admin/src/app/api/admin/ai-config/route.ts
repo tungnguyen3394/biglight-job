@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guard } from "@/lib/guard";
-import { getAiConfig, aiKeyConfigured } from "@/lib/ai";
+import { getAiConfig, aiKeyConfigured, buildJobContext } from "@/lib/ai";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,10 @@ export async function GET() {
   const g = await guard("settings.view");
   if (!g.ok) return g.res;
   const c = await getAiConfig();
-  return NextResponse.json({ config: { enabled: c.enabled, instructions: c.instructions, model: c.model }, keyConfigured: aiKeyConfigured() });
+  // Chẩn đoán: AI đọc được gì từ DB (đúng bộ lọc PUBLIC + OPEN mà aiReply dùng).
+  const jobCount = await prisma.job.count({ where: { publicStatus: "PUBLIC", status: "OPEN" } });
+  const jobContext = await buildJobContext();
+  return NextResponse.json({ config: { enabled: c.enabled, instructions: c.instructions, model: c.model }, keyConfigured: aiKeyConfigured(), jobCount, jobContext });
 }
 
 export async function PUT(req: Request) {

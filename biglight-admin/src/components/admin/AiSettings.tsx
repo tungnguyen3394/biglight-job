@@ -11,10 +11,16 @@ export default function AiSettings() {
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [jobCount, setJobCount] = useState<number | null>(null);
+  const [jobContext, setJobContext] = useState("");
+  const [showCtx, setShowCtx] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/ai-config").then((r) => r.json()).then((j) => {
-      if (j.config) { setEnabled(j.config.enabled); setModel(j.config.model || "gpt-4o-mini"); setInstructions(j.config.instructions || ""); setKeyOk(!!j.keyConfigured); setLoaded(true); }
+      if (j.config) { setEnabled(j.config.enabled); setModel(j.config.model || "gpt-4o-mini"); setInstructions(j.config.instructions || ""); setKeyOk(!!j.keyConfigured); }
+      setJobCount(typeof j.jobCount === "number" ? j.jobCount : null);
+      setJobContext(j.jobContext || "");
+      setLoaded(true);
     }).catch(() => setLoaded(true));
   }, []);
 
@@ -54,6 +60,18 @@ export default function AiSettings() {
       </div>
       <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={9} className="input w-full text-sm" placeholder="ここに書いた内容がそのままAIの指示になります。「おすすめ文を挿入」から始めて、口調やルールを自由に調整してください。" />
       <p className="mt-1 text-[11px] text-slate-400">※ AIの話し方・ルールはすべてこの欄で決まります（コード変更は不要）。空欄の場合はおすすめ文が使われます。<br />※ 安全のため「登録された求人データのみ使用・作り話をしない・担当者への引き継ぎ」だけはシステム側で固定です。</p>
+
+      {/* Chẩn đoán: AI đọc được gì từ DB */}
+      {loaded && (
+        <div className={`mt-4 rounded-lg border p-3 text-xs ${jobCount === 0 ? "border-red-200 bg-red-50" : "border-emerald-200 bg-emerald-50"}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className={`font-bold ${jobCount === 0 ? "text-red-700" : "text-emerald-700"}`}>AIが見ている求人データ（DB・公開＋募集中）：{jobCount ?? "—"} 件</span>
+            {jobContext && <button type="button" onClick={() => setShowCtx((v) => !v)} className="font-semibold text-bl-red hover:underline">{showCtx ? "隠す" : "中身を見る"}</button>}
+          </div>
+          {jobCount === 0 && <p className="mt-1 text-red-700">公開中の求人が0件です。AIは紹介できず同じ質問を繰り返します。求人を「公開」かつ「募集中／急募」にしてください。</p>}
+          {showCtx && <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap rounded bg-white p-2 text-[11px] leading-relaxed text-slate-700">{jobContext}</pre>}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center gap-3">
         <button onClick={save} disabled={busy || !loaded} className="btn btn-navy btn-sm disabled:opacity-50">{busy ? "保存中…" : "保存"}</button>
