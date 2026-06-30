@@ -16,7 +16,7 @@ function hhmm(iso: string) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export default function CandidateMessages() {
+export default function CandidateMessages({ onClose }: { onClose?: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -66,8 +66,13 @@ export default function CandidateMessages() {
   }
 
   return (
-    <div className="flex h-[72dvh] min-h-[460px] max-h-[820px] flex-col overflow-hidden rounded-2xl border border-bl-line bg-white shadow-sm">
+    <div className="fixed inset-0 z-40 flex h-[100dvh] flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
       <div className="flex items-center gap-2 border-b border-bl-line px-4 py-2.5">
+        {onClose && (
+          <button onClick={onClose} className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bl-gray hover:bg-bl-line lg:hidden" aria-label="戻る">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+        )}
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-bl-red text-white">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.9-.9L3 21l1.9-5.6A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" /></svg>
         </div>

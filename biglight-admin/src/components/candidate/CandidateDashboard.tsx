@@ -236,7 +236,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           )}
 
           {/* メッセージ — chat thật (lưu DB) */}
-          {sec === "messages" && <CandidateMessages />}
+          {sec === "messages" && <CandidateMessages onClose={() => go("apps")} />}
 
           {/* アカウント設定 */}
           {sec === "settings" && (

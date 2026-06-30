@@ -30,7 +30,20 @@ export default function SiteHeader({ active, loggedIn, onRegister }: { active: N
           <Link href="/guide" className={cls("guide")}>特定技能ガイド</Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <MessengerLink variant="pill" />
+          {/* Nút tin nhắn của WEB (chat AI/nhân viên trong マイページ) */}
+          {loggedIn ? (
+            <Link href="/mypage?sec=messages" className="flex items-center gap-1.5 rounded-full border border-bl-line bg-white px-3.5 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-bl-red hover:text-bl-red">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z" /></svg>
+              メッセージ
+            </Link>
+          ) : (
+            <button onClick={onRegister} className="flex items-center gap-1.5 rounded-full border border-bl-line bg-white px-3.5 py-2 text-sm font-bold text-ink shadow-sm transition hover:border-bl-red hover:text-bl-red">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z" /></svg>
+              メッセージ
+            </button>
+          )}
+          {/* Messenger Facebook — thu nhỏ thành icon tròn */}
+          <MessengerLink variant="compact" />
           <LangSwitch />
           {loggedIn ? (
             <Link href="/mypage" className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-black text-white shadow-md ${active === "mypage" ? "bg-bl-redd" : "bg-bl-red hover:bg-bl-redd"}`}>
