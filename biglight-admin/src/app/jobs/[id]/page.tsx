@@ -86,7 +86,12 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const allowances = (Array.isArray(fd.allowances) ? fd.allowances : []) as { name?: string; amount?: number | ""; note?: string }[];
   const numOrU = (v: unknown) => (typeof v === "number" ? v : undefined);
   const wkDays = numOrU(fd.workDays), wkHours = numOrU(fd.workHoursPerDay), otHours = numOrU(fd.overtimeMonthly), otRate = numOrU(fd.overtimeRate);
-  const hasWorkCond = wkDays != null || wkHours != null || otHours != null;
+  // chỉ giữ ô điều kiện làm việc CÓ dữ liệu (đã xóa thì không hiện)
+  const workCells = ([
+    wkDays != null ? ["勤務日数 / 月", `${wkDays}日`] : null,
+    wkHours != null ? ["労働時間 / 1日", `${wkHours}時間`] : null,
+    otHours != null ? ["残業時間 / 月", `${otHours}時間`] : null,
+  ].filter(Boolean)) as [string, string][];
   const hasHousing = job.dormitoryAvailable || !!str(fd.houseType) || job.dormitoryFee != null || !!job.utilitiesCost || !!job.wifi || !!job.commuteMethod || !!str(fd.room) || !!str(fd.roomDesc) || !!str(fd.otherCost) || typeof fd.roommates === "number";
   const hasContent = !!job.description || appeal.length > 0 || active.length > 0;
 
@@ -148,6 +153,12 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                   <div className="rounded-xl bg-bl-bg p-4">
                     <div className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</div>
                     <div className="text-2xl font-black text-bl-red">{fmtYen(job.baseSalary)}</div>
+                    {(sal?.hourly || sal?.monthlyBase) && (
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-bl-gray2">
+                        {sal?.hourly ? <span>時給換算：<b className="text-bl-gray">{fmtYen(sal.hourly)}</b></span> : null}
+                        {sal?.monthlyBase ? <span>基本給（月額）：<b className="text-bl-gray">{fmtYen(sal.monthlyBase)}</b></span> : null}
+                      </div>
+                    )}
                     {payNote && <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-bl-gray2">{payNote}</p>}
                   </div>
                 )}
@@ -168,14 +179,14 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                   </div>
                 )}
 
-                {/* 3. 勤務条件 */}
-                {hasWorkCond && (
+                {/* 3. 勤務条件 — chỉ ô có dữ liệu */}
+                {workCells.length > 0 && (
                   <div className="rounded-xl border border-bl-line p-4">
                     <div className="mb-2 text-xs font-bold text-bl-gray">勤務条件（目安）</div>
-                    <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                      <div><div className="text-[11px] text-bl-gray">日数 / 月</div><div className="font-bold">{wkDays != null ? `${wkDays}日` : "—"}</div></div>
-                      <div><div className="text-[11px] text-bl-gray">時間 / 1日</div><div className="font-bold">{wkHours != null ? `${wkHours}時間` : "—"}</div></div>
-                      <div><div className="text-[11px] text-bl-gray">残業 / 月</div><div className="font-bold">{otHours != null ? `${otHours}時間` : "—"}</div></div>
+                    <div className="grid gap-2 text-center text-sm" style={{ gridTemplateColumns: `repeat(${workCells.length}, minmax(0, 1fr))` }}>
+                      {workCells.map(([label, value]) => (
+                        <div key={label} className="rounded-lg bg-bl-bg py-2"><div className="text-[11px] text-bl-gray">{label}</div><div className="font-bold text-ink">{value}</div></div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -183,7 +194,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                 {/* 4. 残業代見込み */}
                 {sal?.overtimePay ? (
                   <div className="flex items-center justify-between rounded-xl border border-bl-line px-4 py-3 text-sm">
-                    <span className="text-bl-gray">残業代見込み{otRate ? `（×${otRate}）` : ""}</span>
+                    <span className="text-bl-gray">残業代見込み{otRate ? `（時給×${otRate}×${otHours ?? "?"}h）` : ""}</span>
                     <span className="font-bold text-ink">{fmtYen(sal.overtimePay)}</span>
                   </div>
                 ) : null}
@@ -277,7 +288,6 @@ export default async function JobDetail({ params, searchParams }: { params: { id
             <KV rows={[
               ["雇用期間", str(fd.term) || job.employmentType],
               ["勤務時間", job.workHours],
-              ["残業", job.overtimeHours],
               ["休日・休暇", job.holidays],
               ["賞与・昇給", job.bonus],
               ["募集人数", `${job.recruitCount}名（男性${job.recruitMale}・女性${job.recruitFemale}）`],
