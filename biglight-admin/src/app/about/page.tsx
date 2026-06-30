@@ -33,6 +33,12 @@ const ADVISORS = [
   { name: "レー・チャン・タオ・グエン", role: "キャリアアドバイザー", img: "/team/nguyen.jpg", bio: "日本語と、人をサポートするこの仕事が大好きです。応募者の方にはそれぞれ違った強みがあります。だからこそ、一人ひとりの能力と目標に合った求人をご紹介できるよう努めています。日本でのお仕事探しを、たくさんの方と一緒に歩んでいけたら幸いです。" },
 ];
 
+// 入社して活躍している先輩たちの声（実在のメンバー）
+const REVIEWS = [
+  { name: "グエン・ヴァン・ダット", role: "工業製品製造業・溶接", place: "岐阜県美濃加茂市", img: "/team/review-dat.jpg", text: "岐阜県美濃加茂市の溶接の会社で働いています。これまで学んできた専門をそのまま活かせる仕事で、任せてもらえることも少しずつ増え、昇進することができました。今では新しく入った後輩に作業を教える立場になり、自分の経験が誰かの役に立つことに大きなやりがいを感じています。" },
+  { name: "グエン・ドゥック・ティン", role: "建設・内装仕上げ", place: "東京", img: "/team/review-thinh.jpg", text: "東京の建設会社で内装仕上げの仕事をしています。会社で最初に入った外国人スタッフだったので、はじめは言葉の壁に戸惑うこともありました。それでも自分の専門分野だったため、現場には早く慣れることができました。今ではベトナム人の仲間が新たに2人加わり、合わせて6人に。社員のおよそ半分がベトナム人になりましたが、みんなで声を掛け合い、助け合いながら働けていることが本当にうれしいです。" },
+];
+
 const Hl = ({ children }: { children: React.ReactNode }) => (
   <span className="rounded-md bg-bl-redsoft px-1.5 font-black text-bl-red">{children}</span>
 );
@@ -101,6 +107,38 @@ export default async function AboutPage() {
               </Reveal>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* ===== 活躍する先輩たち（入社者の声） ===== */}
+      <section className="border-t border-bl-line bg-white">
+        <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20">
+          <div className="text-center">
+            <div className="text-xs font-black tracking-[0.2em] text-bl-red">VOICES</div>
+            <h2 className="mt-2 text-2xl font-black text-ink sm:text-3xl">活躍する先輩たち</h2>
+            <p className="mt-3 text-sm text-bl-gray">BIGLIGHTを通じて入社し、現場で活躍している先輩たちの声です。</p>
+          </div>
+          <div className="mt-12 space-y-14 sm:space-y-20">
+            {REVIEWS.map((r, i) => (
+              <Reveal key={r.name}>
+                <div className="grid items-center gap-8 sm:grid-cols-2 sm:gap-12">
+                  <div className={`relative mx-auto w-full max-w-sm ${i % 2 === 1 ? "sm:order-2" : ""}`}>
+                    <img src={r.img} alt={r.name} className="aspect-[4/5] w-full rounded-[2rem] object-cover shadow-lg ring-4 ring-white" />
+                    <span className="absolute bottom-4 left-4 rounded-full bg-bl-red px-3 py-1 text-xs font-black text-white shadow-lg">{r.place}</span>
+                  </div>
+                  <div className={i % 2 === 1 ? "sm:order-1" : ""}>
+                    <div className="text-xs font-black tracking-[0.2em] text-bl-red">VOICE 0{i + 1}</div>
+                    <h3 className="mt-1 text-2xl font-black text-ink sm:text-3xl">{r.name}</h3>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-bl-redsoft px-3 py-1 text-sm font-bold text-bl-red">{r.role}</span>
+                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-bl-gray ring-1 ring-bl-line">{r.place}</span>
+                    </div>
+                    <p className="mt-5 whitespace-pre-line text-[15px] leading-loose text-bl-gray">{r.text}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
