@@ -24,6 +24,36 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
   const [loading, setLoading] = useState(true);
   const [showOrig, setShowOrig] = useState<Set<string>>(new Set());
   const endRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // Mobile full-screen: bám theo VisualViewport để bàn phím mở không nhảy khung,
+  // ô nhập luôn nằm ngay trên bàn phím (iOS + Android). Desktop (lg) bỏ qua → dùng card.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      const el = boxRef.current;
+      if (!el) return;
+      if (mq.matches && vv) {
+        el.style.height = `${vv.height}px`;
+        el.style.top = `${vv.offsetTop}px`;
+        el.style.bottom = "auto";
+      } else {
+        el.style.height = "";
+        el.style.top = "";
+        el.style.bottom = "";
+      }
+    };
+    apply();
+    vv?.addEventListener("resize", apply);
+    vv?.addEventListener("scroll", apply);
+    mq.addEventListener?.("change", apply);
+    return () => {
+      vv?.removeEventListener("resize", apply);
+      vv?.removeEventListener("scroll", apply);
+      mq.removeEventListener?.("change", apply);
+    };
+  }, []);
 
   async function load() {
     const r = await fetch("/api/candidate/messages");
@@ -67,8 +97,8 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex h-[100dvh] flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
-      <div className="flex items-center gap-2 border-b border-bl-line px-4 py-2.5">
+    <div ref={boxRef} className="fixed inset-0 z-40 flex h-[100dvh] flex-col overflow-hidden bg-white lg:static lg:z-auto lg:h-[72dvh] lg:max-h-[820px] lg:rounded-2xl lg:border lg:border-bl-line lg:shadow-sm">
+      <div className="flex shrink-0 items-center gap-2 border-b border-bl-line px-4 py-2.5">
         {onClose && (
           <button onClick={onClose} className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bl-gray hover:bg-bl-line lg:hidden" aria-label="戻る">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
@@ -80,7 +110,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
         <div className="min-w-0"><b className="text-sm">BIGLIGHT 担当チーム</b><div className="truncate text-[11px] text-bl-gray2">Nhập tiếng Việt / Indonesia — tự động dịch sang tiếng Nhật</div></div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto bg-bl-bg p-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-bl-bg p-4">
         {loading ? (
           <div className="py-10 text-center text-sm text-bl-gray2">読み込み中…</div>
         ) : msgs.map((m) => {
@@ -133,7 +163,9 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
         <div ref={endRef} />
       </div>
 
-      <ChatComposer value={draft} onChange={setDraft} onSend={send} sending={sending} target="ja" variant="round" onFocus={scrollEnd} placeholder="メッセージを入力… / Nhập tin nhắn…" />
+      <div className="shrink-0">
+        <ChatComposer value={draft} onChange={setDraft} onSend={send} sending={sending} target="ja" variant="round" onFocus={scrollEnd} placeholder="メッセージを入力… / Nhập tin nhắn…" />
+      </div>
     </div>
   );
 }
