@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PIPELINE_STATUSES, PIPE_LABEL, PIPE_TONE, bucket, type PipeStatus } from "@/lib/pipeline";
-import { FilterIcon, SortIcon, ColumnsIcon, ExportBar } from "@/components/admin/toolbar";
+import { FilterIcon, SortIcon, ColumnsIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 import { StageTracker } from "@/components/common/StageTracker";
 import { STAGE_OF, isEnded } from "@/lib/applicationFlow";
 import { requestDelete } from "@/lib/adminDelete";
@@ -188,43 +188,34 @@ export default function PipelineSplit({ canEdit, canRowDelete = false, canBulkDe
               <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="氏名・求人・企業で検索" className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-bl-red" />
             </div>
-            <details className="relative">
-              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><FilterIcon />絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}</summary>
-              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-64 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-                <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className={inputCls} value={fStaff} onChange={(e) => setFStaff(e.target.value)}><option value="">すべて</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-                <div><div className="mb-1 text-xs font-bold text-slate-500">企業</div><select className={inputCls} value={fCompany} onChange={(e) => setFCompany(e.target.value)}><option value="">すべて</option>{companies.map((c) => <option key={c}>{c}</option>)}</select></div>
-                <div><div className="mb-1 text-xs font-bold text-slate-500">求人</div><select className={inputCls} value={fJob} onChange={(e) => setFJob(e.target.value)}><option value="">すべて</option>{jobs.map((j) => <option key={j}>{j}</option>)}</select></div>
-                <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className={inputCls} value={fNat} onChange={(e) => setFNat(e.target.value)}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
-                <div><div className="mb-1 text-xs font-bold text-slate-500">応募日（以降）</div><input type="date" className={inputCls} value={fDate} onChange={(e) => setFDate(e.target.value)} /></div>
-                {activeFilters > 0 && <button onClick={() => { setFStaff(""); setFCompany(""); setFJob(""); setFNat(""); setFDate(""); }} className="text-xs font-semibold text-bl-red hover:underline">クリア</button>}
+            <Dropdown icon={<FilterIcon />} label="絞り込み" badge={activeFilters} width="w-64">
+              <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className={inputCls} value={fStaff} onChange={(e) => setFStaff(e.target.value)}><option value="">すべて</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+              <div><div className="mb-1 text-xs font-bold text-slate-500">企業</div><select className={inputCls} value={fCompany} onChange={(e) => setFCompany(e.target.value)}><option value="">すべて</option>{companies.map((c) => <option key={c}>{c}</option>)}</select></div>
+              <div><div className="mb-1 text-xs font-bold text-slate-500">求人</div><select className={inputCls} value={fJob} onChange={(e) => setFJob(e.target.value)}><option value="">すべて</option>{jobs.map((j) => <option key={j}>{j}</option>)}</select></div>
+              <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className={inputCls} value={fNat} onChange={(e) => setFNat(e.target.value)}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
+              <div><div className="mb-1 text-xs font-bold text-slate-500">応募日（以降）</div><input type="date" className={inputCls} value={fDate} onChange={(e) => setFDate(e.target.value)} /></div>
+              {activeFilters > 0 && <button onClick={() => { setFStaff(""); setFCompany(""); setFJob(""); setFNat(""); setFDate(""); }} className="text-xs font-semibold text-bl-red hover:underline">クリア</button>}
+            </Dropdown>
+            <Dropdown icon={<SortIcon />} label="並び替え" width="w-56">
+              <select className={inputCls} value={pSort.key} onChange={(e) => setPSort((p) => ({ ...p, key: e.target.value as PSortKey }))}>
+                {PSORT.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+              </select>
+              <button onClick={() => setPSort((p) => ({ ...p, dir: p.dir === "asc" ? "desc" : "asc" }))} className="mt-1 w-full rounded-lg bg-slate-50 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">{pSort.dir === "asc" ? "昇順 ↑" : "降順 ↓"}</button>
+              <button onClick={() => setPSort({ key: "createdAt", dir: "desc" })} className="mt-1 w-full text-xs font-semibold text-bl-red hover:underline">リセット</button>
+            </Dropdown>
+            <Dropdown icon={<ColumnsIcon />} label="表示項目" width="w-64">
+              <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
+                <button onClick={selectAllPcols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+                <button onClick={clearPcols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
               </div>
-            </details>
-            <details className="relative">
-              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><SortIcon />並び替え</summary>
-              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-56 space-y-1 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-                <select className={inputCls} value={pSort.key} onChange={(e) => setPSort((p) => ({ ...p, key: e.target.value as PSortKey }))}>
-                  {PSORT.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-                </select>
-                <button onClick={() => setPSort((p) => ({ ...p, dir: p.dir === "asc" ? "desc" : "asc" }))} className="mt-1 w-full rounded-lg bg-slate-50 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100">{pSort.dir === "asc" ? "昇順 ↑" : "降順 ↓"}</button>
-                <button onClick={() => setPSort({ key: "createdAt", dir: "desc" })} className="mt-1 w-full text-xs font-semibold text-bl-red hover:underline">リセット</button>
+              <div className="grid grid-cols-2 gap-1">
+                {PCOLUMNS.map((c) => (
+                  <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                    <input type="checkbox" checked={pcols.has(c.key)} onChange={() => togglePcol(c.key)} />{c.label}
+                  </label>
+                ))}
               </div>
-            </details>
-            <details className="relative">
-              <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
-              <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-                <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
-                  <button onClick={selectAllPcols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
-                  <button onClick={clearPcols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {PCOLUMNS.map((c) => (
-                    <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                      <input type="checkbox" checked={pcols.has(c.key)} onChange={() => togglePcol(c.key)} />{c.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </details>
+            </Dropdown>
             <ExportBar compact filename="応募進捗" title="応募進捗一覧" getData={() => ({ headers: ["氏名", ...PCOLUMNS.map((c) => c.label)], rows: filtered.map((i) => [i.name, ...PCOLUMNS.map((c) => c.value(i))]) })} />
             {canBulkDelete && bulkSel.size > 0 && <button onClick={() => delApps([...bulkSel], `選択した${bulkSel.size}件の応募`)} disabled={delBusy} className="btn btn-ghost btn-sm gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>選択削除（{bulkSel.size}）</button>}
             <span className="ml-auto text-sm text-slate-500">{filtered.length} 件</span>

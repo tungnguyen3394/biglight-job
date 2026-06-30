@@ -257,8 +257,12 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
   );
 
   const btn = "inline-flex items-center gap-1.5 rounded-xl border border-bl-line bg-white px-3 py-2 text-sm font-bold text-ink hover:border-bl-red";
+  // Mobile (<lg): panel → bottom sheet vừa khít màn hình (không tràn ra ngoài).
+  const sheet = "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:mx-auto max-lg:mt-0 max-lg:w-[calc(100vw-32px)] max-lg:max-w-[380px] max-lg:max-h-[80dvh] max-lg:overflow-y-auto max-lg:rounded-2xl max-lg:rounded-b-none max-lg:p-4 max-lg:pb-[calc(16px+env(safe-area-inset-bottom))] max-lg:shadow-2xl";
   const Toolbar = (
     <div className="flex flex-wrap items-center gap-2">
+      {/* Overlay mờ — chỉ mobile, bấm ngoài để đóng */}
+      {menu && <div onClick={() => setMenu(null)} className="fixed inset-0 z-40 bg-black/30 lg:hidden" />}
       {ViewToggle}
       {/* フィルタ */}
       <div className="relative">
@@ -267,7 +271,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
           フィルタ{activeCount > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeCount}</span>}
         </button>
         {menu === "filter" && (
-          <div className="absolute right-0 z-50 mt-2 w-[min(92vw,360px)] rounded-2xl border border-bl-line bg-white p-4 shadow-xl">
+          <div className={`absolute right-0 z-50 mt-2 w-[min(92vw,360px)] rounded-2xl border border-bl-line bg-white p-4 shadow-xl ${sheet}`}>
             <div className="grid grid-cols-2 gap-2.5">
               <div className="col-span-2"><label className="mb-1 block text-xs font-bold text-bl-gray">キーワード</label><input className={sel} value={f.q} onChange={(e) => set("q", e.target.value)} placeholder="職種・タグなど" /></div>
               <div><label className="mb-1 block text-xs font-bold text-bl-gray">地域</label><select className={sel} value={f.pref} onChange={(e) => set("pref", e.target.value)}><option value="">すべて</option>{PREFECTURES.map((p) => <option key={p}>{p}</option>)}</select></div>
@@ -291,7 +295,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
           並び替え
         </button>
         {menu === "sort" && (
-          <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-bl-line bg-white py-1 shadow-xl">
+          <div className={`absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-bl-line bg-white py-1 shadow-xl ${sheet}`}>
             {SORTS.map((s) => <button key={s.v} onClick={() => { setSort(s.v); setMenu(null); }} className={`block w-full px-4 py-2 text-left text-sm hover:bg-bl-bg ${sort === s.v ? "font-bold text-bl-red" : "text-ink"}`}>{s.label}</button>)}
           </div>
         )}
@@ -304,7 +308,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
             表示項目
           </button>
           {menu === "cols" && (
-            <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-bl-line bg-white p-3 shadow-xl">
+            <div className={`absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-bl-line bg-white p-3 shadow-xl ${sheet}`}>
               <div className="mb-2 flex gap-2">
                 <button onClick={() => setVisible(new Set(ALL_KEYS))} className="flex-1 rounded-lg bg-bl-bg py-1 text-xs font-bold text-ink">すべて選択</button>
                 <button onClick={() => setVisible(new Set(["title"]))} className="flex-1 rounded-lg bg-bl-bg py-1 text-xs font-bold text-ink">クリア</button>

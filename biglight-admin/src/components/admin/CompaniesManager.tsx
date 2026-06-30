@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge, publicStatusTone } from "@/components/ui/Badge";
 import { PUBLIC_STATUS_LABEL, JOB_OP_STATUS_LABEL } from "@/lib/constants";
-import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
+import { SearchIcon, FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 import { MailMergeModal } from "@/components/admin/MailMergeModal";
 import { requestDelete } from "@/lib/adminDelete";
 import { useAutoCloseDetails } from "@/lib/useAutoCloseDetails";
@@ -151,26 +151,15 @@ export function CompaniesManager({ rows, canCreateJob, canRowDelete = false, can
         </div>
 
         {/* 絞り込み */}
-        <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
-            <FilterIcon />
-            絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
-          </summary>
-          <div className="absolute left-0 z-30 mt-1 max-w-[90vw] max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-            <div><div className="mb-1 text-xs font-bold text-slate-500">業種</div><select className="input w-full" value={fInd} onChange={(e) => setFInd(e.target.value)}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className="input w-full" value={fContact} onChange={(e) => setFContact(e.target.value)}><option value="">すべて</option>{contacts.map((c) => <option key={c}>{c}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">求人状況</div><select className="input w-full" value={fJobs} onChange={(e) => setFJobs(e.target.value)}><option value="">すべて</option><option value="open">募集中あり</option><option value="none">求人なし</option></select></div>
-            {activeFilters > 0 && <button onClick={clearFilters} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
-          </div>
-        </details>
+        <Dropdown icon={<FilterIcon />} label="絞り込み" badge={activeFilters} width="w-64">
+          <div><div className="mb-1 text-xs font-bold text-slate-500">業種</div><select className="input w-full" value={fInd} onChange={(e) => setFInd(e.target.value)}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">担当者</div><select className="input w-full" value={fContact} onChange={(e) => setFContact(e.target.value)}><option value="">すべて</option>{contacts.map((c) => <option key={c}>{c}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">求人状況</div><select className="input w-full" value={fJobs} onChange={(e) => setFJobs(e.target.value)}><option value="">すべて</option><option value="open">募集中あり</option><option value="none">求人なし</option></select></div>
+          {activeFilters > 0 && <button onClick={clearFilters} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
+        </Dropdown>
 
         {/* 並び替え */}
-        <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
-            <SortIcon />
-            並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-700 px-1.5 text-[10px] font-bold text-white">{sortList.length}</span>}
-          </summary>
-          <div className="absolute right-0 z-30 mt-1 max-w-[90vw] w-72 space-y-2 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+        <Dropdown icon={<SortIcon />} label="並び替え" badge={sortList.length} align="right" width="w-72">
             {sortList.map((s, i) => (
               <div key={s.key} className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1.5">
                 <span className="text-[10px] font-bold text-slate-400">{i + 1}</span>
@@ -188,31 +177,24 @@ export function CompaniesManager({ rows, canCreateJob, canRowDelete = false, can
               </select>
             )}
             <button onClick={() => setSortList([{ key: "name", dir: "asc" }])} className="text-xs font-semibold text-bl-red hover:underline">リセット</button>
-          </div>
-        </details>
+        </Dropdown>
 
         {/* 表示項目 (chỉ áp dụng リスト) */}
         {view === "list" && (
-          <details className="relative">
-            <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
-              <ColumnsIcon />
-              表示項目
-            </summary>
-            <div className="absolute right-0 z-30 mt-1 max-w-[90vw] w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-              <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
-                <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
-                <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
-              </div>
-              <div className="grid grid-cols-2 gap-1">
-                {COLUMNS.map((c) => (
-                  <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                    <input type="checkbox" checked={cols.has(c.key)} disabled={c.key === "name"} onChange={() => toggleCol(c.key)} />
-                    {c.label}
-                  </label>
-                ))}
-              </div>
+          <Dropdown icon={<ColumnsIcon />} label="表示項目" align="right" width="w-72">
+            <div className="mb-1.5 flex gap-3 border-b border-slate-100 pb-1.5">
+              <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+              <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
             </div>
-          </details>
+            <div className="grid grid-cols-2 gap-1">
+              {COLUMNS.map((c) => (
+                <label key={c.key} className="flex items-center gap-1.5 rounded px-1.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                  <input type="checkbox" checked={cols.has(c.key)} disabled={c.key === "name"} onChange={() => toggleCol(c.key)} />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+          </Dropdown>
         )}
 
         <div className="ml-auto flex items-center gap-2">

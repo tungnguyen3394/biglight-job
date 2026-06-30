@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ===== Bộ icon line dùng chung cho toolbar mọi bảng (đồng bộ logo) =====
 const S = ({ children, size = 15 }: { children: React.ReactNode; size?: number }) => (
@@ -16,21 +16,44 @@ export const PrintIcon = () => <S><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0
 export const MailIcon = () => <S><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></S>;
 export const PlusIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>;
 
-// ===== Dropdown (details/summary) dùng chung cho 絞り込み / 並び替え / 表示項目 =====
+// ===== Dropdown dùng chung cho 絞り込み / 並び替え / 表示項目 =====
+// Desktop: dropdown bám nút (như cũ). Mobile (<lg): Bottom Sheet ở giữa đáy + overlay mờ + bấm ngoài/Esc để đóng.
+// → KHÔNG bao giờ tràn ra ngoài màn hình.
 export function Dropdown({ icon, label, badge, align = "left", width = "w-64", children }: {
   icon: React.ReactNode; label: string; badge?: number; align?: "left" | "right"; width?: string; children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
   return (
-    <details className="relative">
-      <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="btn btn-ghost btn-sm gap-1.5">
         {icon}
         {label}
         {badge != null && badge > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{badge}</span>}
-      </summary>
-      <div className={`absolute ${align === "right" ? "right-0" : "left-0"} z-30 mt-1 max-h-[70vh] ${width} max-w-[90vw] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl`}>
-        {children}
-      </div>
-    </details>
+      </button>
+      {open && (
+        <>
+          {/* Overlay mờ — chỉ mobile */}
+          <div onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-black/30 lg:hidden" />
+          {/* Panel: mobile = bottom sheet vừa khít màn hình; desktop = dropdown bám nút */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`absolute ${align === "right" ? "right-0" : "left-0"} z-30 mt-1 max-h-[70vh] ${width} max-w-[90vw] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl
+              max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-50 max-lg:mx-auto max-lg:mt-0 max-lg:w-[calc(100vw-32px)] max-lg:max-w-[380px] max-lg:max-h-[80dvh] max-lg:rounded-2xl max-lg:rounded-b-none max-lg:p-4 max-lg:pb-[calc(16px+env(safe-area-inset-bottom))] max-lg:shadow-2xl`}
+          >
+            {children}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

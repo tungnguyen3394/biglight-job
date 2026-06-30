@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar } from "@/components/admin/toolbar";
+import { FilterIcon, SortIcon, ColumnsIcon, MailIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
 import { MailMergeModal } from "@/components/admin/MailMergeModal";
 import { requestDelete } from "@/lib/adminDelete";
 import { useAutoCloseDetails } from "@/lib/useAutoCloseDetails";
@@ -351,32 +351,21 @@ export function CandidatesTable({ rows, canRowDelete = false, canBulkDelete = fa
         </div>
 
         {/* 絞り込み (gom các bộ lọc) */}
-        <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
-            <FilterIcon />
-            絞り込み{activeFilters > 0 && <span className="rounded-full bg-bl-red px-1.5 text-[10px] font-bold text-white">{activeFilters}</span>}
-          </summary>
-          <div className="absolute left-0 z-30 mt-1 max-w-[90vw] max-h-[70vh] w-64 space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
-            <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className="input w-full" value={fNat} onChange={(e) => { setFNat(e.target.value); reset(); }}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">在留資格</div><select className="input w-full" value={fVisa} onChange={(e) => { setFVisa(e.target.value); reset(); }}><option value="">すべて</option>{visas.map((v) => <option key={v}>{v}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">日本語</div><select className="input w-full" value={fJp} onChange={(e) => { setFJp(e.target.value); reset(); }}><option value="">すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">性別</div><select className="input w-full" value={fGender} onChange={(e) => { setFGender(e.target.value); reset(); }}><option value="">すべて</option>{genders.map((g) => <option key={g}>{g}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">特定技能分野</div><select className="input w-full" value={fSsw} onChange={(e) => { setFSsw(e.target.value); reset(); }}><option value="">すべて</option>{ssws.map((s) => <option key={s}>{s}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">希望業種</div><select className="input w-full" value={fInd} onChange={(e) => { setFInd(e.target.value); reset(); }}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">希望勤務地</div><select className="input w-full" value={fLoc} onChange={(e) => { setFLoc(e.target.value); reset(); }}><option value="">すべて</option>{locs.map((l) => <option key={l}>{l}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">寮</div><select className="input w-full" value={fDorm} onChange={(e) => { setFDorm(e.target.value); reset(); }}><option value="">すべて</option>{dorms.map((d) => <option key={d}>{d}</option>)}</select></div>
-            <div><div className="mb-1 text-xs font-bold text-slate-500">ステータス</div><select className="input w-full" value={fStatus} onChange={(e) => { setFStatus(e.target.value); reset(); }}><option value="">すべて</option>{statuses.map((s) => <option key={s}>{s}</option>)}</select></div>
-            {activeFilters > 0 && <button onClick={clearFilters} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
-          </div>
-        </details>
+        <Dropdown icon={<FilterIcon />} label="絞り込み" badge={activeFilters} width="w-64">
+          <div><div className="mb-1 text-xs font-bold text-slate-500">国籍</div><select className="input w-full" value={fNat} onChange={(e) => { setFNat(e.target.value); reset(); }}><option value="">すべて</option>{nats.map((n) => <option key={n}>{n}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">在留資格</div><select className="input w-full" value={fVisa} onChange={(e) => { setFVisa(e.target.value); reset(); }}><option value="">すべて</option>{visas.map((v) => <option key={v}>{v}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">日本語</div><select className="input w-full" value={fJp} onChange={(e) => { setFJp(e.target.value); reset(); }}><option value="">すべて</option>{jps.map((j) => <option key={j}>{j}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">性別</div><select className="input w-full" value={fGender} onChange={(e) => { setFGender(e.target.value); reset(); }}><option value="">すべて</option>{genders.map((g) => <option key={g}>{g}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">特定技能分野</div><select className="input w-full" value={fSsw} onChange={(e) => { setFSsw(e.target.value); reset(); }}><option value="">すべて</option>{ssws.map((s) => <option key={s}>{s}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">希望業種</div><select className="input w-full" value={fInd} onChange={(e) => { setFInd(e.target.value); reset(); }}><option value="">すべて</option>{inds.map((i) => <option key={i}>{i}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">希望勤務地</div><select className="input w-full" value={fLoc} onChange={(e) => { setFLoc(e.target.value); reset(); }}><option value="">すべて</option>{locs.map((l) => <option key={l}>{l}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">寮</div><select className="input w-full" value={fDorm} onChange={(e) => { setFDorm(e.target.value); reset(); }}><option value="">すべて</option>{dorms.map((d) => <option key={d}>{d}</option>)}</select></div>
+          <div><div className="mb-1 text-xs font-bold text-slate-500">ステータス</div><select className="input w-full" value={fStatus} onChange={(e) => { setFStatus(e.target.value); reset(); }}><option value="">すべて</option>{statuses.map((s) => <option key={s}>{s}</option>)}</select></div>
+          {activeFilters > 0 && <button onClick={clearFilters} className="text-xs font-semibold text-bl-red hover:underline">フィルターをクリア</button>}
+        </Dropdown>
 
         {/* 並び替え nâng cao (đa trường) */}
-        <details className="relative">
-          <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden">
-            <SortIcon />
-            並び替え{sortList.length > 0 && <span className="rounded-full bg-slate-200 px-1.5 text-[10px] font-bold text-slate-600">{sortList.length}</span>}
-          </summary>
-          <div className="absolute left-0 z-30 mt-1 max-w-[90vw] w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+        <Dropdown icon={<SortIcon />} label="並び替え" badge={sortList.length} width="w-72">
             {sortList.length === 0 && <p className="mb-2 text-xs text-slate-400">並び替え項目がありません。</p>}
             {sortList.map((s, i) => (
               <div key={s.key} className="mb-1.5 flex items-center gap-1 rounded-lg bg-slate-50 px-2 py-1.5">
@@ -395,26 +384,22 @@ export function CandidatesTable({ rows, canRowDelete = false, canBulkDelete = fa
               </select>
             )}
             {sortList.length > 0 && <button onClick={() => setSortList([])} className="mt-2 text-xs font-semibold text-bl-red hover:underline">並び替えをクリア</button>}
-          </div>
-        </details>
+        </Dropdown>
 
         <div className="ml-auto flex items-center gap-2">
           {/* 表示項目 */}
-          <details className="relative">
-            <summary className="btn btn-ghost btn-sm cursor-pointer list-none gap-1.5 [&::-webkit-details-marker]:hidden"><ColumnsIcon />表示項目</summary>
-            <div className="absolute right-0 z-30 mt-1 max-w-[90vw] w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-              <div className="mb-1 flex gap-3 border-b border-slate-100 px-1 pb-1.5">
-                <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
-                <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
-              </div>
-              {COLUMNS.map((c) => (
-                <label key={c.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50">
-                  <input type="checkbox" checked={cols.has(c.key)} onChange={() => toggleCol(c.key)} className="h-3.5 w-3.5 accent-bl-red" />
-                  {c.label}
-                </label>
-              ))}
+          <Dropdown icon={<ColumnsIcon />} label="表示項目" align="right" width="w-52">
+            <div className="mb-1 flex gap-3 border-b border-slate-100 px-1 pb-1.5">
+              <button onClick={selectAllCols} className="text-xs font-semibold text-bl-red hover:underline">すべて選択</button>
+              <button onClick={clearCols} className="text-xs font-semibold text-slate-500 hover:underline">クリア</button>
             </div>
-          </details>
+            {COLUMNS.map((c) => (
+              <label key={c.key} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50">
+                <input type="checkbox" checked={cols.has(c.key)} onChange={() => toggleCol(c.key)} className="h-3.5 w-3.5 accent-bl-red" />
+                {c.label}
+              </label>
+            ))}
+          </Dropdown>
           <ExportBar compact filename="応募者一覧" title="応募者一覧" getData={() => ({ headers: visCols.map((c) => c.label), rows: filtered.map((r) => visCols.map((c) => c.value(r))) })} />
           <button onClick={() => selected.size && setMailOpen(true)} disabled={selected.size === 0} className="btn btn-navy btn-sm gap-1.5 disabled:opacity-40"><MailIcon />メール送信{selected.size > 0 && `（${selected.size}）`}</button>
           {canBulkDelete && <button onClick={() => delRows([...selected], `選択した${selected.size}名`)} disabled={selected.size === 0 || delBusy} className="btn btn-sm gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" /></svg>選択削除{selected.size > 0 && `（${selected.size}）`}</button>}
