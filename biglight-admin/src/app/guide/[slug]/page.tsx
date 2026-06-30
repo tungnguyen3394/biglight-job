@@ -9,6 +9,8 @@ import { articleCard, articleBodyHtml, type GuideCard } from "@/lib/guide";
 import { buildMetadata } from "@/lib/seo";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 import { JsonLd } from "@/components/common/JsonLd";
+import ShareButtons from "@/components/candidate/ShareButtons";
+import { PUBLIC_BASE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +98,11 @@ export default async function GuideArticlePage({ params }: { params: { slug: str
         {image && <img src={image} alt="" className="mt-4 w-full rounded-2xl object-cover" />}
         <div className="bl-guide mt-5" dangerouslySetInnerHTML={{ __html: html }} />
       </article>
+
+      {/* Chia sẻ bài viết */}
+      <div className="pb-2">
+        <ShareButtons url={`${PUBLIC_BASE_URL}/guide/${a.slug || a.id}`} title={a.title} />
+      </div>
 
       {relatedCards.length > 0 && (
         <section className="border-t border-bl-line bg-white">

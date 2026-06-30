@@ -42,6 +42,12 @@ function GuideTeaser({ guides }: { guides: GuideCard[] }) {
             </Link>
           ))}
         </div>
+        <div className="mt-7 text-center">
+          <Link href="/guide" className="inline-flex items-center gap-2 rounded-full bg-bl-red px-7 py-3 text-sm font-black text-white shadow-md transition hover:-translate-y-0.5 hover:bg-bl-redd hover:shadow-lg">
+            すべての記事を見る
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
+        </div>
       </div>
     </section>
   );
