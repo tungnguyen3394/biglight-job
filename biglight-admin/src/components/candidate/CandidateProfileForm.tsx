@@ -223,8 +223,8 @@ function SnsEditor({ values, onChange }: { values: Record<SnsField, string>; onC
 // ---------------------------------------------------------------------------
 function Card({ n, title, sub, children }: { n: number; title: string; sub?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
-      <h3 className="flex items-center gap-2 text-base font-black"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bl-red text-xs text-white">{n}</span>{title}</h3>
+    <section className="rounded-[20px] border border-bl-line bg-white p-5 shadow-sm">
+      <h3 className="flex items-center gap-2 text-[17px] font-black text-ink"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-bl-bg text-xs font-bold text-bl-gray2">{n}</span>{title}</h3>
       {sub && <p className="mb-3 ml-8 mt-1 text-xs text-bl-gray">{sub}</p>}
       <div className={sub ? "" : "mt-4"}>{children}</div>
     </section>
@@ -408,13 +408,13 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
         {err && <p className="mb-2 rounded-lg bg-bl-redsoft px-3 py-2 text-center text-sm font-semibold text-bl-red">{err}</p>}
         {editing ? (
           <div className="flex gap-2">
-            <button onClick={cancel} disabled={saving} className="rounded-xl border border-bl-line bg-white px-5 py-3.5 text-base font-bold text-bl-gray hover:bg-bl-bg disabled:opacity-60">キャンセル</button>
-            <button onClick={save} disabled={saving} className="flex-1 rounded-xl bg-bl-red py-3.5 text-base font-bold text-white shadow-lg hover:bg-bl-redd disabled:opacity-60">
+            <button onClick={cancel} disabled={saving} className="rounded-2xl border border-bl-line bg-white px-5 py-4 text-base font-bold text-bl-gray hover:bg-bl-bg disabled:opacity-60">キャンセル</button>
+            <button onClick={save} disabled={saving} className="flex-1 rounded-2xl bg-bl-red py-4 text-base font-bold text-white shadow-lg hover:bg-bl-redd disabled:opacity-60">
               {saving ? "保存中…" : "プロフィールを保存する"}
             </button>
           </div>
         ) : (
-          <button onClick={() => { setEditing(true); setSaved(false); }} className="flex w-full items-center justify-center gap-2 rounded-xl bg-bl-red py-3.5 text-base font-bold text-white shadow-lg hover:bg-bl-redd">
+          <button onClick={() => { setEditing(true); setSaved(false); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-bl-red py-4 text-base font-bold text-white shadow-lg hover:bg-bl-redd">
             <IconEdit /> {saved ? "保存しました（編集する）" : "プロフィールを編集する"}
           </button>
         )}

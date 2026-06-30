@@ -69,6 +69,9 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   if (!profile.visa?.trim()) missing.push("現在の在留資格");
   if (!profile.facebookUrl?.trim() && !profile.instagramUrl?.trim() && !profile.tiktokUrl?.trim()) missing.push("SNSアカウント");
   if (!emailLocked && !profile.email?.trim()) missing.push("メールアドレス");
+  // % hoàn thành hồ sơ (mẫu số = số trường 必須 đang kiểm tra)
+  const totalReq = emailLocked ? 6 : 7;
+  const pct = Math.max(0, Math.min(100, Math.round(((totalReq - missing.length) / totalReq) * 100)));
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -106,47 +109,54 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
         <Ic d={ICONS[key]} />{label}
       </button>
     ) : (
-      <button key={key} data-sec={key} onClick={() => go(key)} className={`flex flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-center text-[10px] font-bold leading-tight transition ${sec === key ? "bg-bl-red text-white shadow" : "text-bl-gray hover:bg-white"}`}>
-        <Ic d={ICONS[key]} size={19} /><span className="break-keep">{label}</span>
+      <button key={key} data-sec={key} onClick={() => go(key)} className={`flex flex-col items-center gap-1 rounded-xl px-0.5 py-2 text-center text-[10px] font-bold leading-tight transition ${sec === key ? "bg-white text-bl-red shadow-sm" : "text-bl-gray2 hover:bg-white/60"}`}>
+        <Ic d={ICONS[key]} size={22} /><span className="break-keep">{label}</span>
       </button>
     );
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Welcome */}
-      <div className="mb-5">
-        <h1 className="text-xl font-black">ようこそ、{name} さん</h1>
-        <p className="text-sm text-bl-gray">応募状況の確認・担当者との連絡ができます。</p>
+      <div className="mb-3">
+        <h1 className="text-lg font-black text-ink">ようこそ、{name} さん</h1>
+        <p className="mt-0.5 text-[13px] text-bl-gray">応募状況の確認・担当者との連絡ができます。</p>
       </div>
 
-      {applied && <div className="mb-5 flex items-center gap-2 rounded-2xl border border-bl-green bg-bl-greensoft p-4 text-sm font-semibold text-bl-green"><Ic d={<path d="M20 6 9 17l-5-5" />} />応募を受け付けました。担当者がご連絡します。</div>}
-
-      {/* Banner nổi (sticky): liệt kê 必須 còn thiếu, hoặc thông báo đã có thể ứng tuyển */}
-      {missing.length > 0 ? (
-        <div className="sticky top-2 z-20 mb-5 rounded-2xl border-2 border-bl-red bg-bl-redsoft p-4 shadow-lg">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex-none text-bl-red"><Ic d={<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>} /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-bl-red">応募するには、次の必須項目の入力が必要です</p>
-              <p className="mt-1 text-sm font-bold text-ink">{missing.join("・")}</p>
-              <p className="mt-1 text-xs text-bl-gray">下のフォームに入力して保存すると、応募できるようになります。</p>
-            </div>
-            <button onClick={() => go("profile")} className="flex-none self-center rounded-xl bg-bl-red px-4 py-2 text-xs font-bold text-white hover:bg-bl-redd">入力する</button>
-          </div>
+      {/* Profile Completion — progress navy, % đen, thoáng */}
+      <div className="mb-3 rounded-[20px] border border-bl-line bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-ink">プロフィール完成度</span>
+          <span className="text-lg font-black text-ink">{pct}%</span>
         </div>
-      ) : (
-        <div className="sticky top-2 z-20 mb-5 flex items-center gap-2 rounded-2xl border border-bl-green bg-bl-greensoft px-4 py-3 text-sm font-bold text-bl-green shadow-sm">
-          <Ic d={<path d="M20 6 9 17l-5-5" />} />プロフィールが完成しました。求人に応募できます。
+        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-bl-line">
+          <div className="h-full rounded-full bg-[#13335c] transition-all duration-500" style={{ width: `${pct}%` }} />
+        </div>
+        <p className="mt-2 text-xs text-bl-gray">
+          {missing.length === 0 ? "プロフィールが完成しました。求人に応募できます。" : `あと少しで完成します（未入力：${missing.join("・")}）`}
+        </p>
+        {missing.length > 0 && sec !== "profile" && (
+          <button onClick={() => go("profile")} className="mt-3 flex h-[54px] w-full items-center justify-center gap-1.5 rounded-2xl bg-bl-red text-sm font-bold text-white transition hover:bg-bl-redd">
+            編集する
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+        )}
+      </div>
+
+      {/* Thông báo xanh — gọn 1 dòng, icon check nhỏ */}
+      {applied && (
+        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-bl-green/50 bg-bl-greensoft px-4 py-3 text-[13px] font-semibold text-bl-green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-none"><path d="M20 6 9 17l-5-5" /></svg>
+          <span className="min-w-0 flex-1">応募を受け付けました。担当者がご連絡します。</span>
         </div>
       )}
 
-      <div className="flex gap-2.5 lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
+      <div className="flex gap-3 lg:grid lg:grid-cols-[230px_1fr] lg:items-start lg:gap-6">
         {/* ===== Mobile: slider bar DỌC bên trái (chỉ mobile) ===== */}
-        <nav ref={tabBarRef} className="flex w-[80px] flex-none flex-col gap-1 self-start overflow-y-auto rounded-2xl bg-bl-bg p-1.5 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <nav ref={tabBarRef} className="flex w-[60px] flex-none flex-col gap-0.5 self-start overflow-y-auto rounded-[18px] bg-bl-bg p-1 lg:hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {ITEMS.map((it) => navBtn(it.key, SHORT[it.key], false))}
           {navBtn("settings", SHORT.settings, false)}
-          <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mt-0.5 flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-bl-red to-bl-redd px-1 py-2.5 text-center text-[10px] font-bold leading-tight text-white">
-            <Ic d={ICONS.salary} size={19} /><span className="break-keep">手取り計算</span>
+          <a href="/biglight-job-salary.html" target="_blank" rel="noopener noreferrer" className="mt-0.5 flex flex-col items-center gap-1 rounded-xl px-0.5 py-2 text-center text-[10px] font-bold leading-tight text-[#13335c] hover:bg-white/60">
+            <Ic d={ICONS.salary} size={22} /><span className="break-keep">手取り計算</span>
           </a>
         </nav>
 
@@ -169,7 +179,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           <h2 className="mb-3 hidden text-lg font-black lg:block">{heading}</h2>
 
           {notice && (
-            <div className="mb-4 flex items-start gap-2 rounded-2xl border border-bl-red bg-bl-redsoft p-4 text-sm font-bold text-bl-red">
+            <div className="mb-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-700">
               <Ic d={<><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></>} />{notice}
             </div>
           )}
