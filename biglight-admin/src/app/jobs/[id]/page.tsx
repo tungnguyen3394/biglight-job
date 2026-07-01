@@ -234,7 +234,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
           </div>
 
           {/* おすすめスコア (mock frontend) — dưới phần lương/応募 */}
-          <RecommendScore jobId={job.id} jobTitle={job.title} />
+          <RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} />
 
           {/* 2. 住居・生活 */}
           <Card title="住居・生活">

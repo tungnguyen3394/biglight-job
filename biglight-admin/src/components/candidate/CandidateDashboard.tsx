@@ -163,7 +163,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           {canApply
             ? <span className="flex items-center gap-1 font-bold text-bl-green"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>応募できます</span>
             : <button onClick={() => go("profile")} className="font-bold text-bl-red">あと{missing.length}項目 →</button>}
-          <span className="text-bl-gray2">AIおすすめ <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
+          <span className="text-bl-gray2">おすすめ度 <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
         </div>
       </div>
 

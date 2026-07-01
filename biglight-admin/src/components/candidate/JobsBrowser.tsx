@@ -74,7 +74,7 @@ function cellText(j: BrowseJob, key: string): string {
   }
 }
 
-function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: boolean; onToggleSave: () => void; onApply: () => void }) {
+function Card({ job, saved, onToggleSave, onApply, loggedIn }: { job: BrowseJob; saved: boolean; onToggleSave: () => void; onApply: () => void; loggedIn?: boolean }) {
   const chip = job.industry.includes("製造") ? "bg-bl-bluesoft text-bl-blue" : job.industry.includes("建設") ? "bg-bl-ambersoft text-bl-amber" : "bg-bl-greensoft text-bl-green";
   const rec = recommendScore(job.id);
   return (
@@ -85,8 +85,10 @@ function Card({ job, saved, onToggleSave, onApply }: { job: BrowseJob; saved: bo
           {job.open && job.isUrgent && <span className="rounded-full bg-bl-red px-2 py-0.5 text-[11px] font-black text-white shadow">急募</span>}
           {!job.open && <span className="rounded-full bg-bl-gray px-2 py-0.5 text-[11px] font-bold text-white">募集終了</span>}
         </div>
-        {/* おすすめスコア (mock) — nhỏ, không chiếm diện tích */}
-        <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-black text-bl-red shadow-sm">★ おすすめ {rec.score}%</span>
+        {/* おすすめ度 (mock) — nhỏ; guest không thấy điểm */}
+        {loggedIn
+          ? <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-black text-bl-red shadow-sm">★ おすすめ度 {rec.score}%</span>
+          : <span className="absolute bottom-2 left-2.5 inline-flex items-center gap-0.5 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-bold text-bl-gray2 shadow-sm">おすすめ度 ログイン後</span>}
         <button onClick={(e) => { e.preventDefault(); onToggleSave(); }} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-lg leading-none shadow hover:bg-white" aria-label="お気に入り">
           <span className={saved ? "text-bl-red" : "text-bl-gray2"}>{saved ? "♥" : "♡"}</span>
         </button>
@@ -250,7 +252,7 @@ export default function JobsBrowser({ items, loggedIn, savedIds = [] }: { items:
   );
 
   const Grid = list.length === 0 ? empty
-    : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} onApply={() => onApply(j)} />)}</div>;
+    : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{list.map((j) => <Card key={j.id} job={j} saved={savedSet.has(j.id)} onToggleSave={() => toggleSave(j.id)} onApply={() => onApply(j)} loggedIn={loggedIn} />)}</div>;
   const Body = list.length === 0 ? empty : view === "grid" ? Grid : Table;
 
   const ViewToggle = (
