@@ -12,6 +12,7 @@ const DOCSLOTS = [
   { id: "hyouka", label: "専門級 / 評価調書", hint: "技能実習の評価調書など" },
   { id: "jlpt", label: "日本語能力試験（JLPT）", hint: "合格証明書" },
   { id: "tokutei", label: "特定技能の資格", hint: "技能試験の合格証など" },
+  { id: "other", label: "その他の書類", hint: "パスポート・給与明細・卒業証明書など" },
 ];
 
 const IconUpload = () => (<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 9l5-5 5 5" /><path d="M12 4v12" /></svg>);

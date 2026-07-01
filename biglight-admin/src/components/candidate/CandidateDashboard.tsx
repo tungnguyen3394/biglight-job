@@ -179,21 +179,27 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
           <span className="text-bl-gray2">おすすめ度 <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
         </div>
 
-        {/* 履歴書PDF: trạng thái + nút xuất (realtime) */}
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-bl-line pt-3">
-          <div className="min-w-0">
+        {/* 履歴書PDF: trạng thái + 2 nút xuất (realtime) */}
+        <div className="mt-3 border-t border-bl-line pt-3">
+          <div className="flex items-center justify-between">
             <div className="text-[11px] font-bold text-bl-gray2">履歴書PDF</div>
             {pdfOk
               ? <div className="flex items-center gap-1 text-sm font-black text-bl-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>出力可能</div>
               : <div className="text-sm font-bold text-bl-gray2">未完成</div>}
           </div>
           {pdfOk ? (
-            <a href="/mypage/rirekisho" target="_blank" rel="noopener noreferrer" className="flex flex-none items-center gap-1.5 rounded-xl bg-bl-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-bl-redd">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
-              PDF出力
-            </a>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <a href="/mypage/rirekisho" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-bl-red px-3 py-2.5 text-[13px] font-bold text-white shadow-sm transition hover:bg-bl-redd">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
+                情報のみ
+              </a>
+              <a href="/mypage/rirekisho?attach=1" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl border border-bl-red bg-white px-3 py-2.5 text-[13px] font-bold text-bl-red shadow-sm transition hover:bg-bl-redsoft">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.4 11.05 12.25 20.2a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49" /></svg>
+                書類付き
+              </a>
+            </div>
           ) : (
-            <button type="button" onClick={() => { setNotice(PDF_WARN); go("profile"); }} className="flex flex-none items-center gap-1.5 rounded-xl border border-bl-line bg-bl-bg px-4 py-2.5 text-sm font-bold text-bl-gray2">
+            <button type="button" onClick={() => { setNotice(PDF_WARN); go("profile"); }} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-bl-line bg-bl-bg px-4 py-2.5 text-sm font-bold text-bl-gray2">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
               PDF出力
             </button>

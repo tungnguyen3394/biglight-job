@@ -11,16 +11,19 @@ const ymd = (d?: Date | null) => (d ? `${d.getFullYear()}年${d.getMonth() + 1}�
 const ymdStr = (s?: string | null) => { if (!s) return "未記入"; const [y, m, d] = String(s).split("-"); return y ? `${y}年${Number(m || 1)}月${d ? `${Number(d)}日` : ""}` : "未記入"; };
 const genderJP = (g?: string | null) => (g === "MALE" ? "男性" : g === "FEMALE" ? "女性" : "未記入");
 const v = (s?: string | null) => (s && String(s).trim() ? String(s) : "未記入");
+const isImg = (name: string) => /\.(jpe?g|png|webp|gif|heic|bmp)$/i.test(name);
 
+// Danh sách書類 (提出書類 + đính kèm). label dùng cho 添付書類一覧 và trang đính kèm.
 const DOCLIST = [
   { id: "rirekisho", label: "履歴書" },
   { id: "zairyu", label: "在留カード（両面）" },
   { id: "hyouka", label: "専門級 / 評価調書" },
   { id: "jlpt", label: "日本語能力試験（JLPT）" },
   { id: "tokutei", label: "特定技能の資格" },
+  { id: "other", label: "その他の書類" },
 ];
 
-export default async function RirekishoPage() {
+export default async function RirekishoPage({ searchParams }: { searchParams: { attach?: string } }) {
   const session = await getSessionUser();
   if (!session || session.role !== "CANDIDATE") redirect("/mypage");
 
@@ -32,6 +35,7 @@ export default async function RirekishoPage() {
   const workHistory: WorkRow[] = Array.isArray(p.workHistory) ? (p.workHistory as WorkRow[]) : [];
   const addressDetail = (p.addressDetail as string) || "";
   const cvPhoto = docs.cvphoto?.[0]?.file;
+  const withAttach = searchParams.attach === "1";
 
   // Gating server-side: thiếu thì hiện cảnh báo, không xuất.
   const elig = pdfEligibility({ address: c.currentAddress, addressDetail, workHistory, hasPhoto: !!cvPhoto });
@@ -62,17 +66,24 @@ export default async function RirekishoPage() {
     ["重視すること", v(priorities)],
   ];
 
+  // Chế độ「書類付き」: gom mọi file trong các slot书類 (không gồm 証明写真) → ghép sau CV.
+  const attachments = withAttach
+    ? DOCLIST.flatMap((d) => (docs[d.id] ?? []).map((f) => ({ ...f, slot: d.id, slotLabel: d.label })))
+    : [];
+
   return (
     <div className="min-h-screen bg-[#e9edf1] text-ink">
       <style>{`
         @page { size: A4; margin: 12mm; }
+        .sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         @media print {
           html, body { background: #fff !important; }
           .no-print { display: none !important; }
           .sheet { box-shadow: none !important; margin: 0 !important; width: auto !important; }
+          .attach-page { break-before: page; }
         }
         .rk-sec { break-inside: avoid; }
-        .rk-work { break-inside: avoid; }
+        .rk-tr { break-inside: avoid; }
       `}</style>
 
       <PrintBar />
@@ -84,14 +95,12 @@ export default async function RirekishoPage() {
             <h1 className="text-2xl font-black tracking-wide text-ink">履歴書</h1>
             <div className="mt-1 text-xs text-bl-gray">BIGLIGHT JOB</div>
           </div>
-          {/* 証明写真 3x4 */}
           {cvPhoto && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={`/api/candidate/documents?slot=cvphoto&file=${encodeURIComponent(cvPhoto)}`} alt="証明写真" className="h-[40mm] w-[30mm] flex-none border border-bl-line object-cover" />
           )}
         </div>
 
-        {/* 1. 基本情報 */}
         <Section title="基本情報">
           <Grid rows={[
             ["氏名（ローマ字）", v(c.name)],
@@ -104,7 +113,6 @@ export default async function RirekishoPage() {
           ]} />
         </Section>
 
-        {/* 2. 現住所 */}
         <Section title="現住所">
           <Grid rows={[
             ["都道府県", v(c.currentAddress)],
@@ -112,7 +120,6 @@ export default async function RirekishoPage() {
           ]} />
         </Section>
 
-        {/* 3. 在留資格・日本語レベル */}
         <Section title="在留資格・日本語レベル">
           <Grid rows={[
             ["現在の在留資格", v(c.visaType)],
@@ -123,47 +130,63 @@ export default async function RirekishoPage() {
           ]} />
         </Section>
 
-        {/* 4. 職務経歴 */}
         <Section title="職務経歴">
           {workHistory.length === 0 ? (
             <p className="px-3 py-2 text-sm text-bl-gray2">未記入</p>
           ) : (
-            <div className="divide-y divide-bl-line">
-              {workHistory.map((w, i) => (
-                <div key={i} className="rk-work py-2.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                    <div className="text-sm font-bold text-ink">{v(w.company)}</div>
-                    <div className="text-xs text-bl-gray">{formatYm(w.start) || "未記入"} 〜 {workEndLabel(w)}</div>
-                  </div>
-                  {w.work && <div className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-ink">{w.work}</div>}
-                </div>
-              ))}
-            </div>
+            <table className="w-full border-collapse text-sm">
+              <tbody>
+                {workHistory.map((w, i) => (
+                  <tr key={i} className="rk-tr border-b border-bl-line align-top last:border-0">
+                    <td className="w-[42mm] px-3 py-2 align-top text-xs text-bl-gray">{formatYm(w.start) || "未記入"}<br />〜 {workEndLabel(w)}</td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="font-bold text-ink">{v(w.company)}</div>
+                      {w.work && <div className="mt-0.5 whitespace-pre-wrap leading-relaxed text-ink">{w.work}</div>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </Section>
 
-        {/* 5. 希望条件 */}
         <Section title="希望条件">
           <Grid rows={wishRows} />
         </Section>
 
-        {/* 6. 添付書類一覧 */}
         <Section title="添付書類一覧">
-          <div className="divide-y divide-bl-line">
-            {DOCLIST.map((d) => {
-              const done = (docs[d.id]?.length ?? 0) > 0;
-              return (
-                <div key={d.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                  <span className="text-ink">{d.label}</span>
-                  <span className={done ? "font-bold text-bl-green" : "text-bl-gray2"}>{done ? "提出済み" : "未提出"}</span>
-                </div>
-              );
-            })}
-          </div>
+          <table className="w-full border-collapse text-sm">
+            <tbody>
+              {DOCLIST.map((d) => {
+                const done = (docs[d.id]?.length ?? 0) > 0;
+                return (
+                  <tr key={d.id} className="border-b border-bl-line last:border-0">
+                    <td className="px-3 py-2 text-ink">{d.label}</td>
+                    <td className={`w-[30mm] px-3 py-2 text-right ${done ? "font-bold text-bl-green" : "text-bl-gray2"}`}>{done ? "提出済み" : "未提出"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Section>
 
         <p className="mt-5 text-right text-[10px] text-bl-gray2">この履歴書は BIGLIGHT JOB で作成されました。</p>
       </div>
+
+      {/* ===== Trang đính kèm (chỉ mode 書類付き) ===== */}
+      {withAttach && attachments.map((a, i) => (
+        <div key={i} className="sheet attach-page mx-auto my-6 w-[210mm] max-w-[calc(100vw-24px)] bg-white p-[14mm] shadow-xl print:my-0 print:w-auto print:p-0">
+          <h2 className="mb-3 border-l-4 border-bl-red pl-2 text-[15px] font-black text-ink">添付書類：{a.slotLabel}</h2>
+          {isImg(a.name) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/candidate/documents?slot=${a.slot}&file=${encodeURIComponent(a.file)}`} alt={a.name} className="mx-auto max-h-[240mm] w-auto max-w-full object-contain" />
+          ) : (
+            <div className="rounded-lg border border-dashed border-bl-line bg-bl-bg p-6 text-center text-sm text-bl-gray">
+              PDFファイル：{a.name}<br /><span className="text-xs text-bl-gray2">※ PDF書類は原本を別途ご提出ください。</span>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -172,20 +195,23 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="rk-sec mb-4">
       <h2 className="mb-1.5 border-l-4 border-bl-red pl-2 text-[15px] font-black text-ink">{title}</h2>
-      <div className="rounded-md border border-bl-line">{children}</div>
+      <div className="overflow-hidden rounded-md border border-bl-line">{children}</div>
     </section>
   );
 }
 
+// Bảng nhãn/giá trị cột cố định → thẳng hàng khi in.
 function Grid({ rows }: { rows: [string, string][] }) {
   return (
-    <dl className="divide-y divide-bl-line">
-      {rows.map(([k, val]) => (
-        <div key={k} className="flex gap-3 px-3 py-2">
-          <dt className="w-[38%] flex-none text-sm font-bold text-bl-gray">{k}</dt>
-          <dd className={`min-w-0 flex-1 whitespace-pre-wrap text-sm ${val === "未記入" ? "text-bl-gray2" : "text-ink"}`}>{val}</dd>
-        </div>
-      ))}
-    </dl>
+    <table className="w-full table-fixed border-collapse text-sm">
+      <tbody>
+        {rows.map(([k, val]) => (
+          <tr key={k} className="rk-tr border-b border-bl-line align-top last:border-0">
+            <th className="w-[38%] bg-bl-bg px-3 py-2 text-left align-top font-bold text-bl-gray">{k}</th>
+            <td className={`px-3 py-2 align-top whitespace-pre-wrap break-words ${val === "未記入" ? "text-bl-gray2" : "text-ink"}`}>{val}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

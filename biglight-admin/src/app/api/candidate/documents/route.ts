@@ -5,7 +5,7 @@ import { writeFile, mkdir, readFile, unlink } from "fs/promises";
 import path from "path";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "/app/uploads";
-const SLOTS = ["rirekisho", "zairyu", "hyouka", "jlpt", "tokutei", "workphotos", "cvphoto"];
+const SLOTS = ["rirekisho", "zairyu", "hyouka", "jlpt", "tokutei", "workphotos", "cvphoto", "other"];
 const MAX = 10 * 1024 * 1024; // 10MB
 
 type Doc = { name: string; file: string; size: number };
