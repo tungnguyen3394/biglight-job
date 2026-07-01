@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import Linkify from "@/components/common/Linkify";
+import { Avatar, BIGU_KUN_SRC } from "@/components/common/Avatar";
 
 type Msg = {
   id: string; senderRole: string;
@@ -98,7 +99,7 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
     return m.translatedText ?? m.originalText;
   }
   function senderName(m: Msg) {
-    if (m.senderRole === "AI") return "BIGLIGHT AI";
+    if (m.senderRole === "AI") return "ビグくん";
     if (m.senderRole === "SYSTEM") return "BIGLIGHT JOB";
     if (m.senderRole === "ADMIN" || m.senderRole === "STAFF") return "BIGLIGHT 担当";
     return "";
@@ -128,7 +129,8 @@ export default function CandidateMessages({ onClose }: { onClose?: () => void })
           const translatable = !mine && !tomb && m.translatedText && m.translatedText !== m.originalText;
           const canRecall = mine && !tomb;
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
+              {!mine && <Avatar name={name} src={m.senderRole === "AI" ? BIGU_KUN_SRC : undefined} size={30} />}
               <div className="max-w-[80%]">
                 {name && <div className="mb-0.5 text-[11px] font-semibold text-bl-gray2">{name}</div>}
                 <div className="flex items-end gap-1">

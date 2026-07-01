@@ -32,11 +32,7 @@ export default function AiSettings() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-1 flex items-center gap-2">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-bl-red"><path d="M12 2a3 3 0 0 1 3 3v1a3 3 0 0 1 3 3 3 3 0 0 1 0 6 3 3 0 0 1-3 3v1a3 3 0 0 1-6 0v-1a3 3 0 0 1-3-3 3 3 0 0 1 0-6 3 3 0 0 1 3-3V5a3 3 0 0 1 3-3z" /><path d="M9 12h.01M15 12h.01" /></svg>
-        <h2 className="text-base font-black text-ink">AI設定（自動返信）</h2>
-      </div>
+    <>
       <p className="mb-3 text-xs text-slate-500">メッセージでAIがまず自動で応答します。スタッフが返信すると翌日までAIは停止します。各会話の「AI ON/OFF」はメッセージ画面で切り替えできます。</p>
 
       {!keyOk && loaded && (
@@ -77,6 +73,6 @@ export default function AiSettings() {
         <button onClick={save} disabled={busy || !loaded} className="btn btn-navy btn-sm disabled:opacity-50">{busy ? "保存中…" : "保存"}</button>
         {msg && <span className={`text-sm font-semibold ${msg.includes("保存しました") ? "text-emerald-600" : "text-red-600"}`}>{msg}</span>}
       </div>
-    </div>
+    </>
   );
 }

@@ -109,11 +109,7 @@ export default function AiKnowledge() {
   );
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-1 flex items-center gap-2">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-bl-red"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" /></svg>
-        <h2 className="text-base font-black text-ink">AI Knowledge</h2>
-      </div>
+    <>
       <p className="mb-3 text-xs text-slate-500">BIGLIGHTの資料（.md / .txt）を登録・管理します。<b className="text-bl-green">ON</b>の資料はAIが回答時に参照します（OFFは使用しません）。長すぎる場合は一部のみ読み込みます。</p>
 
       {/* Nút thêm + form pending */}
@@ -155,6 +151,6 @@ export default function AiKnowledge() {
             </div>
           ))}
       </div>
-    </div>
+    </>
   );
 }

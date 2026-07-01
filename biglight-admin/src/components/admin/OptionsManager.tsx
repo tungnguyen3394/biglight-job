@@ -58,10 +58,7 @@ export default function OptionsManager() {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="text-[22px] font-black text-ink">設定 — 定義マスタ</h1>
-        <p className="text-sm text-slate-500">ドロップダウン・タグなどの選択肢を一元管理します。変更は応募者フォーム・求人フォームに反映されます。</p>
-      </div>
+      <p className="mb-4 text-sm text-slate-500">ドロップダウン・タグなどの選択肢を一元管理します。変更は応募者フォーム・求人フォームに反映されます。</p>
 
       {err && <div className="mb-3 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700 ring-1 ring-red-100">{err}</div>}
 

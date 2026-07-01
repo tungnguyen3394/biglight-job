@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CONV_STATUS_LABEL, CONV_STATUS_TONE } from "@/lib/messageConstants";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import Linkify from "@/components/common/Linkify";
+import { BIGU_KUN_SRC } from "@/components/common/Avatar";
 
 type Conv = { id: string; candidateId: string; name: string; image: string | null; lastMessage: string | null; lastMessageAt: string | null; unread: boolean; status: keyof typeof CONV_STATUS_LABEL; staffName: string | null };
 type Msg = { id: string; senderRole: string; senderId: string | null; senderName?: string | null; originalText: string; originalLanguage: string; translatedText: string | null; translatedLanguage: string | null; createdAt: string; deleted?: boolean; recalled?: boolean };
@@ -120,7 +121,7 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
     return m.originalText;
   }
   function roleName(m: Msg) {
-    if (m.senderRole === "AI") return "BIGLIGHT AI（自動）";
+    if (m.senderRole === "AI") return "ビグくん";
     if (m.senderRole === "SYSTEM") return "システム";
     if (m.senderRole === "ADMIN" || m.senderRole === "STAFF") {
       const role = m.senderRole === "ADMIN" ? "管理者" : "スタッフ";
@@ -214,9 +215,10 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
                   const translatable = left && !tomb && m.translatedText && m.translatedText !== m.originalText;
                   const hasMenu = canRecall(m) || canDeleteMsg(m);
                   return (
-                    <div key={m.id} className={`flex ${left ? "justify-start" : "justify-end"}`}>
+                    <div key={m.id} className={`flex items-end gap-2 ${left ? "justify-start" : "justify-end"}`}>
+                      {left && <Avatar name={roleName(m)} image={null} size={30} />}
                       <div className="max-w-[80%]">
-                        <div className="mb-0.5 text-[11px] font-semibold text-slate-400">{roleName(m)}</div>
+                        <div className={`mb-0.5 text-[11px] font-semibold text-slate-400 ${left ? "" : "text-right"}`}>{roleName(m)}</div>
                         <div className="flex items-end gap-1">
                           {tomb ? (
                             <div className={`rounded-2xl border border-dashed px-3.5 py-2 text-sm italic text-slate-400 ${left ? "border-slate-200 bg-white" : "border-red-200 bg-red-50/40"}`}>
@@ -246,6 +248,7 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
                           </div>
                         )}
                       </div>
+                      {!left && <Avatar name={roleName(m)} image={m.senderRole === "AI" ? BIGU_KUN_SRC : null} size={30} />}
                     </div>
                   );
                 })}

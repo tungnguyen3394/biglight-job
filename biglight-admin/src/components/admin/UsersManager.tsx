@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { AdminRole, Role, AccountStatus } from "@prisma/client";
 import { ADMIN_LEVEL_LABEL, PERM_GROUPS } from "@/lib/adminAccess";
 import { FilterIcon, ExportBar, Dropdown } from "@/components/admin/toolbar";
@@ -320,6 +321,7 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                         <div className="flex min-w-0 items-center">
                           <input defaultValue={u.name} onBlur={(e) => rename(u, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} title="クリックして氏名を編集" className="w-[150px] rounded-md border border-transparent bg-transparent px-1.5 py-0.5 font-semibold text-ink outline-none hover:border-slate-200 focus:border-bl-red focus:bg-white" />
                           {isSelf && <span className="ml-1 shrink-0 text-[10px] font-medium text-slate-400">(自分)</span>}
+                          <Link href={`/admin/users/${u.id}`} className="ml-1.5 shrink-0 text-[11px] font-semibold text-bl-red hover:underline">詳細</Link>
                         </div>
                       </div>
                     </td>
