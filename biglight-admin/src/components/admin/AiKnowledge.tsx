@@ -65,6 +65,37 @@ export default function AiKnowledge() {
     setBusy(false); load();
   }
 
+  // Nhóm danh sách theo 種類 (preset trước, tự đặt tên sau)
+  const grouped: [string, Doc[]][] = (() => {
+    const m = new Map<string, Doc[]>();
+    for (const d of docs) { const k = d.type || "Other"; if (!m.has(k)) m.set(k, []); m.get(k)!.push(d); }
+    const known = types.filter((t) => m.has(t));
+    const extra = [...m.keys()].filter((k) => !types.includes(k)).sort((a, b) => a.localeCompare(b, "ja"));
+    return [...known, ...extra].map((k) => [k, m.get(k)!]);
+  })();
+
+  const card = (d: Doc) => (
+    <div key={d.file} className="rounded-2xl border border-slate-200 p-3.5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-black text-ink">📄 {d.name}</span>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500"><span>v{d.version}</span><span>{kb(d.size)}</span><span>{d.updatedAt}</span></div>
+        </div>
+        <div className="flex flex-none items-center gap-2">
+          <span className={`w-7 text-right text-[11px] font-black ${d.status === "ON" ? "text-bl-green" : "text-slate-400"}`}>{d.status}</span>
+          <button onClick={() => toggle(d)} aria-label="ON/OFF" className={`relative h-6 w-11 rounded-full transition ${d.status === "ON" ? "bg-bl-green" : "bg-slate-300"}`}>
+            <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${d.status === "ON" ? "left-[22px]" : "left-0.5"}`} />
+          </button>
+        </div>
+      </div>
+      <div className="mt-2.5 flex gap-2 border-t border-slate-100 pt-2.5 text-xs font-bold">
+        <a href={`/api/admin/knowledge/download?file=${encodeURIComponent(d.file)}`} className="text-bl-gray hover:text-bl-red">Download</a>
+        <button onClick={() => startReplace(d)} className="text-bl-gray hover:text-bl-red">Replace</button>
+        <button onClick={() => del(d)} className="ml-auto text-slate-400 hover:text-red-600">Delete</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-1 flex items-center gap-2">
@@ -76,6 +107,7 @@ export default function AiKnowledge() {
       {/* Nút thêm + form pending */}
       <input ref={addRef} type="file" accept=".md,.txt,text/markdown,text/plain" onChange={onAddFile} className="hidden" />
       <input ref={replRef} type="file" accept=".md,.txt,text/markdown,text/plain" onChange={onReplaceFile} className="hidden" />
+      <datalist id="kn-types">{types.map((t) => <option key={t} value={t} />)}</datalist>
       {!pending ? (
         <button onClick={() => addRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-xl border border-bl-red px-3.5 py-2 text-sm font-bold text-bl-red hover:bg-bl-redsoft">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>ファイルを追加
@@ -86,7 +118,7 @@ export default function AiKnowledge() {
             <div className="text-[11px] font-bold text-slate-500">ファイル</div>
             <div className="truncate text-sm font-bold text-ink">📄 {pending.file}</div>
           </div>
-          <div><div className="text-[11px] font-bold text-slate-500">種類</div><select value={pType} onChange={(e) => setPType(e.target.value)} className="input h-9 py-0 text-sm">{types.map((t) => <option key={t}>{t}</option>)}</select></div>
+          <div><div className="text-[11px] font-bold text-slate-500">種類（自由入力可）</div><input list="kn-types" value={pType} onChange={(e) => setPType(e.target.value)} placeholder="Handbook…" className="input h-9 w-36 py-0 text-sm" /></div>
           <div><div className="text-[11px] font-bold text-slate-500">Version</div><input value={pVer} onChange={(e) => setPVer(e.target.value)} className="input h-9 w-20 py-0 text-sm" /></div>
           <div className="flex gap-2">
             <button onClick={upload} disabled={busy} className="btn btn-navy btn-sm disabled:opacity-50">{busy ? "…" : "アップロード"}</button>
@@ -96,35 +128,18 @@ export default function AiKnowledge() {
       )}
       {msg && <p className="mt-2 text-xs font-semibold text-red-600">{msg}</p>}
 
-      {/* Danh sách */}
-      <div className="mt-4 space-y-2">
+      {/* Danh sách — nhóm theo 種類 */}
+      <div className="mt-4">
         {!loaded ? <p className="text-sm text-slate-400">読み込み中…</p>
           : docs.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">まだ資料がありません。「ファイルを追加」から .md / .txt を登録できます。</p>
-          : docs.map((d) => (
-            <div key={d.file} className="rounded-2xl border border-slate-200 p-3.5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-black text-ink">📄 {d.name}</span>
-                    <span className="rounded-full bg-bl-bluesoft px-2 py-0.5 text-[10px] font-bold text-bl-blue">{d.type}</span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
-                    <span>v{d.version}</span><span>{kb(d.size)}</span><span>{d.updatedAt}</span>
-                  </div>
-                </div>
-                {/* ON/OFF switch */}
-                <div className="flex flex-none items-center gap-2">
-                  <span className={`w-7 text-right text-[11px] font-black ${d.status === "ON" ? "text-bl-green" : "text-slate-400"}`}>{d.status}</span>
-                  <button onClick={() => toggle(d)} aria-label="ON/OFF" className={`relative h-6 w-11 rounded-full transition ${d.status === "ON" ? "bg-bl-green" : "bg-slate-300"}`}>
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${d.status === "ON" ? "left-[22px]" : "left-0.5"}`} />
-                  </button>
-                </div>
+          : grouped.map(([type, list]) => (
+            <div key={type} className="mb-4">
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="rounded-full bg-bl-bluesoft px-2.5 py-0.5 text-xs font-black text-bl-blue">{type}</span>
+                <span className="text-[11px] font-bold text-slate-400">{list.length}件</span>
+                <span className="ml-1 h-px flex-1 bg-slate-100" />
               </div>
-              <div className="mt-2.5 flex gap-2 border-t border-slate-100 pt-2.5 text-xs font-bold">
-                <a href={`/api/admin/knowledge/download?file=${encodeURIComponent(d.file)}`} className="text-bl-gray hover:text-bl-red">Download</a>
-                <button onClick={() => startReplace(d)} className="text-bl-gray hover:text-bl-red">Replace</button>
-                <button onClick={() => del(d)} className="ml-auto text-slate-400 hover:text-red-600">Delete</button>
-              </div>
+              <div className="space-y-2">{list.map(card)}</div>
             </div>
           ))}
       </div>

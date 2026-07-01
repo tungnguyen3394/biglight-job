@@ -21,7 +21,8 @@ export async function POST(req: Request) {
   if (!file) return NextResponse.json({ error: "ファイル名が必要です。" }, { status: 422 });
   if (!/\.(md|txt)$/i.test(file)) return NextResponse.json({ error: ".md または .txt のみ対応しています。" }, { status: 422 });
   if (content.length > 1_000_000) return NextResponse.json({ error: "ファイルが大きすぎます（最大1MB）。" }, { status: 422 });
-  const type = (DOC_TYPES as readonly string[]).includes(b.type) ? b.type : "Other";
+  // 種類: cho phép tự đặt tên (preset hoặc tự do). Bỏ ký tự phá frontmatter.
+  const type = (String(b.type || "").replace(/[\r\n:]/g, " ").trim().slice(0, 40)) || "Other";
   const status = b.status === "OFF" ? "OFF" : "ON";
   try {
     const meta = await saveDoc({ file, name: String(b.name || "").trim() || file, type, version: String(b.version || "1.0").trim(), content, status });
