@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Doc = { file: string; name: string; type: string; version: string; updatedAt: string; status: "ON" | "OFF"; size: number };
+type Doc = { file: string; name: string; type: string; version: string; updatedAt: string; status: "ON" | "OFF"; size: number; order: number };
 const kb = (n: number) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 
 export default function AiKnowledge() {
@@ -49,6 +49,15 @@ export default function AiKnowledge() {
     await fetch("/api/admin/knowledge", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: d.file, status: next }) }).catch(() => {});
   }
 
+  // Đổi thứ tự trong cùng nhóm (không đổi tên file) → gửi reorder = danh sách file mới.
+  async function move(list: Doc[], i: number, dir: -1 | 1) {
+    const j = i + dir; if (j < 0 || j >= list.length) return;
+    const arr = [...list]; [arr[i], arr[j]] = [arr[j], arr[i]];
+    const files = arr.map((d) => d.file);
+    setDocs((prev) => prev.map((d) => { const idx = files.indexOf(d.file); return idx >= 0 ? { ...d, order: idx } : d; }));
+    await fetch("/api/admin/knowledge", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reorder: files }) }).catch(() => {});
+  }
+
   async function del(d: Doc) {
     if (!window.confirm(`「${d.name}」を削除しますか？`)) return;
     await fetch(`/api/admin/knowledge?file=${encodeURIComponent(d.file)}`, { method: "DELETE" }).catch(() => {});
@@ -61,7 +70,7 @@ export default function AiKnowledge() {
     if (!f || !d) return;
     if (!/\.(md|txt)$/i.test(f.name)) { setMsg(".md または .txt のみ対応しています。"); return; }
     setBusy(true);
-    await fetch("/api/admin/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: d.file, name: d.name, type: d.type, version: d.version, content: await f.text(), status: d.status }) }).catch(() => {});
+    await fetch("/api/admin/knowledge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ file: d.file, name: d.name, type: d.type, version: d.version, content: await f.text(), status: d.status, order: d.order }) }).catch(() => {});
     setBusy(false); load();
   }
 
@@ -74,7 +83,7 @@ export default function AiKnowledge() {
     return [...known, ...extra].map((k) => [k, m.get(k)!]);
   })();
 
-  const card = (d: Doc) => (
+  const card = (d: Doc, list: Doc[], i: number) => (
     <div key={d.file} className="rounded-2xl border border-slate-200 p-3.5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
@@ -88,7 +97,10 @@ export default function AiKnowledge() {
           </button>
         </div>
       </div>
-      <div className="mt-2.5 flex gap-2 border-t border-slate-100 pt-2.5 text-xs font-bold">
+      <div className="mt-2.5 flex items-center gap-2 border-t border-slate-100 pt-2.5 text-xs font-bold">
+        <button onClick={() => move(list, i, -1)} disabled={i === 0} className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-bl-red disabled:opacity-25" aria-label="上へ"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="m6 15 6-6 6 6" /></svg></button>
+        <button onClick={() => move(list, i, 1)} disabled={i === list.length - 1} className="flex h-6 w-6 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-bl-red disabled:opacity-25" aria-label="下へ"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="m6 9 6 6 6-6" /></svg></button>
+        <span className="mx-1 h-3 w-px bg-slate-200" />
         <a href={`/api/admin/knowledge/download?file=${encodeURIComponent(d.file)}`} className="text-bl-gray hover:text-bl-red">Download</a>
         <button onClick={() => startReplace(d)} className="text-bl-gray hover:text-bl-red">Replace</button>
         <button onClick={() => del(d)} className="ml-auto text-slate-400 hover:text-red-600">Delete</button>
@@ -139,7 +151,7 @@ export default function AiKnowledge() {
                 <span className="text-[11px] font-bold text-slate-400">{list.length}件</span>
                 <span className="ml-1 h-px flex-1 bg-slate-100" />
               </div>
-              <div className="space-y-2">{list.map(card)}</div>
+              <div className="space-y-2">{list.map((d, i) => card(d, list, i))}</div>
             </div>
           ))}
       </div>

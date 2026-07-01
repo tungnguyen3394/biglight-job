@@ -16,6 +16,7 @@ export type KnowledgeMeta = {
   updatedAt: string; // YYYY-MM-DD
   status: "ON" | "OFF";
   size: number;      // bytes
+  order: number;     // thứ tự hiển thị trong cùng 種類 (nhỏ = trước)
 };
 
 // Chặn path traversal: chỉ nhận tên file thuần .md/.txt trong KNOWLEDGE_DIR.
@@ -33,8 +34,8 @@ function parseFrontmatter(raw: string): { meta: Record<string, string>; body: st
   return { meta, body: m[2] };
 }
 
-function buildFile(meta: { name: string; type: string; version: string; updatedAt: string; status: string }, body: string): string {
-  return `---\nname: ${meta.name}\ntype: ${meta.type}\nversion: ${meta.version}\nupdatedAt: ${meta.updatedAt}\nstatus: ${meta.status}\n---\n${body.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "")}`;
+function buildFile(meta: { name: string; type: string; version: string; order: number | string; updatedAt: string; status: string }, body: string): string {
+  return `---\nname: ${meta.name}\ntype: ${meta.type}\nversion: ${meta.version}\norder: ${meta.order}\nupdatedAt: ${meta.updatedAt}\nstatus: ${meta.status}\n---\n${body.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "")}`;
 }
 
 async function ensureDir() { await fs.mkdir(KNOWLEDGE_DIR, { recursive: true }); }
@@ -56,27 +57,38 @@ export async function listDocs(): Promise<KnowledgeMeta[]> {
       updatedAt: meta.updatedAt || stat.mtime.toISOString().slice(0, 10),
       status: meta.status === "OFF" ? "OFF" : "ON",
       size: stat.size,
+      order: Number(meta.order) || 9999,
     });
   }
-  return out.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  return out.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ja"));
 }
 
-export async function saveDoc(input: { file: string; name: string; type: string; version: string; content: string; status?: "ON" | "OFF" }): Promise<KnowledgeMeta> {
+export async function saveDoc(input: { file: string; name: string; type: string; version: string; content: string; status?: "ON" | "OFF"; order?: number }): Promise<KnowledgeMeta> {
   await ensureDir();
   const file = safeName(input.file);
-  const meta = { name: input.name || file.replace(/\.(md|txt)$/i, ""), type: input.type || "Other", version: input.version || "1.0", updatedAt: today(), status: input.status || "ON" };
+  const meta = { name: input.name || file.replace(/\.(md|txt)$/i, ""), type: input.type || "Other", version: input.version || "1.0", order: input.order ?? 9999, updatedAt: today(), status: input.status || "ON" };
   await fs.writeFile(path.join(KNOWLEDGE_DIR, file), buildFile(meta, input.content ?? ""), "utf8");
   const stat = await fs.stat(path.join(KNOWLEDGE_DIR, file));
   return { file, ...meta, status: meta.status as "ON" | "OFF", size: stat.size };
 }
 
-export async function setStatus(file: string, status: "ON" | "OFF"): Promise<void> {
-  const safe = safeName(file);
-  const full = path.join(KNOWLEDGE_DIR, safe);
-  const raw = await fs.readFile(full, "utf8");
-  const { meta, body } = parseFrontmatter(raw);
-  await fs.writeFile(full, buildFile({ name: meta.name || safe, type: meta.type || "Other", version: meta.version || "1.0", updatedAt: meta.updatedAt || today(), status }, body), "utf8");
+// Cập nhật metadata (giữ nguyên các trường khác + nội dung).
+async function updateMeta(file: string, patch: Partial<{ name: string; type: string; version: string; order: number; updatedAt: string; status: string }>): Promise<void> {
+  const full = path.join(KNOWLEDGE_DIR, safeName(file));
+  const { meta, body } = parseFrontmatter(await fs.readFile(full, "utf8"));
+  const merged = {
+    name: patch.name ?? meta.name ?? safeName(file),
+    type: patch.type ?? meta.type ?? "Other",
+    version: patch.version ?? meta.version ?? "1.0",
+    order: patch.order ?? (Number(meta.order) || 9999),
+    updatedAt: patch.updatedAt ?? meta.updatedAt ?? today(),
+    status: patch.status ?? (meta.status === "OFF" ? "OFF" : "ON"),
+  };
+  await fs.writeFile(full, buildFile(merged, body), "utf8");
 }
+
+export async function setStatus(file: string, status: "ON" | "OFF"): Promise<void> { await updateMeta(file, { status }); }
+export async function setOrder(file: string, order: number): Promise<void> { await updateMeta(file, { order }); }
 
 export async function removeDoc(file: string): Promise<void> {
   await fs.unlink(path.join(KNOWLEDGE_DIR, safeName(file)));

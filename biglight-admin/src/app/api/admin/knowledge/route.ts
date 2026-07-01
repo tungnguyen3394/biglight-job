@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { guard } from "@/lib/guard";
-import { listDocs, saveDoc, setStatus, removeDoc, DOC_TYPES } from "@/lib/knowledge";
+import { listDocs, saveDoc, setStatus, setOrder, removeDoc, DOC_TYPES } from "@/lib/knowledge";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +37,11 @@ export async function PATCH(req: Request) {
   const g = await guard("settings.update");
   if (!g.ok) return g.res;
   const b = await req.json().catch(() => ({}));
+  // Sắp xếp lại thứ tự 1 nhóm: reorder = [file1, file2, ...] → order = index.
+  if (Array.isArray(b.reorder)) {
+    await Promise.all(b.reorder.map((f: unknown, i: number) => setOrder(String(f), i).catch(() => {})));
+    return NextResponse.json({ ok: true });
+  }
   const file = String(b.file || "").trim();
   if (!file) return NextResponse.json({ error: "対象が不正です。" }, { status: 422 });
   await setStatus(file, b.status === "OFF" ? "OFF" : "ON").catch(() => {});
