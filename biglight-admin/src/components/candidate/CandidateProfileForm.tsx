@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { pdfEligibility } from "@/lib/rirekisho";
 import {
   NATIONALITIES, VISA_TYPES, JP_LEVELS, SKILL_FIELDS, PREF_OPTIONS,
   DORM_OPTIONS, START_OPTIONS, NIGHTSHIFT_OPTIONS, SHIFTWORK_OPTIONS,
@@ -11,8 +12,8 @@ import { SSW_JOBS, type SswField } from "@/lib/sswJobs";
 import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
 import MultiUpload, { type DocFile } from "./MultiUpload";
 
-// 1 dòng 職歴・業務経験 (dùng cho CV/PDF).
-export type WorkItem = { start: string; end: string; company: string; work: string };
+// 1 dòng 職歴・業務経験 (dùng cho CV/PDF). current = 現在も勤務中.
+export type WorkItem = { start: string; end: string; company: string; work: string; current?: boolean };
 
 export type ProfileInit = {
   name: string; kana: string; birth: string; gender: string; nat: string; phone: string; email: string;
@@ -275,14 +276,18 @@ function WorkHistory({ items, onChange }: { items: WorkItem[]; onChange: (v: Wor
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={subLabel}>勤務開始年月</label>
+              <label className={subLabel}>入社年月</label>
               <input type="month" value={it.start} onChange={(e) => update(i, "start", e.target.value)} onClick={openPicker} className={inputCls} />
             </div>
             <div>
               <label className={subLabel}>退職年月</label>
-              <input type="month" value={it.end} onChange={(e) => update(i, "end", e.target.value)} onClick={openPicker} className={inputCls} />
+              <input type="month" value={it.current ? "" : it.end} disabled={it.current} onChange={(e) => update(i, "end", e.target.value)} onClick={openPicker} className={`${inputCls} ${it.current ? "bg-bl-bg text-bl-gray2" : ""}`} placeholder={it.current ? "現在まで" : ""} />
             </div>
           </div>
+          <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
+            <input type="checkbox" checked={!!it.current} onChange={(e) => onChange(items.map((x, idx) => (idx === i ? { ...x, current: e.target.checked, end: e.target.checked ? "" : x.end } : x)))} className="h-4 w-4 accent-bl-red" />
+            現在も勤務中（現在まで至る）
+          </label>
           <div className="mt-3">
             <label className={subLabel}>会社名</label>
             <input value={it.company} onChange={(e) => update(i, "company", e.target.value)} placeholder="株式会社〇〇" className={inputCls} />
@@ -308,7 +313,7 @@ function WorkHistory({ items, onChange }: { items: WorkItem[]; onChange: (v: Wor
 const IconCamera = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>);
 const IconImage = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg>);
 
-function CvPhoto({ initFile }: { initFile: DocFile | null }) {
+function CvPhoto({ initFile, onChange }: { initFile: DocFile | null; onChange?: (has: boolean) => void }) {
   const [file, setFile] = useState<DocFile | null>(initFile);
   const [busy, setBusy] = useState(false);
   async function upload(list: FileList | null) {
@@ -321,14 +326,14 @@ function CvPhoto({ initFile }: { initFile: DocFile | null }) {
     fd.append("slot", "cvphoto");
     fd.append("file", f);
     const res = await fetch("/api/candidate/documents", { method: "POST", body: fd });
-    if (res.ok) { const d = await res.json(); setFile((d.files as DocFile[])[(d.files as DocFile[]).length - 1] ?? null); }
+    if (res.ok) { const d = await res.json(); const nf = (d.files as DocFile[])[(d.files as DocFile[]).length - 1] ?? null; setFile(nf); onChange?.(!!nf); }
     else alert((await res.json().catch(() => ({}))).error || "アップロードに失敗しました");
     setBusy(false);
   }
   async function remove() {
     if (!file) return;
     const res = await fetch("/api/candidate/documents", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot: "cvphoto", file: file.file }) });
-    if (res.ok) setFile(null);
+    if (res.ok) { setFile(null); onChange?.(false); }
   }
   const btn = "flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-bl-line bg-white py-3 text-sm font-semibold text-bl-gray hover:border-bl-red hover:text-bl-red";
   return (
@@ -357,8 +362,9 @@ function CvPhoto({ initFile }: { initFile: DocFile | null }) {
 
 export type FieldOptions = { nationality?: string[]; visa?: string[]; jpLevel?: string[]; industry?: string[] };
 
-export default function CandidateProfileForm({ init, initDocs, emailLocked, options, sswTree }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions; sswTree?: SswField[] }) {
+export default function CandidateProfileForm({ init, initDocs, emailLocked, options, sswTree, onPdfChange }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions; sswTree?: SswField[]; onPdfChange?: (has: boolean) => void }) {
   const router = useRouter();
+  const [hasCvPhoto, setHasCvPhoto] = useState<boolean>(!!initDocs.cvphoto?.length);
   // Định nghĩa từ 設定 (DB); fallback về hằng số gốc nếu chưa có.
   const NAT = options?.nationality ?? NATIONALITIES;
   const VISA = options?.visa ?? VISA_TYPES;
@@ -389,6 +395,12 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
     else setErr((await res.json().catch(() => ({}))).error || "保存に失敗しました");
   }
   function cancel() { setF(baseline); setEditing(false); setErr(""); }
+
+  // Realtime: báo lên マイページ khi đủ/thiếu điều kiện xuất 履歴書PDF (住所・職歴・写真).
+  useEffect(() => {
+    const { ok } = pdfEligibility({ address: f.address, addressDetail: f.addressDetail, workHistory: f.workHistory, hasPhoto: hasCvPhoto });
+    onPdfChange?.(ok);
+  }, [f.address, f.addressDetail, f.workHistory, hasCvPhoto, onPdfChange]);
 
   const genderJP = f.gender === "MALE" ? "男性" : f.gender === "FEMALE" ? "女性" : "";
 
@@ -459,7 +471,7 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
 
         <Card n={4} title="履歴書用写真（3cm×4cm）">
           <p className="mb-3 text-xs text-bl-gray2">履歴書に使用する正面写真をアップロードしてください。</p>
-          <CvPhoto initFile={initDocs.cvphoto?.[0] ?? null} />
+          <CvPhoto initFile={initDocs.cvphoto?.[0] ?? null} onChange={setHasCvPhoto} />
         </Card>
 
         <Card n={5} title="希望する仕事">
@@ -483,18 +495,19 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
         <CandidateDocuments initDocs={initDocs} />
       </fieldset>
 
-      {/* Footer thao tác */}
-      <div className="sticky bottom-20 z-10 lg:bottom-4">
-        {err && <p className="mb-2 rounded-lg bg-bl-redsoft px-3 py-2 text-center text-sm font-semibold text-bl-red">{err}</p>}
+      {/* Footer thao tác — pointer-events-none ở wrapper để KHÔNG chặn click các ô phía sau
+          (fix desktop: thanh sticky trong suốt từng che input như 職歴). Chỉ nút/thông báo nhận click. */}
+      <div className="pointer-events-none sticky bottom-20 z-10 lg:bottom-4">
+        {err && <p className="pointer-events-auto mb-2 rounded-lg bg-bl-redsoft px-3 py-2 text-center text-sm font-semibold text-bl-red">{err}</p>}
         {editing ? (
-          <div className="flex gap-2">
+          <div className="pointer-events-auto flex gap-2">
             <button onClick={cancel} disabled={saving} className="rounded-2xl border border-bl-line bg-white px-5 py-4 text-base font-bold text-bl-gray hover:bg-bl-bg disabled:opacity-60">キャンセル</button>
             <button onClick={save} disabled={saving} className="flex-1 rounded-2xl bg-bl-red py-4 text-base font-bold text-white shadow-lg hover:bg-bl-redd disabled:opacity-60">
               {saving ? "保存中…" : "プロフィールを保存する"}
             </button>
           </div>
         ) : (
-          <button onClick={() => { setEditing(true); setSaved(false); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-bl-red py-4 text-base font-bold text-white shadow-lg hover:bg-bl-redd">
+          <button onClick={() => { setEditing(true); setSaved(false); }} className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-bl-red py-4 text-base font-bold text-white shadow-lg hover:bg-bl-redd">
             <IconEdit /> {saved ? "保存しました（編集する）" : "プロフィールを編集する"}
           </button>
         )}

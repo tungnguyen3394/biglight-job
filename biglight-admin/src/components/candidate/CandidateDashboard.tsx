@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CandidateProfileForm, { type ProfileInit, type FieldOptions } from "./CandidateProfileForm";
+import { pdfEligibility, PDF_WARN, PDF_READY_TOAST } from "@/lib/rirekisho";
 import type { SswField } from "@/lib/sswJobs";
 import CandidateMessages from "./CandidateMessages";
 import { type DocMap } from "./CandidateDocuments";
@@ -73,6 +74,18 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState(needProfile ? "応募する前にプロフィールを完成してください。" : "");
   const [drawer, setDrawer] = useState(false); // mobile: sidebar dạng drawer
+
+  // 履歴書PDF: đủ điều kiện xuất chưa (realtime từ form). Khởi tạo từ dữ liệu đã lưu.
+  const [pdfOk, setPdfOk] = useState<boolean>(() => pdfEligibility({ address: profile.address, addressDetail: profile.addressDetail, workHistory: profile.workHistory, hasPhoto: !!docs.cvphoto?.length }).ok);
+  const [pdfToast, setPdfToast] = useState(false);
+  const handlePdfChange = useCallback((ok: boolean) => {
+    setPdfOk((prev) => { if (ok && !prev) setPdfToast(true); return ok; });
+  }, []);
+  useEffect(() => {
+    if (!pdfToast) return;
+    const t = setTimeout(() => setPdfToast(false), 4000);
+    return () => clearTimeout(t);
+  }, [pdfToast]);
 
   // các trường bắt buộc còn thiếu (để hiện banner ở mục プロフィール入力)
   const missing: string[] = [];
@@ -165,7 +178,36 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
             : <button onClick={() => go("profile")} className="font-bold text-bl-red">あと{missing.length}項目 →</button>}
           <span className="text-bl-gray2">おすすめ度 <span className="text-bl-red">{"★".repeat(stars)}</span><span className="text-bl-line">{"★".repeat(5 - stars)}</span></span>
         </div>
+
+        {/* 履歴書PDF: trạng thái + nút xuất (realtime) */}
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-bl-line pt-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold text-bl-gray2">履歴書PDF</div>
+            {pdfOk
+              ? <div className="flex items-center gap-1 text-sm font-black text-bl-green"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>出力可能</div>
+              : <div className="text-sm font-bold text-bl-gray2">未完成</div>}
+          </div>
+          {pdfOk ? (
+            <a href="/mypage/rirekisho" target="_blank" rel="noopener noreferrer" className="flex flex-none items-center gap-1.5 rounded-xl bg-bl-red px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-bl-redd">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
+              PDF出力
+            </a>
+          ) : (
+            <button type="button" onClick={() => { setNotice(PDF_WARN); go("profile"); }} className="flex flex-none items-center gap-1.5 rounded-xl border border-bl-line bg-bl-bg px-4 py-2.5 text-sm font-bold text-bl-gray2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /></svg>
+              PDF出力
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Toast: vừa đủ điều kiện xuất PDF */}
+      {pdfToast && (
+        <div className="fixed inset-x-0 bottom-24 z-[60] mx-auto flex w-fit max-w-[92vw] items-center gap-2 rounded-full bg-bl-green px-5 py-3 text-sm font-bold text-white shadow-xl lg:bottom-6">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+          {PDF_READY_TOAST}
+        </div>
+      )}
 
       {/* Thông báo xanh — gọn 1 dòng, icon check nhỏ */}
       {applied && (
@@ -238,7 +280,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
                   <p className="mt-1 font-semibold text-bl-red">{missing.join("・")}</p>
                 </div>
               )}
-              <CandidateProfileForm init={profile} initDocs={docs} emailLocked={emailLocked} options={fieldOptions} sswTree={sswTree} />
+              <CandidateProfileForm init={profile} initDocs={docs} emailLocked={emailLocked} options={fieldOptions} sswTree={sswTree} onPdfChange={handlePdfChange} />
             </>
           )}
 

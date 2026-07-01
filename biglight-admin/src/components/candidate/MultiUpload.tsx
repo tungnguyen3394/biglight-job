@@ -6,35 +6,35 @@ export type DocFile = { name: string; file: string; size: number };
 
 // Uploader cho 1 slot — chọn & tải NHIỀU file cùng lúc.
 export default function MultiUpload({
-  slot, initFiles, accept = "image/*,application/pdf", addLabel = "＋ ファイルを追加", preview = false,
+  slot, initFiles, accept = "image/*,application/pdf", addLabel = "＋ ファイルを追加", preview = false, onCountChange,
 }: {
   slot: string;
   initFiles: DocFile[];
   accept?: string;
-  addLabel?: string;
+  addLabel?: React.ReactNode;
   preview?: boolean; // hiện thumbnail (ảnh)
+  onCountChange?: (n: number) => void; // báo số file (để cập nhật trạng thái 提出済み)
 }) {
   const [files, setFiles] = useState<DocFile[]>(initFiles ?? []);
   const [busy, setBusy] = useState(false);
+  const apply = (list: DocFile[]) => { setFiles(list); onCountChange?.(list.length); };
 
   async function uploadMany(list: FileList | null) {
     if (!list || list.length === 0) return;
     setBusy(true);
-    let latest = files;
     for (const file of Array.from(list)) {
       const fd = new FormData();
       fd.append("slot", slot);
       fd.append("file", file);
       const res = await fetch("/api/candidate/documents", { method: "POST", body: fd });
-      if (res.ok) { const d = await res.json(); latest = d.files; setFiles(d.files); }
+      if (res.ok) { const d = await res.json(); apply(d.files); }
       else alert((await res.json().catch(() => ({}))).error || `「${file.name}」のアップロードに失敗しました`);
     }
-    void latest;
     setBusy(false);
   }
   async function removeOne(file: string) {
     const res = await fetch("/api/candidate/documents", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot, file }) });
-    if (res.ok) { const d = await res.json(); setFiles(d.files); }
+    if (res.ok) { const d = await res.json(); apply(d.files); }
   }
 
   return (

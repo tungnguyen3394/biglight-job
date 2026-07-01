@@ -27,12 +27,16 @@ export async function POST(req: Request) {
   // 職歴・業務経験 (dùng cho CV/PDF) — làm sạch, bỏ block trống.
   const workHistory = Array.isArray(b.workHistory)
     ? b.workHistory
-        .map((w: Record<string, unknown>) => ({
-          start: String(w?.start ?? "").trim(),
-          end: String(w?.end ?? "").trim(),
-          company: String(w?.company ?? "").trim(),
-          work: String(w?.work ?? "").trim(),
-        }))
+        .map((w: Record<string, unknown>) => {
+          const current = !!w?.current;
+          return {
+            start: String(w?.start ?? "").trim(),
+            end: current ? "" : String(w?.end ?? "").trim(), // đang làm → không giữ 退職年月
+            company: String(w?.company ?? "").trim(),
+            work: String(w?.work ?? "").trim(),
+            current,
+          };
+        })
         .filter((w: { start: string; end: string; company: string; work: string }) => w.start || w.end || w.company || w.work)
     : [];
 
