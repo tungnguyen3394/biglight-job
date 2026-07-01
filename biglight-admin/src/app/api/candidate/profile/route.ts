@@ -24,13 +24,26 @@ export async function POST(req: Request) {
   const fields = arr(b.fields);
   const areas = arr(b.areas);
 
+  // 職歴・業務経験 (dùng cho CV/PDF) — làm sạch, bỏ block trống.
+  const workHistory = Array.isArray(b.workHistory)
+    ? b.workHistory
+        .map((w: Record<string, unknown>) => ({
+          start: String(w?.start ?? "").trim(),
+          end: String(w?.end ?? "").trim(),
+          company: String(w?.company ?? "").trim(),
+          work: String(w?.work ?? "").trim(),
+        }))
+        .filter((w: { start: string; end: string; company: string; work: string }) => w.start || w.end || w.company || w.work)
+    : [];
+
   // Các trường nguyện vọng chi tiết (giữ đủ form gốc) → cột prefs (Json).
   const prefs = {
     arrival: b.arrival || "",
     sswField: b.sswField || "",
     sswCategory: b.sswCategory || "",
     sswTask: b.sswTask || "",
-    otherSkills: b.otherSkills || "",
+    addressDetail: b.addressDetail || "",
+    workHistory,
     desiredJobType: b.desiredJobType || "",
     lineId: b.lineId || "",
     instagramUrl: b.instagramUrl || "",

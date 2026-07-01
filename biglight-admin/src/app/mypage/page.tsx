@@ -10,7 +10,7 @@ import Shell from "@/components/candidate/Shell";
 import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import CandidateLogin from "@/components/candidate/CandidateLogin";
 import CandidateDashboard, { type AppView, type SavedJob } from "@/components/candidate/CandidateDashboard";
-import { type ProfileInit } from "@/components/candidate/CandidateProfileForm";
+import { type ProfileInit, type WorkItem } from "@/components/candidate/CandidateProfileForm";
 import { type DocMap } from "@/components/candidate/CandidateDocuments";
 
 const ymd = (d?: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
@@ -106,6 +106,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     phone: candidate?.phone ?? "",
     email: formEmail,
     address: candidate?.currentAddress ?? "",
+    addressDetail: (p.addressDetail as string) ?? "",
     facebookUrl: candidate?.facebookUrl ?? "",
     instagramUrl: (p.instagramUrl as string) ?? "",
     tiktokUrl: (p.tiktokUrl as string) ?? "",
@@ -113,7 +114,7 @@ export default async function MyPage({ searchParams }: { searchParams: { apply?:
     sswField: (p.sswField as string) ?? candidate?.currentTokuteiField ?? "",
     sswCategory: (p.sswCategory as string) ?? "",
     sswTask: (p.sswTask as string) ?? "",
-    otherSkills: (p.otherSkills as string) ?? "",
+    workHistory: Array.isArray(p.workHistory) ? (p.workHistory as WorkItem[]) : [],
     expiry: ymd(candidate?.visaExpiryDate),
     arrival: (p.arrival as string) ?? "",
     jp: candidate?.japaneseLevel ?? "",

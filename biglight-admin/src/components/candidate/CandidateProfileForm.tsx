@@ -9,13 +9,17 @@ import {
 } from "@/lib/candidateFields";
 import { SSW_JOBS, type SswField } from "@/lib/sswJobs";
 import CandidateDocuments, { type DocMap } from "./CandidateDocuments";
-import MultiUpload from "./MultiUpload";
+import MultiUpload, { type DocFile } from "./MultiUpload";
+
+// 1 dòng 職歴・業務経験 (dùng cho CV/PDF).
+export type WorkItem = { start: string; end: string; company: string; work: string };
 
 export type ProfileInit = {
   name: string; kana: string; birth: string; gender: string; nat: string; phone: string; email: string;
-  address: string; facebookUrl: string; instagramUrl: string; tiktokUrl: string;
+  address: string; addressDetail: string; facebookUrl: string; instagramUrl: string; tiktokUrl: string;
   visa: string; expiry: string; arrival: string; jp: string;
-  sswField: string; sswCategory: string; sswTask: string; otherSkills: string;
+  sswField: string; sswCategory: string; sswTask: string;
+  workHistory: WorkItem[];
   fields: string[]; areas: string[]; desiredJobType: string; sal: number;
   dorm: string; start: string; nightshift: string; shiftwork: string;
   reasons: string[]; reasonOther: string; priorities: string[];
@@ -252,6 +256,105 @@ function Many({ options, value, onChange, max, scroll }: { options: string[]; va
   return <div className={`flex flex-wrap gap-1.5 ${scroll ? "max-h-44 overflow-y-auto" : ""}`}>{options.map((o) => <button key={o} type="button" onClick={() => toggle(o)} className={chipCls(value.includes(o))}>{o}</button>)}</div>;
 }
 
+// ---------------------------------------------------------------------------
+// 職歴・業務経験 — nhiều block, mỗi block card dọc (mobile-first).
+// ---------------------------------------------------------------------------
+function WorkHistory({ items, onChange }: { items: WorkItem[]; onChange: (v: WorkItem[]) => void }) {
+  const update = (i: number, key: keyof WorkItem, val: string) => onChange(items.map((it, idx) => (idx === i ? { ...it, [key]: val } : it)));
+  const add = () => onChange([...items, { start: "", end: "", company: "", work: "" }]);
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const subLabel = "mb-1 block text-xs font-bold text-ink";
+  const note = "mt-1 text-xs text-bl-gray2";
+  return (
+    <div className="space-y-3">
+      {items.map((it, i) => (
+        <div key={i} className="rounded-2xl border border-bl-line bg-bl-bg/50 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm font-black text-ink">職歴 {i + 1}</span>
+            <button type="button" onClick={() => remove(i)} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-bl-red hover:bg-bl-redsoft"><IconTrash /> 削除</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={subLabel}>勤務開始年月</label>
+              <input type="month" value={it.start} onChange={(e) => update(i, "start", e.target.value)} onClick={openPicker} className={inputCls} />
+            </div>
+            <div>
+              <label className={subLabel}>退職年月</label>
+              <input type="month" value={it.end} onChange={(e) => update(i, "end", e.target.value)} onClick={openPicker} className={inputCls} />
+            </div>
+          </div>
+          <div className="mt-3">
+            <label className={subLabel}>会社名</label>
+            <input value={it.company} onChange={(e) => update(i, "company", e.target.value)} placeholder="株式会社〇〇" className={inputCls} />
+            <p className={note}>会社名はできるだけ正式名称・漢字で入力してください。</p>
+          </div>
+          <div className="mt-3">
+            <label className={subLabel}>仕事内容</label>
+            <textarea value={it.work} onChange={(e) => update(i, "work", e.target.value)} rows={2} placeholder="溶接、検品、組立など" className={inputCls} />
+            <p className={note}>母国語でも入力できます。CV作成時に日本語へ整えます。</p>
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-bl-line bg-white py-3 text-sm font-bold text-bl-gray hover:border-bl-red hover:text-bl-red">
+        ＋ 職歴を追加
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 履歴書用写真（3cm×4cm）— 1 ảnh, camera + thư viện. Lưu qua slot documents "cvphoto".
+// ---------------------------------------------------------------------------
+const IconCamera = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>);
+const IconImage = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></svg>);
+
+function CvPhoto({ initFile }: { initFile: DocFile | null }) {
+  const [file, setFile] = useState<DocFile | null>(initFile);
+  const [busy, setBusy] = useState(false);
+  async function upload(list: FileList | null) {
+    const f = list?.[0];
+    if (!f) return;
+    setBusy(true);
+    // Chỉ giữ 1 ảnh: xóa ảnh cũ trước khi thêm mới.
+    if (file) await fetch("/api/candidate/documents", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot: "cvphoto", file: file.file }) }).catch(() => {});
+    const fd = new FormData();
+    fd.append("slot", "cvphoto");
+    fd.append("file", f);
+    const res = await fetch("/api/candidate/documents", { method: "POST", body: fd });
+    if (res.ok) { const d = await res.json(); setFile((d.files as DocFile[])[(d.files as DocFile[]).length - 1] ?? null); }
+    else alert((await res.json().catch(() => ({}))).error || "アップロードに失敗しました");
+    setBusy(false);
+  }
+  async function remove() {
+    if (!file) return;
+    const res = await fetch("/api/candidate/documents", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot: "cvphoto", file: file.file }) });
+    if (res.ok) setFile(null);
+  }
+  const btn = "flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-bl-line bg-white py-3 text-sm font-semibold text-bl-gray hover:border-bl-red hover:text-bl-red";
+  return (
+    <div>
+      {file ? (
+        <div className="flex items-start gap-3">
+          <img src={`/api/candidate/documents?slot=cvphoto&file=${encodeURIComponent(file.file)}`} alt="履歴書用写真" className="h-40 w-[120px] rounded-lg border border-bl-line object-cover" />
+          <button type="button" onClick={remove} className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-bl-red hover:bg-bl-redsoft"><IconTrash /> 削除</button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <label className={btn}>
+            <input type="file" accept="image/*" capture="user" className="hidden" disabled={busy} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+            <IconCamera /> カメラで撮影
+          </label>
+          <label className={btn}>
+            <input type="file" accept="image/*" className="hidden" disabled={busy} onChange={(e) => { upload(e.target.files); e.target.value = ""; }} />
+            <IconImage /> 画像を選択
+          </label>
+        </div>
+      )}
+      {busy && <p className="mt-2 text-xs text-bl-gray2">アップロード中…</p>}
+    </div>
+  );
+}
+
 export type FieldOptions = { nationality?: string[]; visa?: string[]; jpLevel?: string[]; industry?: string[] };
 
 export default function CandidateProfileForm({ init, initDocs, emailLocked, options, sswTree }: { init: ProfileInit; initDocs: DocMap; emailLocked?: boolean; options?: FieldOptions; sswTree?: SswField[] }) {
@@ -318,6 +421,9 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
               {PREFECTURES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </Field>
+          <Field label="現在の住所（詳細）" opt>
+            <input value={f.addressDetail} onChange={(e) => set("addressDetail", e.target.value)} placeholder="例：名古屋市中区〇〇町1-2-3 〇〇マンション101" className={inputCls} />
+          </Field>
         </Card>
 
         <Card n={2} title="在留資格（ビザ）">
@@ -338,9 +444,6 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
               </select>
             </div>
           </Field>
-          <Field label="その他の経験・スキル" opt>
-            <textarea value={f.otherSkills} onChange={(e) => set("otherSkills", e.target.value)} rows={2} placeholder="例：フォークリフト免許、溶接3年 など" className={inputCls} />
-          </Field>
           <Field label="製品の写真（溶接など）" opt>
             <p className="mb-2 text-xs text-bl-gray2">溶接など、ものづくりの作業をする方は、ご自身が作った製品の写真を添付してください（複数可）。担当者があなたの技術をより正確に伝えられます。</p>
             <MultiUpload slot="workphotos" initFiles={initDocs.workphotos ?? []} accept="image/*" addLabel="＋ 製品の写真を追加（複数可）" preview />
@@ -350,7 +453,16 @@ export default function CandidateProfileForm({ init, initDocs, emailLocked, opti
           <Field label="日本語レベル"><One options={JP} value={f.jp} onChange={(v) => set("jp", v)} /></Field>
         </Card>
 
-        <Card n={3} title="希望する仕事">
+        <Card n={3} title="職歴・業務経験" sub="これまで働いた会社と仕事内容を入力してください。複数ある場合は追加できます。">
+          <WorkHistory items={f.workHistory} onChange={(v) => set("workHistory", v)} />
+        </Card>
+
+        <Card n={4} title="履歴書用写真（3cm×4cm）">
+          <p className="mb-3 text-xs text-bl-gray2">履歴書に使用する正面写真をアップロードしてください。</p>
+          <CvPhoto initFile={initDocs.cvphoto?.[0] ?? null} />
+        </Card>
+
+        <Card n={5} title="希望する仕事">
           <Field label={`希望月給（手取り）：${f.sal || 16}万円`} opt><input type="range" min={16} max={40} value={f.sal || 16} onChange={(e) => set("sal", Number(e.target.value))} className="w-full accent-bl-red" /></Field>
           <Field label="希望する特定技能分野"><Many options={IND} value={f.fields} onChange={(v) => set("fields", v)} /></Field>
           <Field label="希望勤務地"><Many options={PREF_OPTIONS} value={f.areas} onChange={(v) => set("areas", v)} scroll /></Field>

@@ -89,7 +89,7 @@ export default function CandidateDashboard({ name, apps, applied, profile, docs,
   // 1 thanh duy nhất: 必須 lấp tới mốc 60% (= 応募可能); 任意 lấp 60→100% (= AIマッチング cao hơn)
   const optList: unknown[] = [
     profile.kana?.trim(), profile.phone?.trim(), profile.address?.trim(), profile.jp?.trim(),
-    profile.sswField?.trim(), profile.desiredJobType?.trim(), profile.otherSkills?.trim(), profile.start?.trim(), profile.dorm?.trim(),
+    profile.sswField?.trim(), profile.desiredJobType?.trim(), profile.workHistory?.length, profile.start?.trim(), profile.dorm?.trim(),
     profile.fields?.length, profile.areas?.length, profile.sal > 0 ? 1 : 0, profile.reasons?.length, profile.priorities?.length,
   ];
   const reqRatio = (totalReq - missing.length) / totalReq;
