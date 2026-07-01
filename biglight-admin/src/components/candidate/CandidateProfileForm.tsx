@@ -264,8 +264,24 @@ function WorkHistory({ items, onChange }: { items: WorkItem[]; onChange: (v: Wor
   const update = (i: number, key: keyof WorkItem, val: string) => onChange(items.map((it, idx) => (idx === i ? { ...it, [key]: val } : it)));
   const add = () => onChange([...items, { start: "", end: "", company: "", work: "" }]);
   const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+  const toggleCurrent = (i: number, on: boolean) => onChange(items.map((x, idx) => (idx === i ? { ...x, current: on, end: on ? "" : x.end } : x)));
   const subLabel = "mb-1 block text-xs font-bold text-ink";
   const note = "mt-1 text-xs text-bl-gray2";
+  const [tIdx, setTIdx] = useState<number | null>(null);
+
+  // Dịch 仕事内容 sang tiếng Nhật (母国語 → 日本語) dùng /api/translate.
+  async function translateWork(i: number) {
+    const text = items[i].work?.trim();
+    if (!text) return;
+    setTIdx(i);
+    try {
+      const r = await fetch("/api/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, target: "ja" }) });
+      const d = await r.json().catch(() => ({}));
+      if (d?.translated) update(i, "work", d.translated);
+    } catch { /* im lặng, giữ nguyên văn */ }
+    setTIdx(null);
+  }
+
   return (
     <div className="space-y-3">
       {items.map((it, i) => (
@@ -281,22 +297,29 @@ function WorkHistory({ items, onChange }: { items: WorkItem[]; onChange: (v: Wor
             </div>
             <div>
               <label className={subLabel}>退職年月</label>
-              <input type="month" value={it.current ? "" : it.end} disabled={it.current} onChange={(e) => update(i, "end", e.target.value)} onClick={openPicker} className={`${inputCls} ${it.current ? "bg-bl-bg text-bl-gray2" : ""}`} placeholder={it.current ? "現在まで" : ""} />
+              <input type="month" value={it.current ? "" : it.end} disabled={it.current} onChange={(e) => update(i, "end", e.target.value)} onClick={openPicker} className={`${inputCls} ${it.current ? "bg-bl-bg text-bl-gray2" : ""}`} placeholder={it.current ? "現在まで至る" : ""} />
+              {/* 現在まで至る — gộp ngay dưới ô 退職年月 */}
+              <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-bl-gray">
+                <input type="checkbox" checked={!!it.current} onChange={(e) => toggleCurrent(i, e.target.checked)} className="h-3.5 w-3.5 accent-bl-red" />
+                現在まで至る（在職中）
+              </label>
             </div>
           </div>
-          <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
-            <input type="checkbox" checked={!!it.current} onChange={(e) => onChange(items.map((x, idx) => (idx === i ? { ...x, current: e.target.checked, end: e.target.checked ? "" : x.end } : x)))} className="h-4 w-4 accent-bl-red" />
-            現在も勤務中（現在まで至る）
-          </label>
           <div className="mt-3">
             <label className={subLabel}>会社名</label>
             <input value={it.company} onChange={(e) => update(i, "company", e.target.value)} placeholder="株式会社〇〇" className={inputCls} />
             <p className={note}>会社名はできるだけ正式名称・漢字で入力してください。</p>
           </div>
           <div className="mt-3">
-            <label className={subLabel}>仕事内容</label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="text-xs font-bold text-ink">仕事内容</label>
+              <button type="button" onClick={() => translateWork(i)} disabled={tIdx === i || !it.work?.trim()} className="inline-flex items-center gap-1 rounded-lg border border-bl-line bg-white px-2 py-1 text-[11px] font-bold text-bl-blue hover:border-bl-blue disabled:opacity-50">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h7M9 3v2c0 4-2 7-6 9M5 9c0 3 3 5 7 6" /><path d="M14 21l4-9 4 9M15.5 17h5" /></svg>
+                {tIdx === i ? "翻訳中…" : "日本語に翻訳"}
+              </button>
+            </div>
             <textarea value={it.work} onChange={(e) => update(i, "work", e.target.value)} rows={2} placeholder="溶接、検品、組立など" className={inputCls} />
-            <p className={note}>母国語でも入力できます。CV作成時に日本語へ整えます。</p>
+            <p className={note}>母国語でも入力できます。「日本語に翻訳」で日本語に変換できます。</p>
           </div>
         </div>
       ))}

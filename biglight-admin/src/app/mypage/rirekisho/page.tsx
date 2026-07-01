@@ -22,6 +22,8 @@ const DOCLIST = [
   { id: "tokutei", label: "特定技能の資格" },
   { id: "other", label: "その他の書類" },
 ];
+// Thứ tự đính kèm & danh sách: 製品の写真 đứng TRƯỚC 提出書類.
+const LIST_DOCS = [{ id: "workphotos", label: "製品の写真" }, ...DOCLIST];
 
 export default async function RirekishoPage({ searchParams }: { searchParams: { attach?: string } }) {
   const session = await getSessionUser();
@@ -68,7 +70,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
 
   // Chế độ「書類付き」: gom mọi file trong các slot书類 (không gồm 証明写真) → ghép sau CV.
   const attachments = withAttach
-    ? DOCLIST.flatMap((d) => (docs[d.id] ?? []).map((f) => ({ ...f, slot: d.id, slotLabel: d.label })))
+    ? LIST_DOCS.flatMap((d) => (docs[d.id] ?? []).map((f) => ({ ...f, slot: d.id, slotLabel: d.label })))
     : [];
 
   return (
@@ -158,7 +160,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
         <Section title="添付書類一覧">
           <table className="w-full border-collapse text-sm">
             <tbody>
-              {DOCLIST.map((d) => {
+              {LIST_DOCS.map((d) => {
                 const done = (docs[d.id]?.length ?? 0) > 0;
                 return (
                   <tr key={d.id} className="border-b border-bl-line last:border-0">
