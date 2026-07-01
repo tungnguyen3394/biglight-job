@@ -3,11 +3,13 @@
 import { useEffect } from "react";
 
 // Thanh thao tác cho trang 履歴書PDF — ẩn khi in. Tự mở hộp thoại in 1 lần.
-export default function PrintBar() {
+// title: đặt document.title = tên file gợi ý khi lưu PDF (お名前 履歴書 国籍).
+export default function PrintBar({ title }: { title?: string }) {
   useEffect(() => {
+    if (title) document.title = title;
     const t = setTimeout(() => { try { window.print(); } catch { /* ignore */ } }, 500);
     return () => clearTimeout(t);
-  }, []);
+  }, [title]);
   return (
     <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-bl-line bg-white/95 px-4 py-3 backdrop-blur">
       <button onClick={() => window.close()} className="rounded-xl border border-bl-line px-4 py-2 text-sm font-bold text-bl-gray hover:bg-bl-bg">閉じる</button>

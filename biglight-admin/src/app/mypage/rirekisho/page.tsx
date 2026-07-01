@@ -50,6 +50,9 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
     );
   }
 
+  // Tên file gợi ý khi lưu PDF: お名前（ローマ字）＋履歴書＋国籍.
+  const pdfTitle = [c.name?.trim(), "履歴書", c.nationality?.trim()].filter(Boolean).join(" ");
+
   const email = c.user?.email && !c.user.email.endsWith(".biglight.local") ? c.user.email : c.email;
   const industries = c.desiredIndustry ? c.desiredIndustry.split(",").filter(Boolean).join("、") : "";
   const locations = c.desiredLocation ? c.desiredLocation.split(",").filter(Boolean).join("、") : "";
@@ -89,7 +92,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
         .rk-tr { break-inside: avoid; }
       `}</style>
 
-      <PrintBar />
+      <PrintBar title={pdfTitle} />
 
       <div className="sheet mx-auto my-6 w-[210mm] max-w-[calc(100vw-24px)] bg-white p-[14mm] shadow-xl print:my-0 print:w-auto print:p-0">
         {/* Header */}
