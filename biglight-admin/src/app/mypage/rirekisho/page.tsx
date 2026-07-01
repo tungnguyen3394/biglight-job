@@ -74,13 +74,14 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
   return (
     <div className="min-h-screen bg-[#e9edf1] text-ink">
       <style>{`
-        @page { size: A4; margin: 12mm; }
+        @page { size: A4; margin: 10mm; }
         .sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         @media print {
           html, body { background: #fff !important; }
           .no-print { display: none !important; }
-          .sheet { box-shadow: none !important; margin: 0 !important; width: auto !important; }
+          .sheet { box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: none !important; padding: 0 !important; }
           .attach-page { break-before: page; }
+          .attach-img { max-height: 255mm !important; }
         }
         .rk-sec { break-inside: avoid; }
         .rk-tr { break-inside: avoid; }
@@ -93,7 +94,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
         <div className="mb-5 flex items-start justify-between gap-4 border-b-2 border-ink pb-3">
           <div>
             <h1 className="text-2xl font-black tracking-wide text-ink">履歴書</h1>
-            <div className="mt-1 text-xs text-bl-gray">BIGLIGHT JOB</div>
+            <div className="mt-1 text-xs text-bl-gray">BIGLIGHT株式会社</div>
           </div>
           {cvPhoto && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -170,7 +171,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
           </table>
         </Section>
 
-        <p className="mt-5 text-right text-[10px] text-bl-gray2">この履歴書は BIGLIGHT JOB で作成されました。</p>
+        <p className="mt-5 text-right text-[10px] text-bl-gray2">この履歴書は BIGLIGHT株式会社 で作成されました。</p>
       </div>
 
       {/* ===== Trang đính kèm (chỉ mode 書類付き) ===== */}
@@ -179,7 +180,7 @@ export default async function RirekishoPage({ searchParams }: { searchParams: { 
           <h2 className="mb-3 border-l-4 border-bl-red pl-2 text-[15px] font-black text-ink">添付書類：{a.slotLabel}</h2>
           {isImg(a.name) ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/api/candidate/documents?slot=${a.slot}&file=${encodeURIComponent(a.file)}`} alt={a.name} className="mx-auto max-h-[240mm] w-auto max-w-full object-contain" />
+            <img src={`/api/candidate/documents?slot=${a.slot}&file=${encodeURIComponent(a.file)}`} alt={a.name} className="attach-img mx-auto block max-h-[240mm] w-auto max-w-full object-contain" />
           ) : (
             <div className="rounded-lg border border-dashed border-bl-line bg-bl-bg p-6 text-center text-sm text-bl-gray">
               PDFファイル：{a.name}<br /><span className="text-xs text-bl-gray2">※ PDF書類は原本を別途ご提出ください。</span>
@@ -200,15 +201,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// Bảng nhãn/giá trị cột cố định → thẳng hàng khi in.
+// Bảng nhãn/giá trị: nhãn co gọn (nowrap), giá trị kéo dài hết bề ngang → hết lệch, dùng full lề.
 function Grid({ rows }: { rows: [string, string][] }) {
   return (
-    <table className="w-full table-fixed border-collapse text-sm">
+    <table className="w-full border-collapse text-sm">
       <tbody>
         {rows.map(([k, val]) => (
           <tr key={k} className="rk-tr border-b border-bl-line align-top last:border-0">
-            <th className="w-[38%] bg-bl-bg px-3 py-2 text-left align-top font-bold text-bl-gray">{k}</th>
-            <td className={`px-3 py-2 align-top whitespace-pre-wrap break-words ${val === "未記入" ? "text-bl-gray2" : "text-ink"}`}>{val}</td>
+            <th className="whitespace-nowrap bg-bl-bg px-3 py-2 text-left align-top font-bold text-bl-gray">{k}</th>
+            <td className={`w-full px-3 py-2 align-top whitespace-pre-wrap break-words ${val === "未記入" ? "text-bl-gray2" : "text-ink"}`}>{val}</td>
           </tr>
         ))}
       </tbody>
