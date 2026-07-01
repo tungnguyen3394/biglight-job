@@ -23,8 +23,12 @@ export async function POST(req: Request) {
   if (content.length > 1_000_000) return NextResponse.json({ error: "ファイルが大きすぎます（最大1MB）。" }, { status: 422 });
   const type = (DOC_TYPES as readonly string[]).includes(b.type) ? b.type : "Other";
   const status = b.status === "OFF" ? "OFF" : "ON";
-  const meta = await saveDoc({ file, name: String(b.name || "").trim() || file, type, version: String(b.version || "1.0").trim(), content, status });
-  return NextResponse.json({ ok: true, doc: meta });
+  try {
+    const meta = await saveDoc({ file, name: String(b.name || "").trim() || file, type, version: String(b.version || "1.0").trim(), content, status });
+    return NextResponse.json({ ok: true, doc: meta });
+  } catch (e) {
+    return NextResponse.json({ error: `保存に失敗しました（書き込み権限をご確認ください）: ${(e as Error)?.message ?? ""}` }, { status: 500 });
+  }
 }
 
 // PATCH { file, status } — bật/tắt ON/OFF.
