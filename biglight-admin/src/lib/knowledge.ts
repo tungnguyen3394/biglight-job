@@ -85,3 +85,32 @@ export async function removeDoc(file: string): Promise<void> {
 export async function readRaw(file: string): Promise<string> {
   return fs.readFile(path.join(KNOWLEDGE_DIR, safeName(file)), "utf8");
 }
+
+// Ghép nội dung các tài liệu ĐANG ON để AI tham chiếu. Có giới hạn ký tự (tránh vỡ token).
+const KNOWLEDGE_MAX = Number(process.env.KNOWLEDGE_MAX_CHARS || 24000);
+export async function buildKnowledgeContext(maxChars = KNOWLEDGE_MAX): Promise<string> {
+  try {
+    const docs = (await listDocs()).filter((d) => d.status === "ON");
+    if (!docs.length) return "";
+    const parts: string[] = [];
+    let used = 0;
+    for (const d of docs) {
+      const raw = await readRaw(d.file).catch(() => "");
+      const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim(); // bỏ frontmatter
+      if (!body) continue;
+      let chunk = `【${d.type}】${d.name}（v${d.version}）\n${body}`;
+      if (used + chunk.length > maxChars) {
+        const remain = maxChars - used;
+        if (remain < 300) break;
+        chunk = chunk.slice(0, remain) + "\n…(省略)";
+        parts.push(chunk);
+        break;
+      }
+      parts.push(chunk); used += chunk.length;
+    }
+    if (!parts.length) return "";
+    return "BIGLIGHT 参考資料（社内ナレッジ）:\n"
+      + "※求人・給与・条件は必ず「DANH SÁCH求人」を優先。下記は制度・手続き・会社情報などの一般説明に使う。資料にない事実は作らない。\n\n"
+      + parts.join("\n\n---\n\n");
+  } catch { return ""; }
+}

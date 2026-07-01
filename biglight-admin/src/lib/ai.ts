@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { salaryRange, PUBLIC_BASE_URL } from "./site";
 import { DEFAULT_AI_PROMPT, AI_TECH_NOTE } from "./aiPrompt";
+import { buildKnowledgeContext } from "./knowledge";
 
 export const OPENAI_KEY = process.env.OPENAI_API_KEY || "";
 export const aiKeyConfigured = () => !!OPENAI_KEY;
@@ -39,9 +40,10 @@ export type ChatTurn = { role: "user" | "assistant"; content: string };
 export async function aiReply(history: ChatTurn[], instructions: string, model: string): Promise<{ text: string; handoff: boolean } | null> {
   if (!OPENAI_KEY) return null;
   const jobCtx = await buildJobContext();
-  // Chỉ dẫn = ô AI設定 (admin tự sửa); nếu trống → dùng mẫu gợi ý. Code chỉ ghép ràng buộc kỹ thuật + dữ liệu求人.
+  const knowledge = await buildKnowledgeContext(); // tài liệu ON trong AI Knowledge (nếu có)
+  // Chỉ dẫn = ô AI設定 (admin tự sửa); nếu trống → dùng mẫu gợi ý. Code chỉ ghép ràng buộc kỹ thuật + tài liệu + dữ liệu求人.
   const persona = instructions?.trim() || DEFAULT_AI_PROMPT;
-  const system = `${persona}\n\n${AI_TECH_NOTE}\n\n${jobCtx}`;
+  const system = [persona, AI_TECH_NOTE, knowledge, jobCtx].filter(Boolean).join("\n\n");
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
