@@ -31,6 +31,20 @@ export default function LangSwitch({ compact = false }: { compact?: boolean }) {
   function pick(code: string, lbl: string) {
     setLabel(lbl);
     setOpen(false);
+    // Về 日本語 (ngôn ngữ gốc): Google Website Translate KHÔNG khôi phục bằng combo
+    // → xóa cookie googtrans + reload để hiện lại bản gốc tiếng Nhật.
+    if (code === "ja") {
+      const exp = "Thu, 01 Jan 1970 00:00:00 GMT";
+      const host = location.hostname;
+      document.cookie = `googtrans=;expires=${exp};path=/`;
+      document.cookie = `googtrans=;expires=${exp};path=/;domain=${host}`;
+      document.cookie = `googtrans=;expires=${exp};path=/;domain=.${host}`;
+      location.reload();
+      return;
+    }
+    // Sang ngôn ngữ khác: đặt cookie (bền qua reload) + dùng combo dịch ngay.
+    document.cookie = `googtrans=/ja/${code};path=/`;
+    document.cookie = `googtrans=/ja/${code};path=/;domain=.${location.hostname}`;
     const trySet = (n = 0) => {
       const sel = document.querySelector<HTMLSelectElement>(".goog-te-combo");
       if (sel) { sel.value = code; sel.dispatchEvent(new Event("change")); }
