@@ -46,7 +46,7 @@ export default function RecommendScore({ jobId, jobTitle, loggedIn }: { jobId: s
         <p className="mt-2 text-sm leading-snug text-bl-gray">{r.summary}</p>
         <button onClick={() => setOpen(true)} className="mt-3 w-full rounded-xl bg-bl-red py-2.5 text-sm font-bold text-white transition hover:bg-bl-redd">理由を見る</button>
         <a href={askHref} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-bl-line py-2.5 text-sm font-bold text-bl-gray transition hover:border-bl-red hover:text-bl-red">
-          {chat}この求人についてAIに相談
+          {chat}この求人について相談する
         </a>
       </div>
 
@@ -84,7 +84,7 @@ export default function RecommendScore({ jobId, jobTitle, loggedIn }: { jobId: s
 
             <p className="mt-4 text-[11px] leading-relaxed text-bl-gray2">プロフィールと求人条件から算出しています。参考値です。</p>
             <a href={askHref} onClick={() => setOpen(false)} className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-bl-red py-3 text-sm font-bold text-white">
-              {chat}この求人についてAIに相談
+              {chat}この求人について相談する
             </a>
           </div>
         </div>

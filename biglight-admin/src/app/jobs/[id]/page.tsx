@@ -106,51 +106,77 @@ export default async function JobDetail({ params, searchParams }: { params: { id
     image: job.imageUrl || industryImage(job.industry),
   });
   const bcLd = breadcrumbJsonLd([{ name: "ホーム", path: "/" }, { name: "特定技能求人一覧", path: "/jobs" }, { name: job.title, path: `/jobs/${job.id}` }]);
+  // 3 điểm nổi bật (từ tags/待遇 có sẵn — KHÔNG thêm field mới)
+  const highlights = [...new Set([...(job.tags ?? []), ...benefits, job.dormitoryAvailable ? "寮あり" : ""].filter(Boolean))].slice(0, 3);
 
   return (
     <Shell active="jobs" loggedIn={loggedIn}>
       <JsonLd data={[jobLd, bcLd]} />
-      <div className="mx-auto max-w-3xl px-4 py-5 min-[1200px]:max-w-[1360px] min-[1200px]:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-5 min-[1200px]:max-w-[1200px]">
         <Link href="/jobs" className="inline-flex items-center gap-1 text-sm font-semibold text-bl-gray hover:text-ink">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>求人一覧へ戻る
         </Link>
 
-        {/* Desktop ≥1200: 2 cột (main trái + sidebar sticky phải). Mobile/tablet giữ nguyên 1 cột. */}
-        <div className="min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_360px] min-[1200px]:items-start min-[1200px]:gap-6">
-          <div className="min-w-0">
+        {/* Mobile-first: 1 cột (ảnh→summary→chi tiết). Desktop ≥1200: 2 cột, summary phải sticky. */}
+        <div className="mt-3 min-[1200px]:grid min-[1200px]:grid-cols-[minmax(0,1fr)_380px] min-[1200px]:items-start min-[1200px]:gap-6">
 
-        {/* Hero — Mã đơn + trạng thái + Tỉnh/Thành (trên trái) · Yêu thích (trên phải) · Tiêu đề (đáy ảnh) */}
-        <div className="relative mt-3 h-48 overflow-hidden rounded-2xl sm:h-60 min-[1200px]:h-80">
-          <img src={job.imageUrl || industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/5 to-black/70" />
-          <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-            <div className="flex flex-wrap items-center gap-1.5">
+          {/* ① Ảnh — chỉ 求人コード + trạng thái */}
+          <div className="relative h-40 overflow-hidden rounded-2xl sm:h-52 min-[1200px]:col-start-1 min-[1200px]:row-start-1 min-[1200px]:h-72">
+            <img src={job.imageUrl || industryImage(job.industry)} alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+            <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
               <span className="rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">{job.code}</span>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold text-white ${open ? (job.isUrgent ? "bg-bl-red" : "bg-bl-green") : "bg-bl-gray"}`}>{open ? (job.isUrgent ? "急募" : "募集中") : "募集終了"}</span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-0.5 text-xs font-bold text-white backdrop-blur">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-              {loc}
-            </span>
           </div>
-          <div className="absolute right-3 top-3 flex items-center gap-2 min-[1200px]:hidden">
-            <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} variant="pill" />
-            <SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} />
-          </div>
-          <div className="absolute inset-x-4 bottom-3.5">
-            <h1 className="line-clamp-2 text-lg font-black leading-snug text-white drop-shadow-md sm:text-2xl">{job.title}</h1>
-          </div>
-        </div>
 
-        {/* Nhãn phân loại (chỉ field admin nhập: 業種 / 職種) */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
-          {job.jobTypeName && <span className="rounded-full bg-bl-bg px-2.5 py-0.5 text-[11px] font-bold text-bl-gray">{job.jobTypeName}</span>}
-        </div>
+          {/* ②–⑧ Summary — mobile: sau ảnh; desktop: cột phải sticky */}
+          <div className="mt-4 min-[1200px]:col-start-2 min-[1200px]:row-start-1 min-[1200px]:row-span-2 min-[1200px]:mt-0">
+            <div className="space-y-3 min-[1200px]:sticky min-[1200px]:top-6">
+              <div className="rounded-2xl border border-bl-line bg-white p-4 shadow-sm">
+                {/* ② Tên */}
+                <h1 className="text-xl font-black leading-snug text-ink">{job.title}</h1>
+                {/* ③ Địa điểm + ngành */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                  <span className="inline-flex items-center gap-1 text-bl-gray"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>{loc}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${chip}`}>{job.industry}</span>
+                  {job.jobTypeName && <span className="text-xs font-semibold text-bl-gray2">{job.jobTypeName}</span>}
+                </div>
+                {/* ④ 3 điểm nổi bật */}
+                {highlights.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {highlights.map((h) => <span key={h} className="rounded-full bg-bl-greensoft px-2.5 py-1 text-xs font-bold text-bl-green">{h}</span>)}
+                  </div>
+                )}
+                {/* ⑤ Lương: 時給 → 月収見込み → 手取り(đỏ, nổi bật nhất) */}
+                {hasSalary && (
+                  <div className="mt-4 space-y-1.5 border-t border-bl-line pt-3">
+                    {sal?.hourly ? <div className="flex items-center justify-between text-sm"><span className="text-bl-gray">時給</span><span className="font-bold text-ink">{fmtYen(sal.hourly)}</span></div> : null}
+                    {(sal?.gross || job.expectedMonthly != null) ? <div className="flex items-center justify-between text-sm"><span className="text-bl-gray">月収見込み</span><span className="font-bold text-ink">{fmtYen((sal?.gross ?? job.expectedMonthly) as number)}</span></div> : null}
+                    {job.expectedTakeHome != null && (
+                      <div className="mt-1 flex items-center justify-between rounded-xl bg-bl-redsoft px-3 py-2.5">
+                        <span className="text-sm font-bold text-bl-red">手取り給与（概算）</span>
+                        <span className="text-2xl font-black leading-none text-bl-red">{fmtYen(job.expectedTakeHome)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* ⑥ Nút ứng tuyển */}
+                <div className="mt-4">
+                  <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
+                  <p className="mt-2 text-center text-xs text-bl-gray2">プロフィールだけで簡単応募</p>
+                  <div className="mt-2 flex justify-center"><SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} /></div>
+                </div>
+              </div>
+              {/* ⑦ おすすめ度 + ⑧ 相談 */}
+              <RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} />
+            </div>
+          </div>
 
-        <div className="mt-5 space-y-4 min-[1200px]:space-y-5">
-          {/* 1. 給与 */}
-          <Card title="給与">
+          {/* Chi tiết — mobile: sau summary; desktop: cột trái dưới ảnh */}
+          <div className="mt-4 space-y-4 min-[1200px]:col-start-1 min-[1200px]:row-start-2 min-[1200px]:mt-5 min-[1200px]:space-y-5">
+          {/* 給与詳細 */}
+          <Card title="給与詳細">
             {hasSalary ? (
               <div className="space-y-3">
                 {/* 1. 基本給 */}
@@ -228,19 +254,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
             ) : Empty}
           </Card>
 
-          {/* CTA ứng tuyển — mobile/tablet (desktop dùng sidebar) */}
-          <div className="rounded-2xl border border-bl-red/20 bg-gradient-to-br from-bl-redsoft/50 to-white p-4 shadow-sm min-[1200px]:hidden">
-            <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} autoOpen={searchParams.apply === "1"} />
-            <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-xs text-bl-gray2">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-              {loggedIn ? "プロフィール情報でかんたん応募" : "無料・Facebook / Google で30秒登録"}
-            </p>
-          </div>
-
-          {/* おすすめ度 — mobile/tablet trong luồng (desktop chuyển sang sidebar) */}
-          <div className="min-[1200px]:hidden"><RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} /></div>
-
-          {/* 2. 住居・生活 */}
+          {/* 住居・生活 */}
           <Card title="住居・生活">
             {hasHousing ? (
               <KV rows={[
@@ -329,48 +343,8 @@ export default async function JobDetail({ params, searchParams }: { params: { id
               <div className="flex justify-between"><dt className="text-bl-gray2">更新日</dt><dd className="font-semibold text-bl-gray">{updatedAt}</dd></div>
             </dl>
           </div>
-        </div>
-          </div>{/* /main-left */}
-
-          {/* ===== Sidebar sticky — chỉ Desktop ≥1200px ===== */}
-          <aside className="hidden min-[1200px]:block">
-            <div className="sticky top-6 space-y-4">
-              {hasSalary && (
-                <div className="rounded-2xl border border-bl-line bg-white p-5 shadow-sm">
-                  {job.baseSalary != null && (
-                    <div className="mb-2 flex items-baseline justify-between gap-2">
-                      <span className="text-xs text-bl-gray">基本給{job.payType ? `（${job.payType}）` : ""}</span>
-                      <span className="text-lg font-black text-ink">{fmtYen(job.baseSalary)}</span>
-                    </div>
-                  )}
-                  {(sal?.gross || job.expectedMonthly != null) && (
-                    <div className="flex items-baseline justify-between gap-2 border-t border-bl-line pt-2">
-                      <span className="text-xs font-bold text-bl-gray">総支給見込み</span>
-                      <span className="text-lg font-black text-ink">{fmtYen((sal?.gross ?? job.expectedMonthly) as number)}</span>
-                    </div>
-                  )}
-                  {job.expectedTakeHome != null && (
-                    <div className="mt-2 flex items-baseline justify-between gap-2 rounded-xl bg-bl-red px-3 py-2 text-white">
-                      <span className="text-xs font-bold">手取り（概算）</span>
-                      <span className="text-xl font-black leading-none">{fmtYen(job.expectedTakeHome)}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 応募 / お気に入り (sticky) */}
-              <div className="rounded-2xl border border-bl-red/20 bg-gradient-to-br from-bl-redsoft/50 to-white p-4 shadow-sm">
-                <ApplyButton jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} />
-                <div className="mt-2.5 flex items-center justify-center gap-2 text-sm font-bold text-bl-gray">
-                  <SaveButton jobId={job.id} initialSaved={saved} loggedIn={loggedIn} />お気に入り
-                </div>
-              </div>
-
-              {/* おすすめ度 */}
-              <RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} />
-            </div>
-          </aside>
-        </div>{/* /grid 2 cột */}
+        </div>{/* /chi tiết */}
+        </div>{/* /grid */}
       </div>
       <MessengerPopupButton />
     </Shell>
