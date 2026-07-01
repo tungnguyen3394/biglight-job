@@ -5,7 +5,7 @@ export const SITE_NAME = "BIGLIGHT JOB";
 export const SITE_LOCALE = "ja_JP";
 export const SITE_DESC =
   "特定技能の求人を、地域・分野・条件でかんたん検索。寮あり・未経験OK・ビザサポートつき。外国人材のお仕事探しをBIGLIGHTが無料で応援します。";
-export const DEFAULT_OG = `${PUBLIC_BASE_URL}/api/og`; // ảnh OG thương hiệu mặc định (1200×630)
+export const DEFAULT_OG = `${PUBLIC_BASE_URL}/og.png`; // ảnh OG thương hiệu mặc định (public/og.png, 2400×1260 = tỉ lệ 1200×630)
 
 const abs = (u?: string | null) => {
   if (!u) return DEFAULT_OG;
