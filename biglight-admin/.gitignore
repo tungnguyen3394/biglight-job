@@ -29,3 +29,6 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# AI Knowledge — tài liệu upload runtime (không commit)
+/knowledge/
