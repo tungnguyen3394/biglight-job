@@ -7,14 +7,14 @@ import CandidateHome, { type PublicJob } from "@/components/candidate/CandidateH
 
 export const dynamic = "force-dynamic";
 
-// OG/SNS chỉ cho TRANG CHỦ: dùng THẲNG file logo gốc (không ghép ảnh, không viền).
+// OG/SNS TRANG CHỦ: ảnh thương hiệu BIGLIGHT JOB (public/og.png, 2400×1260 = tỉ lệ 1200×630).
 export const metadata = buildMetadata({
   title: "BIGLIGHT JOB | 特定技能専門の求人・転職サイト",
   description: "あなたに合った特定技能求人を見つけよう。製造業・建設業・外食業など全国の求人を掲載。履歴書作成・面接練習・ビザ申請・入社後フォローまでBIGLIGHTが無料でサポートします。",
   path: "/",
-  image: "/logo3.png",
-  imageWidth: 512,
-  imageHeight: 512,
+  image: "/og.png",
+  imageWidth: 1200,
+  imageHeight: 630,
 });
 
 export default async function Home({ searchParams }: { searchParams: { q?: string } }) {
