@@ -3,6 +3,7 @@ import { industryImage, salaryRange } from "@/lib/site";
 import { getSessionUser } from "@/lib/auth";
 import { buildMetadata } from "@/lib/seo";
 import JobsBrowser, { type BrowseJob } from "@/components/candidate/JobsBrowser";
+import { computeMatch, type CandProfile } from "@/lib/recommend";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +16,24 @@ export const metadata = buildMetadata({
 export default async function JobsPage() {
   const jobs = await prisma.job.findMany({ where: { publicStatus: "PUBLIC" }, orderBy: { createdAt: "desc" } });
 
+  // Hồ sơ ứng viên (nếu đã đăng nhập) → tính おすすめ度 mỗi đơn.
+  const session = await getSessionUser();
+  const loggedIn = session?.role === "CANDIDATE";
+  let savedIds: string[] = [];
+  let profile: CandProfile | null = null;
+  if (loggedIn) {
+    const cand = await prisma.candidate.findUnique({ where: { userId: session!.id }, select: { savedJobIds: true, desiredSalary: true, desiredLocation: true, gender: true, nationality: true, japaneseLevel: true, desiredIndustry: true } });
+    savedIds = cand?.savedJobIds ?? [];
+    profile = cand ?? null;
+  }
+
   const items: BrowseJob[] = jobs.map((j) => {
     const salaryValue = j.expectedMonthly ?? (j.payType === "月給" ? j.baseSalary ?? 0 : j.salaryMin ?? 0);
+    const recScore = loggedIn
+      ? computeMatch(profile, { industry: j.industry, location: j.location, genderCondition: j.genderCondition, nationalityCondition: j.nationalityCondition, nationalityText: `${j.title} ${j.description ?? ""} ${(j.tags ?? []).join(" ")}`, japaneseLevel: j.japaneseLevel, monthly: j.expectedMonthly ?? j.salaryMin }).score
+      : null;
     return {
+      recScore,
       id: j.id,
       code: j.code,
       title: j.title,
@@ -44,12 +60,5 @@ export default async function JobsPage() {
     };
   });
 
-  const session = await getSessionUser();
-  let savedIds: string[] = [];
-  if (session?.role === "CANDIDATE") {
-    const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
-    savedIds = cand?.savedJobIds ?? [];
-  }
-
-  return <JobsBrowser items={items} loggedIn={session?.role === "CANDIDATE"} savedIds={savedIds} />;
+  return <JobsBrowser items={items} loggedIn={loggedIn} savedIds={savedIds} />;
 }

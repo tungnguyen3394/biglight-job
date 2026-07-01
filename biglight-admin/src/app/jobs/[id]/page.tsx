@@ -12,6 +12,7 @@ import MessengerPopupButton from "@/components/common/MessengerPopupButton";
 import { SaveButton } from "@/components/candidate/SaveButton";
 import { ApplyButton } from "@/components/candidate/ApplyButton";
 import RecommendScore from "@/components/candidate/RecommendScore";
+import { computeMatch, type Recommend } from "@/lib/recommend";
 
 export const dynamic = "force-dynamic";
 
@@ -75,9 +76,15 @@ export default async function JobDetail({ params, searchParams }: { params: { id
   const loggedIn = session?.role === "CANDIDATE";
   const open = job.status === "OPEN" && job.recruitCount > job.hiredCount;
   let saved = false;
+  let rec: Recommend | null = null;
   if (session?.role === "CANDIDATE") {
-    const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true } });
+    const cand = await prisma.candidate.findUnique({ where: { userId: session.id }, select: { savedJobIds: true, desiredSalary: true, desiredLocation: true, gender: true, nationality: true, japaneseLevel: true, desiredIndustry: true } });
     saved = (cand?.savedJobIds ?? []).includes(job.id);
+    rec = computeMatch(cand ?? null, {
+      industry: job.industry, location: job.location, genderCondition: job.genderCondition, nationalityCondition: job.nationalityCondition,
+      nationalityText: `${job.title} ${job.description ?? ""} ${(job.tags ?? []).join(" ")}`,
+      japaneseLevel: job.japaneseLevel, monthly: job.expectedMonthly ?? job.salaryMin,
+    });
   }
   const updatedAt = job.updatedAt.toLocaleDateString("ja-JP");
   const loc = `${job.location}${job.city ? ` ${job.city}` : ""}`;
@@ -169,7 +176,7 @@ export default async function JobDetail({ params, searchParams }: { params: { id
                 </div>
               </div>
               {/* ⑦ おすすめ度 + ⑧ 相談 */}
-              <RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} />
+              <RecommendScore jobId={job.id} jobTitle={job.title} loggedIn={loggedIn} rec={rec} />
             </div>
           </div>
 
