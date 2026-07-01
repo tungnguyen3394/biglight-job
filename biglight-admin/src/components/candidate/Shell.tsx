@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
-import SiteHeader, { type NavActive } from "./SiteHeader";
+import SiteHeader, { type NavActive, TEDORI_HREF, TEDORI_LOGIN } from "./SiteHeader";
 import { useLoginModal } from "./useLoginModal";
 import MobileHeaderActions from "./MobileHeaderActions";
 
@@ -18,14 +18,6 @@ const NAV: { key: Active; label: string; href: string; icon: React.ReactNode }[]
   { key: "guide", label: "ガイド", href: "/guide", icon: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" /></> },
   { key: "mypage", label: "マイページ", href: "/mypage", icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></> },
 ];
-
-// Link 手取り計算ツール (trang tĩnh dùng chung với マイページ) + nội dung popup khi chưa đăng nhập.
-const TEDORI_HREF = "/biglight-job-salary.html";
-const TEDORI_LOGIN = {
-  redirect: TEDORI_HREF,
-  title: "ログインが必要です",
-  desc: "手取り計算ツールをご利用いただくには、無料会員登録またはログインが必要です。",
-};
 
 function Icon({ children }: { children: React.ReactNode }) {
   return (

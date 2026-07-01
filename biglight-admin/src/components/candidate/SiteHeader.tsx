@@ -7,6 +7,14 @@ import MessengerLink from "@/components/common/MessengerLink";
 
 export type NavActive = "jobs" | "tedori" | "about" | "info" | "tokutei2" | "guide" | "mypage";
 
+// 手取り計算ツール — dùng chung cho bottom nav (mobile) + header (desktop).
+export const TEDORI_HREF = "/biglight-job-salary.html";
+export const TEDORI_LOGIN = {
+  redirect: TEDORI_HREF,
+  title: "ログインが必要です",
+  desc: "手取り計算ツールをご利用いただくには、無料会員登録またはログインが必要です。",
+};
+
 // Các mục trong dropdown 特定技能2号情報
 export const TOKUTEI2_LINKS = [
   { href: "/tokutei2", label: "特定技能2号とは" },
@@ -17,7 +25,7 @@ export const TOKUTEI2_LINKS = [
 ];
 
 // Header trên cùng dùng chung cho desktop (trang chủ + mọi trang). Mobile dùng Shell riêng.
-export default function SiteHeader({ active, loggedIn, onRegister }: { active: NavActive; loggedIn?: boolean; onRegister?: () => void }) {
+export default function SiteHeader({ active, loggedIn, onRegister }: { active: NavActive; loggedIn?: boolean; onRegister?: (arg?: unknown) => void }) {
   const cls = (key: NavActive) => (active === key ? "text-bl-red" : "text-bl-gray hover:text-ink");
 
   return (
@@ -26,6 +34,11 @@ export default function SiteHeader({ active, loggedIn, onRegister }: { active: N
         <Link href="/" className="flex items-center gap-2"><Logo size={36} /><span className="text-lg font-black">BIGLIGHT<span className="text-bl-red"> JOB</span></span></Link>
         <nav className="flex items-center gap-5 text-sm font-bold">
           <Link href="/jobs" className={cls("jobs")}>求人を探す</Link>
+          {loggedIn ? (
+            <a href={TEDORI_HREF} className={cls("tedori")}>手取り計算</a>
+          ) : (
+            <button type="button" onClick={() => onRegister?.(TEDORI_LOGIN)} className={cls("tedori")}>手取り計算</button>
+          )}
           <Link href="/about" className={cls("about")}>私たちについて</Link>
           <Link href="/guide" className={cls("guide")}>特定技能ガイド</Link>
         </nav>
