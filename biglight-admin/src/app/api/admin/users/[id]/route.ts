@@ -37,12 +37,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const b = await req.json().catch(() => ({}));
-  const data: { name?: string; adminRole?: AdminRole; status?: "ACTIVE" | "SUSPENDED"; canSendMail?: boolean } = {};
+  const data: { name?: string; adminRole?: AdminRole; status?: "ACTIVE" | "SUSPENDED"; canSendMail?: boolean; image?: string | null } = {};
   const isSelf = g.user.id === target.id;
   const curLevel = levelOf(target);
 
   // Đổi tên
   if (typeof b.name === "string" && b.name.trim()) data.name = b.name.trim();
+  // Đổi ảnh (URL từ /api/admin/upload) hoặc xóa ảnh (null)
+  if (typeof b.image === "string" || b.image === null) data.image = b.image || null;
 
   // Đổi cấp (role)
   if (b.adminRole !== undefined) {

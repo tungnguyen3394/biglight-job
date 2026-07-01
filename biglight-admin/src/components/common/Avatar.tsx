@@ -13,4 +13,5 @@ export function Avatar({ name, src, size = 32, className = "" }: { name?: string
   return <span style={style} className={`flex flex-none items-center justify-center rounded-full bg-bl-redsoft font-black text-bl-red ${className}`}>{letter}</span>;
 }
 
-export const BIGU_KUN_SRC = "/bigu-kun-1024.png";
+// Ưu tiên ảnh thật nếu có (bigu-kun-1024.png); mặc định dùng SVG có sẵn để bot luôn có avatar.
+export const BIGU_KUN_SRC = "/bigu-kun.svg";

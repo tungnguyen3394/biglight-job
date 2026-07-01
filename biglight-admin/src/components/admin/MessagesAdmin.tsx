@@ -216,7 +216,7 @@ export default function MessagesAdmin({ canReply, canManage, isAdmin, myId }: { 
                   const hasMenu = canRecall(m) || canDeleteMsg(m);
                   return (
                     <div key={m.id} className={`flex items-end gap-2 ${left ? "justify-start" : "justify-end"}`}>
-                      {left && <Avatar name={roleName(m)} image={null} size={30} />}
+                      {left && <Avatar name={roleName(m)} image={cand?.image ?? null} size={30} />}
                       <div className="max-w-[80%]">
                         <div className={`mb-0.5 text-[11px] font-semibold text-slate-400 ${left ? "" : "text-right"}`}>{roleName(m)}</div>
                         <div className="flex items-end gap-1">

@@ -321,7 +321,6 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                         <div className="flex min-w-0 items-center">
                           <input defaultValue={u.name} onBlur={(e) => rename(u, e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} title="クリックして氏名を編集" className="w-[150px] rounded-md border border-transparent bg-transparent px-1.5 py-0.5 font-semibold text-ink outline-none hover:border-slate-200 focus:border-bl-red focus:bg-white" />
                           {isSelf && <span className="ml-1 shrink-0 text-[10px] font-medium text-slate-400">(自分)</span>}
-                          <Link href={`/admin/users/${u.id}`} className="ml-1.5 shrink-0 text-[11px] font-semibold text-bl-red hover:underline">詳細</Link>
                         </div>
                       </div>
                     </td>
@@ -360,6 +359,7 @@ export function UsersManager({ initial, meId }: { initial: UserRow[]; meId: stri
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <Link href={`/admin/users/${u.id}`} className="mr-0.5 rounded-lg px-2 py-1 text-[11px] font-bold text-bl-red hover:bg-bl-redsoft" title="詳細を見る">詳細</Link>
                         <IconBtn
                           onClick={() => toggleLock(u)}
                           disabled={rowBusy || isSelf || (lastAdmin && !locked)}
