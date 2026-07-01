@@ -36,7 +36,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - biglight_uploads:/app/uploads   # lưu file giấy tờ ứng viên (bền vững qua build)
+      - biglight_uploads:/app/uploads       # lưu file giấy tờ ứng viên (bền vững qua build)
+      - biglight_knowledge:/app/knowledge   # AI Knowledge (.md/.txt) — bền vững qua build
     # Nhãn để caddy-docker-proxy tự route domain + cấp HTTPS (giống pgadmin, biglight-web)
     labels:
       caddy: job.biglight.jp
@@ -75,3 +76,4 @@ networks:
 volumes:
   biglight_pgdata:
   biglight_uploads:
+  biglight_knowledge:
