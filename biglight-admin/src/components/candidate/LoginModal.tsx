@@ -7,7 +7,7 @@ import { setCookieConsent } from "@/lib/cookieConsent";
 import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 
 // Modal đăng nhập/đăng ký nhanh (Google / Facebook) — dùng cho nút「30秒で無料登録」.
-export default function LoginModal({ open, onClose, redirect = "/mypage" }: { open: boolean; onClose: () => void; redirect?: string }) {
+export default function LoginModal({ open, onClose, redirect = "/mypage", title, desc }: { open: boolean; onClose: () => void; redirect?: string; title?: string; desc?: string }) {
   const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
   const dest = redirect.startsWith("/") ? redirect : "/mypage";
   const googleHref = `/api/auth/candidate/google/start?redirect=${encodeURIComponent(dest)}`;
@@ -35,8 +35,8 @@ export default function LoginModal({ open, onClose, redirect = "/mypage" }: { op
       <div className="w-full max-w-sm rounded-3xl border border-bl-line bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-black text-ink">30秒で無料登録</h2>
-            <p className="mt-1 text-xs text-bl-gray">この求人に応募するには、無料のアカウント登録が必要です。</p>
+            <h2 className="text-xl font-black text-ink">{title ?? "30秒で無料登録"}</h2>
+            <p className="mt-1 text-xs text-bl-gray">{desc ?? "この求人に応募するには、無料のアカウント登録が必要です。"}</p>
           </div>
           <button onClick={onClose} aria-label="閉じる" className="flex h-8 w-8 items-center justify-center rounded-full text-bl-gray2 hover:bg-bl-bg hover:text-ink">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>

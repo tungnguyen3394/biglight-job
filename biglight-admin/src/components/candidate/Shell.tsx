@@ -13,10 +13,19 @@ type Active = NavActive;
 
 const NAV: { key: Active; label: string; href: string; icon: React.ReactNode }[] = [
   { key: "jobs", label: "求人", href: "/jobs", icon: <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /> },
+  { key: "tedori", label: "手取り", href: "/biglight-job-salary.html", icon: <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8" /><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" /></> },
   { key: "about", label: "私たち", href: "/about", icon: <><circle cx="9" cy="8" r="3" /><path d="M3 20c0-3 2.5-5 6-5s6 2 6 5" /><circle cx="17.5" cy="9" r="2.2" /><path d="M15 20c0-2 1.2-3.4 4-3.4" /></> },
   { key: "guide", label: "ガイド", href: "/guide", icon: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" /></> },
   { key: "mypage", label: "マイページ", href: "/mypage", icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" /></> },
 ];
+
+// Link 手取り計算ツール (trang tĩnh dùng chung với マイページ) + nội dung popup khi chưa đăng nhập.
+const TEDORI_HREF = "/biglight-job-salary.html";
+const TEDORI_LOGIN = {
+  redirect: TEDORI_HREF,
+  title: "ログインが必要です",
+  desc: "手取り計算ツールをご利用いただくには、無料会員登録またはログインが必要です。",
+};
 
 function Icon({ children }: { children: React.ReactNode }) {
   return (
@@ -69,8 +78,27 @@ export default function Shell({
       <main className="pb-24 lg:pb-10">{children}</main>
 
       {/* Bottom nav — chỉ mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-4 border-t border-bl-line bg-white lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-bl-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
         {NAV.map((n) => {
+          const cell = (activeCell: boolean) => (
+            <span className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold ${activeCell ? "text-bl-red" : "text-bl-gray2"}`}>
+              <Icon>{n.icon}</Icon>
+              {n.label}
+            </span>
+          );
+
+          // 手取り: đã đăng nhập → mở tool; chưa → popup đăng nhập (redirect về tool sau khi login).
+          if (n.key === "tedori") {
+            if (!loggedIn) {
+              return (
+                <button key={n.key} type="button" onClick={() => onRegister(TEDORI_LOGIN)} className="w-full">
+                  {cell(active === n.key)}
+                </button>
+              );
+            }
+            return <a key={n.key} href={TEDORI_HREF}>{cell(active === n.key)}</a>;
+          }
+
           // Chưa đăng nhập: tab マイ → CTA「無料登録」mở modal (không đi /mypage).
           if (n.key === "mypage" && !loggedIn) {
             return (
@@ -84,10 +112,7 @@ export default function Shell({
           }
           return (
             <Link key={n.key} href={n.href}>
-              <span className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold ${active === n.key ? "text-bl-red" : "text-bl-gray2"}`}>
-                <Icon>{n.icon}</Icon>
-                {n.label}
-              </span>
+              {cell(active === n.key)}
             </Link>
           );
         })}

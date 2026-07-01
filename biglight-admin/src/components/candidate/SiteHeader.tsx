@@ -5,7 +5,7 @@ import Logo from "./Logo";
 import LangSwitch from "./LangSwitch";
 import MessengerLink from "@/components/common/MessengerLink";
 
-export type NavActive = "jobs" | "about" | "info" | "tokutei2" | "guide" | "mypage";
+export type NavActive = "jobs" | "tedori" | "about" | "info" | "tokutei2" | "guide" | "mypage";
 
 // Các mục trong dropdown 特定技能2号情報
 export const TOKUTEI2_LINKS = [

@@ -8,13 +8,28 @@ import LoginModal from "./LoginModal";
 export function useLoginModal(defaultRedirect = "/mypage") {
   const [open, setOpen] = useState(false);
   const [redirect, setRedirect] = useState(defaultRedirect);
+  const [title, setTitle] = useState<string | undefined>();
+  const [desc, setDesc] = useState<string | undefined>();
 
+  // arg: string (redirect) | { redirect?, title?, desc? } | event (bỏ qua) — tương thích ngược.
   function onRegister(arg?: unknown) {
-    const dest = typeof arg === "string" && arg.startsWith("/") ? arg : defaultRedirect;
+    let dest = defaultRedirect;
+    let t: string | undefined;
+    let d: string | undefined;
+    if (typeof arg === "string" && arg.startsWith("/")) {
+      dest = arg;
+    } else if (arg && typeof arg === "object" && "redirect" in arg) {
+      const o = arg as { redirect?: string; title?: string; desc?: string };
+      if (o.redirect?.startsWith("/")) dest = o.redirect;
+      t = o.title;
+      d = o.desc;
+    }
     setRedirect(dest);
+    setTitle(t);
+    setDesc(d);
     setOpen(true);
   }
 
-  const modal = <LoginModal open={open} onClose={() => setOpen(false)} redirect={redirect} />;
+  const modal = <LoginModal open={open} onClose={() => setOpen(false)} redirect={redirect} title={title} desc={desc} />;
   return { onRegister, modal };
 }
